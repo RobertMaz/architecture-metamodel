@@ -1,5 +1,6 @@
 package arch.analyzer.core
 
+import arch.analyzer.lanes.BytecodeLane
 import arch.analyzer.lanes.ConfigLane
 import arch.analyzer.lanes.SourceLane
 import java.nio.file.Files
@@ -23,7 +24,7 @@ object Analyze {
         val report: ReconcileReport,
     )
 
-    fun defaultLanes(): List<Lane> = listOf(SourceLane(), ConfigLane())
+    fun defaultLanes(): List<Lane> = listOf(SourceLane(), ConfigLane(), BytecodeLane())
 
     fun run(archRoot: Path, containerId: String, date: String, lanes: List<Lane> = defaultLanes()): Result {
         val entry = Registry(archRoot).entry(containerId)

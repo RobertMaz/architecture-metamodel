@@ -101,6 +101,29 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `байткод подтверждает эндпоинт из сорцов - confidence растёт, детали от source`() {
+        val source = ev(
+            "source",
+            fact(
+                FactType.ENDPOINT, "src/A.java#L10", 0.95,
+                "method" to "GET", "path" to "/owners/{ownerId}", "response" to "OwnerDto",
+            ),
+        )
+        val bytecode = ev(
+            "bytecode",
+            fact(FactType.ENDPOINT, "app.jar!demo.OwnerController#findOwner", 0.8, "method" to "GET", "path" to "/owners/{id}"),
+        )
+        val (doc, report) = reconciler.reconcile("x.y", listOf(source, bytecode), meta)
+
+        val op = doc.operations.single()
+        assertEquals("/owners/{ownerId}", op.path, "детали от приоритетной полки source")
+        assertEquals("OwnerDto", op.response)
+        assertEquals(0.99, op.confidence, "подтверждение двумя полками")
+        assertTrue(op.source.contains("app.jar!"), "источники объединены: ${op.source}")
+        assertEquals(emptyList(), report.conflicts, "нормализованный путь — не конфликт: ${report.conflicts}")
+    }
+
+    @Test
     fun `низкий confidence попадает в отчёт`() {
         val e = ev(
             "source",

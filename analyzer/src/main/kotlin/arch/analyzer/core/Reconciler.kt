@@ -47,6 +47,8 @@ class Reconciler(
                     when {
                         cur == null || cur.isEmpty() -> attrs[k] = v
                         v.isEmpty() || v == cur -> {}
+                        // Имя path-параметра не различает эндпоинты — и не конфликтует.
+                        k == "path" && normPath(cur) == normPath(v) -> {}
                         else -> conflicts += "$label: $k «$cur» (${winner.lane}) vs «$v» (${other.lane})"
                     }
                 }
