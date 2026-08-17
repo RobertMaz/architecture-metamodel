@@ -124,6 +124,21 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `runtime побеждает source в деталях`() {
+        val source = ev(
+            "source",
+            fact(FactType.STORE_ACCESS, "src/R.java#L1", 0.9, "kind" to "jdbc", "address" to "", "access" to "readwrite"),
+        )
+        val runtime = ev(
+            "runtime",
+            fact(FactType.STORE_ACCESS, "actuator:/env", 0.97, "kind" to "jdbc", "address" to "jdbc:mysql://db/x"),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(source, runtime), meta)
+        assertEquals("jdbc:mysql://db/x", doc.stores.single().address)
+        assertTrue(doc.stores.single().confidence > 0.97)
+    }
+
+    @Test
     fun `llm-осмысление заполняет пустой summary и description, не перетирая source`() {
         val source = ev(
             "source",
