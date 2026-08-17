@@ -2,6 +2,7 @@ package arch.analyzer.core
 
 import arch.analyzer.lanes.BytecodeLane
 import arch.analyzer.lanes.ConfigLane
+import arch.analyzer.lanes.JqassistantLane
 import arch.analyzer.lanes.SourceLane
 import java.nio.file.Files
 import java.nio.file.Path
@@ -24,9 +25,17 @@ object Analyze {
         val report: ReconcileReport,
     )
 
-    fun defaultLanes(): List<Lane> = listOf(SourceLane(), ConfigLane(), BytecodeLane())
+    fun defaultLanes(archRoot: Path? = null): List<Lane> = listOf(
+        SourceLane(),
+        ConfigLane(),
+        BytecodeLane(),
+        JqassistantLane(
+            adapter = (archRoot ?: Paths.get(".")).resolve("analyzer/jqassistant/extract.sh"),
+        ),
+    )
 
-    fun run(archRoot: Path, containerId: String, date: String, lanes: List<Lane> = defaultLanes()): Result {
+    fun run(archRoot: Path, containerId: String, date: String, lanes: List<Lane>? = null): Result {
+        @Suppress("NAME_SHADOWING") val lanes = lanes ?: defaultLanes(archRoot)
         val entry = Registry(archRoot).entry(containerId)
         val repoDir = Paths.get(entry.path)
         require(Files.isDirectory(repoDir)) { "нет директории репозитория: $repoDir" }
