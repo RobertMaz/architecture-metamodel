@@ -12,6 +12,8 @@ export default defineConfig({
     },
   },
   server: {
+    // 5173 занят LikeC4 dev-сервером — UI живёт на 5174.
+    port: 5174,
     proxy: {
       '/api': 'http://localhost:8080',
     },

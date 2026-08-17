@@ -17,7 +17,9 @@ npm run check     # полный цикл: gen -> likec4 validate -> export json
 npm run gen       # tools/api-source/*.json -> model/gen/*.gen.c4 (gen-api: легаси v1, gen-model: v2 + системы + рёбра)
 npm run test:tools   # тесты генератора (node:test)
 mvn -q -f analyzer/pom.xml test   # тесты анализатора
-mvn -q -f analyzer/pom.xml compile exec:java -Dexec.args="analyze <id>|--all --date YYYY-MM-DD"   # прогон анализа
+mvn -q -f analyzer/pom.xml compile exec:java -Dexec.args="analyze <id>|--all --date YYYY-MM-DD"   # прогон анализа (dev-вход)
+mvn -q -f analyzer/pom.xml compile exec:java -Dexec.mainClass=arch.analyzer.server.ServerKt       # REST-сервер, порт 8080 (--port N)
+cd ui && npm install && npm run dev   # UI анализатора, http://localhost:5174 (прокси /api -> 8080)
 npm run impact -- shop.orders.api.post_api_v1_orders   # кто сломается при изменении
 npm run drift     # сверка build/model.json с tools/live-services.txt
 npm run owners    # владельцы систем из CODEOWNERS
@@ -30,7 +32,8 @@ node tools/verify.mjs build/model.json --list
 
 ## Структура
 
-- `analyzer/` — Kotlin/Maven: полки-источники (source, config) извлекают факты из репозиториев, реконсилятор сливает их в `tools/api-source/*.json` (v2). Спека: `docs/superpowers/specs/2026-08-17-arch-analyzer-design.md`.
+- `analyzer/` — Kotlin/Maven: полки-источники (source, config) извлекают факты из репозиториев, реконсилятор сливает их в `tools/api-source/*.json` (v2); Ktor-сервер (`server/`) — REST для UI: инвентарь, запуск анализа (после — сам зовёт `npm run gen`), отчёты, дифф, онбординг. Спека: `docs/superpowers/specs/2026-08-17-arch-analyzer-design.md`.
+- `ui/` — React 19 + Vite + Tailwind 4 + shadcn/ui: дашборд контейнеров, карточка с отчётом и диффом, онбординг систем/контейнеров. Единственный пользовательский интерфейс анализатора.
 - `registry/systems.yml` — реестр систем (генерятся в `model/gen/systems/`); `registry/repos.yml` — привязка container-id к репозиторию. Владельцы — только в CODEOWNERS.
 - `workspace/` (gitignore) — evidence-файлы полок и отчёты реконсиляции; персистентны, дают дообогащение при появлении новых источников.
 - `model/00-spec.c4` — метамодель: типы элементов, связей, теги. Одна страница, расти не должна. Kind заводится только если он меняет правила связывания (проверяемые в `check.mjs`); если различие меняет только картинку — это style, ортогональный признак — tag.
