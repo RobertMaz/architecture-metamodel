@@ -15,7 +15,7 @@
     "owners": "node tools/owners.mjs"
   },
   "devDependencies": {
-    "likec4": "latest"
+    "likec4": "^1.59.2"
   },
   "dependencies": {
     "yaml": "^2.9.0"
