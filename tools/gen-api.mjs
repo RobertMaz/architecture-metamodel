@@ -16,27 +16,10 @@
 
 import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { opId, esc } from './ids.mjs'
 
 const SRC = 'tools/api-source'
 const OUT = 'model/gen'
-
-/**
- * ID эндпоинта. Обязан быть СТАБИЛЬНЫМ между перегенерациями:
- * на него ссылаются связи, написанные руками.
- * Имя path-параметра в id не входит — переименование {orderId} -> {id}
- * не должно ломать модель.
- */
-const opId = (method, path) =>
-  (
-    method.toLowerCase() +
-    path
-      .replace(/\{[^}]*\}/g, '_p_')
-      .replace(/[^a-zA-Z0-9]+/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/_$/, '')
-  ).slice(0, 80)
-
-const esc = (s) => String(s).replace(/'/g, "\\'")
 const compactParams = (params = []) =>
   params
     .map((p) => `${p.name}:${p.in}:${p.type}${p.required ? '' : '?'}`)
@@ -59,6 +42,8 @@ const claim = (container, id, label) => {
 
 for (const f of readdirSync(SRC).filter((f) => f.endsWith('.json'))) {
   const d = JSON.parse(readFileSync(join(SRC, f), 'utf8'))
+  // v2-доки (с containerInfo) обрабатывает tools/gen-model.mjs
+  if (d.containerInfo) continue
   const L = []
 
   L.push(`// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.`)

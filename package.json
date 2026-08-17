@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "likec4 start model",
-    "gen": "node tools/gen-api.mjs",
+    "gen": "node tools/gen-api.mjs && node tools/gen-model.mjs",
+    "test:tools": "node --test tools/gen-model.test.mjs",
     "check": "npm run gen && likec4 validate model && likec4 export json model -o build/model.json && node tools/check.mjs build/model.json",
     "impact": "node tools/impact.mjs build/model.json",
     "drift": "node tools/drift.mjs build/model.json tools/live-services.txt",
