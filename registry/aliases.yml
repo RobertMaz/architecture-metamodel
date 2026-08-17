@@ -1,0 +1,11 @@
+# Таблица разрешения адресов: host / feign-name / spring.application.name -> container-id.
+# Пополняется анализатором при прогоне; ручные записи не перетираются.
+aliases:
+  api-gateway: petclinic.gateway
+  customers: petclinic.customers
+  customers-service: petclinic.customers
+  gateway: petclinic.gateway
+  vets: petclinic.vets
+  vets-service: petclinic.vets
+  visits: petclinic.visits
+  visits-service: petclinic.visits

@@ -120,11 +120,23 @@ for (const e of containers) {
 }
 
 // --- R7: границу системы пересекают только элементы с #public ----------
+// Исключение: цель с #stub (или её контейнер/система) — мы ещё не знаем,
+// кто это; требовать от заглушки публичности бессмысленно. После склейки
+// stub исчезает и правило включается само.
+const hasStubUp = (id) => {
+  let cur = id
+  while (cur) {
+    if (tagsOf(cur).includes('stub')) return true
+    cur = parentOf(cur)
+  }
+  return false
+}
 for (const r of rels) {
   const a = systemOf(r.src)
   const b = systemOf(r.dst)
   if (a === b) continue
   if (kindOf(r.src) === 'person') continue
+  if (hasStubUp(r.dst)) continue
   const dstIsPublic = tagsOf(r.dst).includes('public')
   const dstSystemIsPublic = tagsOf(b).includes('public')
   if (!dstIsPublic && !dstSystemIsPublic) {

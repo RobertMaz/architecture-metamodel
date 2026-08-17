@@ -12,5 +12,7 @@
 /model/gen/systems/petclinic.gen.c4  @acme/team-petclinic
 /model/gen/petclinic.*               @acme/team-petclinic
 /registry/                           @acme/architecture
+/model/30-unknown.c4                 @acme/architecture
+/model/gen/unknown/                  @acme/architecture
 # /model/11-crm.c4       @acme/team-crm
 # /model/12-logistics.c4 @acme/team-logistics

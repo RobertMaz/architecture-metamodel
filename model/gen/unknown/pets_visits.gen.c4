@@ -1,0 +1,20 @@
+// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
+// Источник: registry/unresolved.json (stub нераспознанной цели)
+
+model {
+  extend unknown {
+
+    pets_visits = service '{_}pets/visits' {
+      #stub #inferred
+      technology 'неизвестно'
+      metadata {
+        url-templates '{_}pets/visits'
+      }
+
+      api = api '{_}pets/visits API' {
+        #stub #inferred
+        technology 'HTTP'
+      }
+    }
+  }
+}

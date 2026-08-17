@@ -1,0 +1,22 @@
+{
+  "unresolved": [
+    {
+      "stubId": "unknown.pets_visits",
+      "signature": {
+        "feignNames": [],
+        "hosts": [],
+        "urlTemplates": [
+          "{_}pets/visits"
+        ]
+      },
+      "observedEndpoints": [],
+      "callers": [
+        {
+          "container": "petclinic.gateway",
+          "source": "src/main/java/org/springframework/samples/petclinic/api/application/VisitsServiceClient.java#L43"
+        }
+      ],
+      "candidates": []
+    }
+  ]
+}
