@@ -27,6 +27,7 @@ data class NewContainer(
     val id: String,
     val repo: String,
     val path: String,
+    val jar: String? = null,
 )
 
 class Onboarding(private val archRoot: Path) {
@@ -102,18 +103,20 @@ class Onboarding(private val archRoot: Path) {
 
         val file = archRoot.resolve("registry/repos.yml")
         val existing = if (file.exists()) yaml.readTree(file.toFile())?.get("repos") else null
-        val entries = sortedMapOf<String, Pair<String, String>>()
+        data class Row(val repo: String, val path: String, val jar: String?)
+        val entries = sortedMapOf<String, Row>()
         existing?.fields()?.forEach { (id, n) ->
-            entries[id] = (n["repo"]?.asText() ?: "") to (n["path"]?.asText() ?: "")
+            entries[id] = Row(n["repo"]?.asText() ?: "", n["path"]?.asText() ?: "", n["jar"]?.asText())
         }
         if (c.id in entries) return Result.Conflict("контейнер «${c.id}» уже есть")
-        entries[c.id] = c.repo to c.path
+        entries[c.id] = Row(c.repo, c.path, c.jar?.takeIf { it.isNotBlank() })
 
         val out = StringBuilder(reposHeader).append("repos:\n")
-        for ((id, rp) in entries) {
+        for ((id, row) in entries) {
             out.append("  $id:\n")
-            out.append("    repo: ${quote(rp.first)}\n")
-            out.append("    path: ${quote(rp.second)}\n")
+            out.append("    repo: ${quote(row.repo)}\n")
+            out.append("    path: ${quote(row.path)}\n")
+            row.jar?.let { out.append("    jar: ${quote(it)}\n") }
         }
         file.writeText(out.toString())
         return Result.Created

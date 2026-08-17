@@ -86,7 +86,7 @@ export const api = {
   analyze: (id: string) => http<{ started: boolean }>(`/api/containers/${id}/analyze`, { method: "POST" }),
   addSystem: (body: { id: string; title: string; kind: string; description?: string; owner: string }) =>
     http<{ created: string }>("/api/systems", { method: "POST", body: JSON.stringify(body) }),
-  addContainer: (body: { id: string; repo: string; path: string }) =>
+  addContainer: (body: { id: string; repo: string; path: string; jar?: string }) =>
     http<{ created: string }>("/api/containers", { method: "POST", body: JSON.stringify(body) }),
   unresolved: () => http<{ unresolved: UnresolvedEntry[] }>("/api/unresolved"),
   resolve: (stubId: string, body: { container?: string; external?: { id: string; title?: string; contract?: string } }) =>

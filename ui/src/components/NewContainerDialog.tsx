@@ -25,11 +25,12 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
   const [name, setName] = useState("")
   const [repo, setRepo] = useState("")
   const [path, setPath] = useState("")
+  const [jar, setJar] = useState("")
 
   const id = system && name ? `${system}.${name}` : ""
 
   const create = useMutation({
-    mutationFn: () => api.addContainer({ id, repo, path }),
+    mutationFn: () => api.addContainer({ id, repo, path, jar: jar || undefined }),
     onSuccess: () => {
       toast.success(`Контейнер «${id}» добавлен`)
       qc.invalidateQueries({ queryKey: ["containers"] })
@@ -83,6 +84,10 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
           <div className="grid gap-1.5">
             <Label htmlFor="c-path">Локальный путь к сорцам</Label>
             <Input id="c-path" value={path} onChange={(e) => setPath(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-jar">JAR из Nexus/сборки (необязательно — полка bytecode)</Label>
+            <Input id="c-jar" value={jar} onChange={(e) => setJar(e.target.value)} />
           </div>
         </div>
         <DialogFooter>

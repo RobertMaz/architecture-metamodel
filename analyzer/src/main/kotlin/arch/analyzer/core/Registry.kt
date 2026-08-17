@@ -12,6 +12,7 @@ import kotlin.io.path.exists
 data class RepoEntry(
     val repo: String,
     val path: String,
+    val jar: String? = null,
 )
 
 class Registry(private val archRoot: Path) {
@@ -26,7 +27,8 @@ class Registry(private val archRoot: Path) {
         root.fields().forEach { (id, node) ->
             val repo = node.get("repo")?.asText() ?: ""
             val path = node.get("path")?.asText() ?: ""
-            if (path.isNotEmpty()) out[id] = RepoEntry(repo, path)
+            val jar = node.get("jar")?.asText()?.takeIf { it.isNotEmpty() }
+            if (path.isNotEmpty()) out[id] = RepoEntry(repo, path, jar)
         }
         return out
     }

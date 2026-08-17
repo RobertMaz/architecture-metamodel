@@ -10,6 +10,7 @@ import java.nio.file.Path
 data class RepoInput(
     val containerId: String,
     val repoDir: Path,
+    val jar: Path? = null,
 )
 
 interface Lane {
