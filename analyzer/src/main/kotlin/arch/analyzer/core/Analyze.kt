@@ -57,7 +57,15 @@ object Analyze {
         }
 
         val meta = SourceMeta(repo = entry.repo, commit = gitCommit(repoDir) ?: "local", extractedAt = date)
-        val (doc, report) = Reconciler().reconcile(containerId, evidences, meta)
+        val (doc, baseReport) = Reconciler().reconcile(containerId, evidences, meta)
+
+        // Сервис декларирует свои имена — реестр алиасов пополняется сам.
+        val aliasEntries = buildMap {
+            doc.containerInfo.appName?.let { put(it, containerId) }
+            put(containerId.substringAfterLast('.'), containerId)
+        }
+        val aliasConflicts = Aliases(archRoot).upsert(aliasEntries)
+        val report = baseReport.copy(conflicts = (baseReport.conflicts + aliasConflicts).sorted())
 
         writeIfChanged(workspace.resolve("reconcile-report.json"), Json.write(report))
         val out = archRoot.resolve("tools/api-source").createDirectories()
