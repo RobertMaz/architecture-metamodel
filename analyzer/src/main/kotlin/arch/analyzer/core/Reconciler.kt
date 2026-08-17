@@ -167,6 +167,7 @@ class Reconciler(
             title = hints["appName"] ?: shortName,
             technology = "Java, Spring Boot",
             appName = hints["appName"],
+            description = hints["description"],
         )
 
         val api = if (operations.isEmpty()) null else ApiBlock(

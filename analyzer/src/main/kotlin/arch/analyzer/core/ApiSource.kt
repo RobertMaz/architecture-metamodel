@@ -25,6 +25,7 @@ data class ContainerInfo(
     val title: String,
     val technology: String,
     val appName: String? = null,
+    val description: String? = null,
 )
 
 data class ApiBlock(

@@ -124,6 +124,22 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `llm-осмысление заполняет пустой summary и description, не перетирая source`() {
+        val source = ev(
+            "source",
+            fact(FactType.ENDPOINT, "src/A.java#L10", 0.95, "method" to "GET", "path" to "/vets"),
+        )
+        val llm = ev(
+            "llm",
+            fact(FactType.ENDPOINT, "llm:enrich", 0.6, "method" to "GET", "path" to "/vets", "summary" to "Список ветеринаров"),
+            fact(FactType.CONTAINER_HINT, "llm:enrich", 0.6, "description" to "Справочник ветеринаров"),
+        )
+        val (doc, _) = reconciler.reconcile("petclinic.vets", listOf(source, llm), meta)
+        assertEquals("Список ветеринаров", doc.operations.single().summary)
+        assertEquals("Справочник ветеринаров", doc.containerInfo.description)
+    }
+
+    @Test
     fun `низкий confidence попадает в отчёт`() {
         val e = ev(
             "source",

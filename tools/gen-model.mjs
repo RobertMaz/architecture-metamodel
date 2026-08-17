@@ -296,6 +296,7 @@ export function generate(root = '.') {
     L.push(``)
     L.push(`    ${name} = ${info.kind} '${esc(info.title)}' {`)
     L.push(`      #inferred`)
+    if (info.description) L.push(`      description '${esc(info.description)}'`)
     L.push(`      technology '${esc(info.technology)}'`)
     if (d.source.repo?.startsWith('http')) L.push(`      link ${d.source.repo} 'repo'`)
     L.push(`      metadata {`)
