@@ -11,6 +11,8 @@ data class RepoInput(
     val containerId: String,
     val repoDir: Path,
     val jar: Path? = null,
+    val runtimeUrl: String? = null,
+    val traces: Path? = null,
 )
 
 interface Lane {

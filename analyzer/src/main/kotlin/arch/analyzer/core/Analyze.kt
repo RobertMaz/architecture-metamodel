@@ -54,7 +54,12 @@ object Analyze {
         val repoDir = Paths.get(entry.path)
         require(Files.isDirectory(repoDir)) { "нет директории репозитория: $repoDir" }
 
-        val input = RepoInput(containerId, repoDir, jar = entry.jar?.let { Paths.get(it) })
+        val input = RepoInput(
+            containerId, repoDir,
+            jar = entry.jar?.let { Paths.get(it) },
+            runtimeUrl = entry.runtimeUrl,
+            traces = entry.traces?.let { Paths.get(it) },
+        )
         val workspace = archRoot.resolve("workspace/$containerId").createDirectories()
 
         val evidences = mutableListOf<Evidence>()

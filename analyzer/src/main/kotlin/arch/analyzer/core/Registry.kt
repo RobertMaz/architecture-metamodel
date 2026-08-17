@@ -13,6 +13,8 @@ data class RepoEntry(
     val repo: String,
     val path: String,
     val jar: String? = null,
+    val runtimeUrl: String? = null,
+    val traces: String? = null,
 )
 
 class Registry(private val archRoot: Path) {
@@ -28,7 +30,9 @@ class Registry(private val archRoot: Path) {
             val repo = node.get("repo")?.asText() ?: ""
             val path = node.get("path")?.asText() ?: ""
             val jar = node.get("jar")?.asText()?.takeIf { it.isNotEmpty() }
-            if (path.isNotEmpty()) out[id] = RepoEntry(repo, path, jar)
+            val runtimeUrl = node.get("runtimeUrl")?.asText()?.takeIf { it.isNotEmpty() }
+            val traces = node.get("traces")?.asText()?.takeIf { it.isNotEmpty() }
+            if (path.isNotEmpty()) out[id] = RepoEntry(repo, path, jar, runtimeUrl, traces)
         }
         return out
     }

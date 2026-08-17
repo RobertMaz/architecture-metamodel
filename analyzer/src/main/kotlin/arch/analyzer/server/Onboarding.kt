@@ -28,6 +28,8 @@ data class NewContainer(
     val repo: String,
     val path: String,
     val jar: String? = null,
+    val runtimeUrl: String? = null,
+    val traces: String? = null,
 )
 
 class Onboarding(private val archRoot: Path) {
@@ -103,13 +105,21 @@ class Onboarding(private val archRoot: Path) {
 
         val file = archRoot.resolve("registry/repos.yml")
         val existing = if (file.exists()) yaml.readTree(file.toFile())?.get("repos") else null
-        data class Row(val repo: String, val path: String, val jar: String?)
+        data class Row(val repo: String, val path: String, val jar: String?, val runtimeUrl: String?, val traces: String?)
         val entries = sortedMapOf<String, Row>()
         existing?.fields()?.forEach { (id, n) ->
-            entries[id] = Row(n["repo"]?.asText() ?: "", n["path"]?.asText() ?: "", n["jar"]?.asText())
+            entries[id] = Row(
+                n["repo"]?.asText() ?: "", n["path"]?.asText() ?: "",
+                n["jar"]?.asText(), n["runtimeUrl"]?.asText(), n["traces"]?.asText(),
+            )
         }
         if (c.id in entries) return Result.Conflict("контейнер «${c.id}» уже есть")
-        entries[c.id] = Row(c.repo, c.path, c.jar?.takeIf { it.isNotBlank() })
+        entries[c.id] = Row(
+            c.repo, c.path,
+            c.jar?.takeIf { it.isNotBlank() },
+            c.runtimeUrl?.takeIf { it.isNotBlank() },
+            c.traces?.takeIf { it.isNotBlank() },
+        )
 
         val out = StringBuilder(reposHeader).append("repos:\n")
         for ((id, row) in entries) {
@@ -117,6 +127,8 @@ class Onboarding(private val archRoot: Path) {
             out.append("    repo: ${quote(row.repo)}\n")
             out.append("    path: ${quote(row.path)}\n")
             row.jar?.let { out.append("    jar: ${quote(it)}\n") }
+            row.runtimeUrl?.let { out.append("    runtimeUrl: ${quote(it)}\n") }
+            row.traces?.let { out.append("    traces: ${quote(it)}\n") }
         }
         file.writeText(out.toString())
         return Result.Created

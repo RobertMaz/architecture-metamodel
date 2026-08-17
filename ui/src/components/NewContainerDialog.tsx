@@ -26,11 +26,21 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
   const [repo, setRepo] = useState("")
   const [path, setPath] = useState("")
   const [jar, setJar] = useState("")
+  const [runtimeUrl, setRuntimeUrl] = useState("")
+  const [traces, setTraces] = useState("")
 
   const id = system && name ? `${system}.${name}` : ""
 
   const create = useMutation({
-    mutationFn: () => api.addContainer({ id, repo, path, jar: jar || undefined }),
+    mutationFn: () =>
+      api.addContainer({
+        id,
+        repo,
+        path,
+        jar: jar || undefined,
+        runtimeUrl: runtimeUrl || undefined,
+        traces: traces || undefined,
+      }),
     onSuccess: () => {
       toast.success(`Контейнер «${id}» добавлен`)
       qc.invalidateQueries({ queryKey: ["containers"] })
@@ -88,6 +98,14 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
           <div className="grid gap-1.5">
             <Label htmlFor="c-jar">JAR из Nexus/сборки (необязательно — полка bytecode)</Label>
             <Input id="c-jar" value={jar} onChange={(e) => setJar(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-rt">URL запущенной апки (необязательно — полка runtime, Actuator)</Label>
+            <Input id="c-rt" placeholder="http://localhost:8080" value={runtimeUrl} onChange={(e) => setRuntimeUrl(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-tr">Файл OTel-спанов (необязательно — полка runtime)</Label>
+            <Input id="c-tr" value={traces} onChange={(e) => setTraces(e.target.value)} />
           </div>
         </div>
         <DialogFooter>
