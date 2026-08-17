@@ -1,0 +1,44 @@
+{
+  "api" : {
+    "basePath" : "/vets",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "vets-service API"
+  },
+  "calls" : [ ],
+  "container" : "petclinic.vets",
+  "containerInfo" : {
+    "appName" : "vets-service",
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "vets-service"
+  },
+  "operations" : [
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "path" : "/vets",
+      "response" : "Vet",
+      "source" : "src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44"
+    }
+  ],
+  "publishes" : [ ],
+  "source" : {
+    "commit" : "9a76b4e",
+    "extractedAt" : "2026-08-17",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
+  },
+  "stores" : [
+    {
+      "access" : "readwrite",
+      "address" : "",
+      "confidence" : 0.9,
+      "entities" : "Vet",
+      "kind" : "jdbc",
+      "source" : "src/main/java/org/springframework/samples/petclinic/vets/model/VetRepository.java#L30"
+    }
+  ],
+  "subscribes" : [ ]
+}

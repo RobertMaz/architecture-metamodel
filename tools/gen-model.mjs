@@ -69,7 +69,9 @@ export function generate(root = '.') {
   const channels = new Map() // topic -> {id, system, topic, messages:Map(schema->{producer,fields,source,confidence}), delivers:[]}
 
   const claimStore = (doc, st) => {
-    const key = `${st.kind}|${st.address}`
+    // Пустой адрес = «свой дефолтный datasource»: идентичность по контейнеру,
+    // иначе неизвестные адреса разных сервисов склеятся в ложный shared database.
+    const key = st.address ? `${st.kind}|${st.address}` : `${st.kind}|${doc.container}`
     if (!stores.has(key)) {
       stores.set(key, {
         id: `db_${slug(storeName(st.address, doc.container))}`,

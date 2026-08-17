@@ -1,0 +1,62 @@
+{
+  "api" : {
+    "basePath" : "/",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "visits-service API"
+  },
+  "calls" : [ ],
+  "container" : "petclinic.visits",
+  "containerInfo" : {
+    "appName" : "visits-service",
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "visits-service"
+  },
+  "operations" : [
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "params" : "petId:path:int",
+      "path" : "/owners/*/pets/{petId}/visits",
+      "response" : "Visit",
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "POST",
+      "params" : "petId:path:int",
+      "path" : "/owners/*/pets/{petId}/visits",
+      "request" : "Visit",
+      "response" : "Visit",
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "params" : "petId:query:Integer",
+      "path" : "/pets/visits",
+      "response" : "Visits",
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72"
+    }
+  ],
+  "publishes" : [ ],
+  "source" : {
+    "commit" : "9a76b4e",
+    "extractedAt" : "2026-08-17",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
+  },
+  "stores" : [
+    {
+      "access" : "readwrite",
+      "address" : "",
+      "confidence" : 0.9,
+      "entities" : "Visit",
+      "kind" : "jdbc",
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/model/VisitRepository.java#L33"
+    }
+  ],
+  "subscribes" : [ ]
+}

@@ -56,8 +56,9 @@ class ReconcilerTest {
                 "kind" to "jdbc", "address" to "jdbc:hsqldb:mem:petclinic", "technology" to "HSQLDB",
             ),
         )
-        val (doc, _) = reconciler.reconcile("petclinic.customers", listOf(source, config), meta)
+        val (doc, report) = reconciler.reconcile("petclinic.customers", listOf(source, config), meta)
 
+        assertEquals(emptyList(), report.conflicts, "разные entities — объединение, а не конфликт")
         val store = doc.stores.single()
         assertEquals("jdbc:hsqldb:mem:petclinic", store.address)
         assertEquals("HSQLDB", store.technology)

@@ -100,6 +100,8 @@ class Reconciler(
             .sortedBy { it.key }
             .map { (key, group) ->
                 val sorted = group.sortedWith(compareBy({ rank(it.lane) }, { it.fact.source }))
+                    // entities объединяются ниже — их расхождение не конфликт
+                    .map { it.copy(fact = it.fact.copy(attrs = java.util.TreeMap(it.fact.attrs.filterKeys { k -> k != "entities" }))) }
                 val m = mergeGroup("STORE_ACCESS $key", sorted)
                 val entities = group.mapNotNull { it.fact.attrs["entities"] }
                     .filter { it.isNotEmpty() }

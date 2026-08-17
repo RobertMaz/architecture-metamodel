@@ -1,0 +1,42 @@
+// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
+// Источник: tools/api-source/petclinic.vets.json
+// Репозиторий: https://github.com/spring-petclinic/spring-petclinic-microservices@9a76b4e
+// Извлечено: 2026-08-17 (arch-analyzer source+config v1)
+
+model {
+  extend petclinic {
+
+    vets = service 'vets-service' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'vets-service'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        extracted-at '2026-08-17'
+      }
+
+      api = api 'vets-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/vets'
+        }
+
+        get_vets = operation 'GET /vets' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/vets'
+            responses 'Vet'
+            source 'src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44'
+            confidence '0.95'
+          }
+        }
+      }
+    }
+  }
+
+  petclinic.vets -[read]-> petclinic.db_vets
+  petclinic.vets -[write]-> petclinic.db_vets
+}

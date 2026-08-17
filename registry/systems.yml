@@ -1,1 +1,7 @@
-systems: []
+# Реестр систем (L0). Источник для model/gen/systems/*.gen.c4.
+# Владельцы — только в CODEOWNERS (правило R1/R1b в check.mjs).
+systems:
+  - id: petclinic
+    kind: system
+    title: PetClinic
+    description: Демо-ландшафт Spring PetClinic (пилот анализатора)

@@ -1,0 +1,62 @@
+{
+  "api" : {
+    "basePath" : "/",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "api-gateway API"
+  },
+  "calls" : [
+    {
+      "confidence" : 0.8,
+      "method" : "GET",
+      "path" : "/owners/{ownerId}",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java#L36",
+      "target" : {
+        "host" : "customers-service",
+        "urlTemplate" : "http://customers-service/owners/{ownerId}"
+      }
+    },
+    {
+      "confidence" : 0.7,
+      "method" : "GET",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/application/VisitsServiceClient.java#L43",
+      "target" : {
+        "urlTemplate" : "{_}pets/visits"
+      }
+    }
+  ],
+  "container" : "petclinic.gateway",
+  "containerInfo" : {
+    "appName" : "api-gateway",
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "api-gateway"
+  },
+  "operations" : [
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "params" : "ownerId:path:int",
+      "path" : "/api/gateway/owners/{ownerId}",
+      "response" : "OwnerDetails",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "POST",
+      "path" : "/fallback",
+      "response" : "String",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11"
+    }
+  ],
+  "publishes" : [ ],
+  "source" : {
+    "commit" : "9a76b4e",
+    "extractedAt" : "2026-08-17",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
+  },
+  "stores" : [ ],
+  "subscribes" : [ ]
+}

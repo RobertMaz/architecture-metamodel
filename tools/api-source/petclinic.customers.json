@@ -1,0 +1,99 @@
+{
+  "api" : {
+    "basePath" : "/",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "customers-service API"
+  },
+  "calls" : [ ],
+  "container" : "petclinic.customers",
+  "containerInfo" : {
+    "appName" : "customers-service",
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "customers-service"
+  },
+  "operations" : [
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "path" : "/owners",
+      "response" : "Owner",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "POST",
+      "path" : "/owners",
+      "request" : "OwnerRequest",
+      "response" : "Owner",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "params" : "petId:path:int",
+      "path" : "/owners/*/pets/{petId}",
+      "response" : "PetDetails",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "PUT",
+      "path" : "/owners/*/pets/{petId}",
+      "request" : "PetRequest",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "params" : "ownerId:path:int",
+      "path" : "/owners/{ownerId}",
+      "response" : "Owner",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "PUT",
+      "params" : "ownerId:path:int",
+      "path" : "/owners/{ownerId}",
+      "request" : "OwnerRequest",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "POST",
+      "params" : "ownerId:path:int",
+      "path" : "/owners/{ownerId}/pets",
+      "request" : "PetRequest",
+      "response" : "Pet",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "path" : "/petTypes",
+      "response" : "PetType",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49"
+    }
+  ],
+  "publishes" : [ ],
+  "source" : {
+    "commit" : "9a76b4e",
+    "extractedAt" : "2026-08-17",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
+  },
+  "stores" : [
+    {
+      "access" : "readwrite",
+      "address" : "",
+      "confidence" : 0.9,
+      "entities" : "Owner, Pet",
+      "kind" : "jdbc",
+      "source" : "src/main/java/org/springframework/samples/petclinic/customers/model/OwnerRepository.java#L30; src/main/java/org/springframework/samples/petclinic/customers/model/PetRepository.java#L35"
+    }
+  ],
+  "subscribes" : [ ]
+}

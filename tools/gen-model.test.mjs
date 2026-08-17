@@ -127,6 +127,26 @@ test('повторный прогон не переписывает файлы',
   assert.equal(statSync(file).mtimeMs, before)
 })
 
+test('пустой адрес БД — свой стор на контейнер, а не общий узел', () => {
+  const root = makeRoot()
+  const mk = (container) => ({
+    ...doc,
+    container,
+    api: null,
+    operations: [],
+    publishes: [],
+    subscribes: [],
+    calls: [],
+    stores: [{ kind: 'jdbc', address: '', access: 'readwrite', source: 's', confidence: 0.9 }],
+  })
+  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(mk('petclinic.customers')))
+  writeFileSync(join(root, 'tools/api-source/petclinic.vets.json'), JSON.stringify(mk('petclinic.vets')))
+  generate(root)
+  const shared = readFileSync(join(root, 'model/gen/_shared.gen.c4'), 'utf8')
+  assert.match(shared, /db_customers = store 'customers'/)
+  assert.match(shared, /db_vets = store 'vets'/)
+})
+
 test('легаси-док без containerInfo игнорируется', () => {
   const root = makeRoot()
   writeFileSync(

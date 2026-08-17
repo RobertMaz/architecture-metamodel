@@ -1,1 +1,15 @@
-repos: {}
+# Инвентарь: container-id -> репозиторий. Единственное место, где человек
+# привязывает репо к id контейнера (и системе — через префикс id).
+repos:
+  petclinic.customers:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-customers-service
+  petclinic.vets:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-vets-service
+  petclinic.visits:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-visits-service
+  petclinic.gateway:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-api-gateway

@@ -1,0 +1,125 @@
+// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
+// Источник: tools/api-source/petclinic.customers.json
+// Репозиторий: https://github.com/spring-petclinic/spring-petclinic-microservices@9a76b4e
+// Извлечено: 2026-08-17 (arch-analyzer source+config v1)
+
+model {
+  extend petclinic {
+
+    customers = service 'customers-service' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'customers-service'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        extracted-at '2026-08-17'
+      }
+
+      api = api 'customers-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/'
+        }
+
+        get_owners = operation 'GET /owners' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/owners'
+            responses 'Owner'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75'
+            confidence '0.95'
+          }
+        }
+
+        post_owners = operation 'POST /owners' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/owners'
+            request 'OwnerRequest'
+            responses 'Owner'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57'
+            confidence '0.95'
+          }
+        }
+
+        get_owners_pets_p = operation 'GET /owners/*/pets/{petId}' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/owners/*/pets/{petId}'
+            params 'petId:path:int'
+            responses 'PetDetails'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88'
+            confidence '0.95'
+          }
+        }
+
+        put_owners_pets_p = operation 'PUT /owners/*/pets/{petId}' {
+          #inferred
+          metadata {
+            method 'PUT'
+            path '/owners/*/pets/{petId}'
+            request 'PetRequest'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68'
+            confidence '0.95'
+          }
+        }
+
+        get_owners_p = operation 'GET /owners/{ownerId}' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/owners/{ownerId}'
+            params 'ownerId:path:int'
+            responses 'Owner'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67'
+            confidence '0.95'
+          }
+        }
+
+        put_owners_p = operation 'PUT /owners/{ownerId}' {
+          #inferred
+          metadata {
+            method 'PUT'
+            path '/owners/{ownerId}'
+            params 'ownerId:path:int'
+            request 'OwnerRequest'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83'
+            confidence '0.95'
+          }
+        }
+
+        post_owners_p_pets = operation 'POST /owners/{ownerId}/pets' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/owners/{ownerId}/pets'
+            params 'ownerId:path:int'
+            request 'PetRequest'
+            responses 'Pet'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54'
+            confidence '0.95'
+          }
+        }
+
+        get_petTypes = operation 'GET /petTypes' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/petTypes'
+            responses 'PetType'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49'
+            confidence '0.95'
+          }
+        }
+      }
+    }
+  }
+
+  petclinic.customers -[read]-> petclinic.db_customers
+  petclinic.customers -[write]-> petclinic.db_customers
+}
