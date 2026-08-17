@@ -1,0 +1,5 @@
+# Ручные решения по нераспознанным целям (stub -> контейнер | external).
+# По духу append-only: решённое не перерешивается через API, только руками.
+resolutions:
+  unknown.pets_visits:
+    container: petclinic.visits

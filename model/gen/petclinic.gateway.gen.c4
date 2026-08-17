@@ -50,5 +50,5 @@ model {
   }
 
   petclinic.gateway -[call]-> petclinic.customers.api.get_owners_p 'GET /owners/{ownerId}'
-  petclinic.gateway -[call]-> unknown.pets_visits.api 'GET'
+  petclinic.gateway -[call]-> petclinic.visits.api 'GET'
 }
