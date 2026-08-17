@@ -12,6 +12,7 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -103,6 +104,7 @@ fun buildApp(archRoot: Path): Application.() -> Unit = {
     val inventory = Inventory(archRoot)
     val runs = Runs(archRoot)
     val modelDiff = ModelDiff(archRoot)
+    val onboarding = Onboarding(archRoot)
 
     install(ContentNegotiation) { jackson() }
     install(CORS) {
@@ -140,5 +142,23 @@ fun buildApp(archRoot: Path): Application.() -> Unit = {
         }
 
         get("/api/diff") { call.respond(modelDiff.diff()) }
+
+        post("/api/systems") {
+            val body = call.receive<NewSystem>()
+            when (val r = onboarding.addSystem(body)) {
+                is Onboarding.Result.Created -> call.respond(HttpStatusCode.Created, mapOf("created" to body.id))
+                is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
+                is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+            }
+        }
+
+        post("/api/containers") {
+            val body = call.receive<NewContainer>()
+            when (val r = onboarding.addContainer(body)) {
+                is Onboarding.Result.Created -> call.respond(HttpStatusCode.Created, mapOf("created" to body.id))
+                is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
+                is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+            }
+        }
     }
 }
