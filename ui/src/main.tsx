@@ -7,6 +7,7 @@ import "./index.css"
 import { Layout } from "./Layout"
 import { Dashboard } from "./pages/Dashboard"
 import { Container } from "./pages/Container"
+import { Triage } from "./pages/Triage"
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -18,6 +19,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/", element: <Dashboard /> },
       { path: "/containers/:id", element: <Container /> },
+      { path: "/triage", element: <Triage /> },
     ],
   },
 ])

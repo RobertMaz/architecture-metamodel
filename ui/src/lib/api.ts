@@ -69,6 +69,15 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return rs.json() as Promise<T>
 }
 
+export type UnresolvedEntry = {
+  stubId: string | null
+  note?: string
+  signature?: { feignNames: string[]; hosts: string[]; urlTemplates: string[] }
+  observedEndpoints: { method: string; path: string }[]
+  callers: { container: string; source: string }[]
+  candidates: { container: string; score: number; matched: string }[]
+}
+
 export const api = {
   systems: () => http<SystemInfo[]>("/api/systems"),
   containers: () => http<ContainerInfo[]>("/api/containers"),
@@ -79,4 +88,7 @@ export const api = {
     http<{ created: string }>("/api/systems", { method: "POST", body: JSON.stringify(body) }),
   addContainer: (body: { id: string; repo: string; path: string }) =>
     http<{ created: string }>("/api/containers", { method: "POST", body: JSON.stringify(body) }),
+  unresolved: () => http<{ unresolved: UnresolvedEntry[] }>("/api/unresolved"),
+  resolve: (stubId: string, body: { container?: string; external?: { id: string; title?: string; contract?: string } }) =>
+    http<{ resolved: string }>(`/api/unresolved/${stubId}/resolve`, { method: "POST", body: JSON.stringify(body) }),
 }
