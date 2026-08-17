@@ -101,12 +101,16 @@ class Inventory(private val archRoot: Path) {
         if (path.exists()) json.readTree(path.readText()) else null
 }
 
-fun buildApp(archRoot: Path): Application.() -> Unit = {
+fun buildApp(
+    archRoot: Path,
+    llm: arch.analyzer.llm.LlmClient? = arch.analyzer.core.Analyze.llmClient(archRoot)?.first,
+): Application.() -> Unit = {
     val inventory = Inventory(archRoot)
     val runs = Runs(archRoot)
     val modelDiff = ModelDiff(archRoot)
     val onboarding = Onboarding(archRoot)
     val triage = Triage(archRoot)
+    val hypotheses = Hypotheses(archRoot, llm)
 
     install(ContentNegotiation) { jackson() }
     install(CORS) {
@@ -165,6 +169,17 @@ fun buildApp(archRoot: Path): Application.() -> Unit = {
 
         get("/api/unresolved") {
             call.respondText(triage.unresolvedJson(), io.ktor.http.ContentType.Application.Json)
+        }
+
+        get("/api/unresolved/{stubId}/hypotheses") {
+            val stubId = call.parameters["stubId"]!!
+            if (!hypotheses.configured()) {
+                call.respond(mapOf("configured" to false, "hypotheses" to emptyList<Hypothesis>()))
+            } else {
+                val result = hypotheses.forStub(stubId)
+                if (result == null) call.respond(HttpStatusCode.NotFound, mapOf("error" to "stub «$stubId» не найден"))
+                else call.respond(mapOf("configured" to true, "hypotheses" to result))
+            }
         }
 
         post("/api/unresolved/{stubId}/resolve") {

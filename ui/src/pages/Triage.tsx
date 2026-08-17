@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router"
-import { Combine, Globe } from "lucide-react"
+import { Combine, Globe, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import { api, type UnresolvedEntry } from "@/lib/api"
@@ -95,8 +95,15 @@ function StubCard({ entry }: { entry: UnresolvedEntry }) {
   const resolve = useResolve()
   const containers = useQuery({ queryKey: ["containers"], queryFn: api.containers })
   const [manual, setManual] = useState("")
+  const [askHypotheses, setAskHypotheses] = useState(false)
 
   const stubId = entry.stubId
+
+  const hypotheses = useQuery({
+    queryKey: ["hypotheses", stubId],
+    queryFn: () => api.hypotheses(stubId!),
+    enabled: askHypotheses && !!stubId,
+  })
 
   return (
     <Card>
@@ -169,6 +176,31 @@ function StubCard({ entry }: { entry: UnresolvedEntry }) {
               </Button>
             </div>
             <ExternalDialog stubId={stubId} />
+            <Button size="sm" variant="ghost" onClick={() => setAskHypotheses(true)} disabled={hypotheses.isFetching}>
+              <Sparkles /> Гипотезы LLM
+            </Button>
+          </div>
+        )}
+
+        {askHypotheses && hypotheses.data && (
+          <div className="space-y-1 border-t pt-3">
+            {!hypotheses.data.configured && (
+              <span className="text-muted-foreground">LLM не настроен — заполни registry/llm.yml.</span>
+            )}
+            {hypotheses.data.configured && !hypotheses.data.hypotheses.length && (
+              <span className="text-muted-foreground">Гипотез нет.</span>
+            )}
+            {hypotheses.data.hypotheses.map((h) => (
+              <div key={h.name} className="flex items-center gap-2">
+                <Badge variant="secondary">{Math.round(h.confidence * 100)}%</Badge>
+                <span>{h.name}</span>
+                {h.container && (
+                  <Button size="sm" variant="link" onClick={() => setManual(h.container!)}>
+                    {h.container}
+                  </Button>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
