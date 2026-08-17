@@ -23,6 +23,7 @@ object Json {
         .enable(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY)
         .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
         .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        .serializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
         .build()
 
     fun write(value: Any): String = mapper.writer(printer).writeValueAsString(value) + "\n"
