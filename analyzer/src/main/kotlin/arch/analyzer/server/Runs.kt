@@ -60,6 +60,9 @@ class Runs(private val archRoot: Path) {
         dir.resolve("status.json").writeText(Json.write(s))
     }
 
+    /** Регенерация модели после ручного решения в триаже. */
+    fun regenerate() = generateModel()
+
     /** npm run gen в корне архрепо; вне полного репо (тесты) — тихий скип. */
     private fun generateModel() {
         if (!archRoot.resolve("package.json").exists()) return

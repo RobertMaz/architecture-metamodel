@@ -14,6 +14,7 @@ import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
@@ -105,6 +106,7 @@ fun buildApp(archRoot: Path): Application.() -> Unit = {
     val runs = Runs(archRoot)
     val modelDiff = ModelDiff(archRoot)
     val onboarding = Onboarding(archRoot)
+    val triage = Triage(archRoot)
 
     install(ContentNegotiation) { jackson() }
     install(CORS) {
@@ -158,6 +160,24 @@ fun buildApp(archRoot: Path): Application.() -> Unit = {
                 is Onboarding.Result.Created -> call.respond(HttpStatusCode.Created, mapOf("created" to body.id))
                 is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
                 is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+            }
+        }
+
+        get("/api/unresolved") {
+            call.respondText(triage.unresolvedJson(), io.ktor.http.ContentType.Application.Json)
+        }
+
+        post("/api/unresolved/{stubId}/resolve") {
+            val stubId = call.parameters["stubId"]!!
+            val body = call.receive<ResolveRequest>()
+            when (val r = triage.resolve(stubId, body)) {
+                is Triage.Result.Ok -> {
+                    runs.regenerate()
+                    call.respond(HttpStatusCode.OK, mapOf("resolved" to stubId))
+                }
+                is Triage.Result.NotFound -> call.respond(HttpStatusCode.NotFound, mapOf("error" to r.message))
+                is Triage.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
+                is Triage.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
             }
         }
     }
