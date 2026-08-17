@@ -3,9 +3,13 @@ package arch.analyzer.lanes
 import arch.analyzer.core.Fact
 import arch.analyzer.core.Lane
 import arch.analyzer.core.RepoInput
+import arch.analyzer.lanes.source.FeignRecognizer
+import arch.analyzer.lanes.source.HttpClientRecognizer
 import arch.analyzer.lanes.source.JavaProject
+import arch.analyzer.lanes.source.KafkaRecognizer
 import arch.analyzer.lanes.source.RouteRecognizer
 import arch.analyzer.lanes.source.SourceRecognizer
+import arch.analyzer.lanes.source.SpringDataRecognizer
 
 /**
  * Полка source: статический анализ Java-сорцов. Состав распознавателей растёт;
@@ -35,6 +39,10 @@ class SourceLane(
     companion object {
         fun defaultRecognizers(): List<SourceRecognizer> = listOf(
             RouteRecognizer(),
+            FeignRecognizer(),
+            HttpClientRecognizer(),
+            KafkaRecognizer(),
+            SpringDataRecognizer(),
         )
     }
 }
