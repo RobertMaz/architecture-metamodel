@@ -1,0 +1,72 @@
+{
+  "api" : {
+    "basePath" : "/chatclient",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "genai-service API"
+  },
+  "calls" : [
+    {
+      "confidence" : 0.7,
+      "method" : "GET",
+      "path" : "/owners",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L43",
+      "target" : {
+        "urlTemplate" : "{_}/owners"
+      }
+    },
+    {
+      "confidence" : 0.7,
+      "method" : "GET",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/VectorStoreController.java#L68",
+      "target" : {
+        "urlTemplate" : "{_}vets"
+      }
+    },
+    {
+      "confidence" : 0.7,
+      "method" : "POST",
+      "path" : "/owners",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L80",
+      "target" : {
+        "urlTemplate" : "{_}/owners"
+      }
+    },
+    {
+      "confidence" : 0.7,
+      "method" : "POST",
+      "path" : "/owners/{_}/pets",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L71",
+      "target" : {
+        "urlTemplate" : "{_}/owners/{_}/pets"
+      }
+    }
+  ],
+  "container" : "petclinic.genai",
+  "containerInfo" : {
+    "appName" : "genai-service",
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "genai-service"
+  },
+  "operations" : [
+    {
+      "confidence" : 0.95,
+      "method" : "POST",
+      "path" : "/chatclient",
+      "request" : "String",
+      "response" : "String",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57"
+    }
+  ],
+  "publishes" : [ ],
+  "source" : {
+    "commit" : "9a76b4e",
+    "extractedAt" : "2026-08-18",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
+  },
+  "stores" : [ ],
+  "subscribes" : [ ]
+}

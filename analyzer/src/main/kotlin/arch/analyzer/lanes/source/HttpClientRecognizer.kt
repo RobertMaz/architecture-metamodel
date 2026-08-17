@@ -128,6 +128,9 @@ class HttpClientRecognizer : SourceRecognizer {
             }
         } else if (base.startsWith("/")) {
             attrs += "path" to base
+        } else if (base.startsWith("{_}/")) {
+            // База из конфига + литеральный путь: хвост после плейсхолдера — это path.
+            attrs += "path" to base.removePrefix("{_}")
         }
         return fact(FactType.OUTGOING_CALL, project.sourceRef(file, node), confidence, *attrs.toTypedArray())
     }

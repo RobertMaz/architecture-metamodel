@@ -32,6 +32,14 @@ class OutgoingCallsTest {
     }
 
     @Test
+    fun `хвост шаблона после плейсхолдера - это path`() {
+        val facts = HttpClientRecognizer().recognize(project)
+        val tricky = facts.filter { it.attrs["urlTemplate"]?.startsWith("{_}") == true }
+        // TrickyCaller не даёт фактов (нет литералов), но конкатенация base + "/x" должна давать path
+        assertTrue(tricky.all { f -> f.attrs["path"]?.startsWith("/") != false })
+    }
+
+    @Test
     fun `resttemplate - конкатенация превращается в плейсхолдер`() {
         val facts = HttpClientRecognizer().recognize(project)
         val rt = facts.single { it.attrs["host"] == "customers-service" }

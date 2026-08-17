@@ -1,10 +1,17 @@
 # Таблица разрешения адресов: host / feign-name / spring.application.name -> container-id.
 # Пополняется анализатором при прогоне; ручные записи не перетираются.
 aliases:
+  admin: petclinic.admin
+  admin-server: petclinic.admin
   api-gateway: petclinic.gateway
+  config: petclinic.config
   customers: petclinic.customers
   customers-service: petclinic.customers
+  discovery: petclinic.discovery
+  discovery-server: petclinic.discovery
   gateway: petclinic.gateway
+  genai: petclinic.genai
+  genai-service: petclinic.genai
   vets: petclinic.vets
   vets-service: petclinic.vets
   visits: petclinic.visits

@@ -1,0 +1,19 @@
+{
+  "calls" : [ ],
+  "container" : "petclinic.config",
+  "containerInfo" : {
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "config"
+  },
+  "operations" : [ ],
+  "publishes" : [ ],
+  "source" : {
+    "commit" : "9a76b4e",
+    "extractedAt" : "2026-08-18",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
+  },
+  "stores" : [ ],
+  "subscribes" : [ ]
+}

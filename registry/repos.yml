@@ -1,9 +1,24 @@
 # Инвентарь: container-id -> репозиторий. Единственное место, где человек
 # привязывает репо к id контейнера (и системе — через префикс id).
 repos:
+  petclinic.admin:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-admin-server
+  petclinic.config:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-config-server
   petclinic.customers:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-customers-service
+  petclinic.discovery:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-discovery-server
+  petclinic.gateway:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-api-gateway
+  petclinic.genai:
+    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-genai-service
   petclinic.vets:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-vets-service
@@ -12,6 +27,3 @@ repos:
   petclinic.visits:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-visits-service
-  petclinic.gateway:
-    repo: https://github.com/spring-petclinic/spring-petclinic-microservices
-    path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-api-gateway

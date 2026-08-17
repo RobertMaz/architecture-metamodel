@@ -1,7 +1,7 @@
 // СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
 // Источник: tools/api-source/petclinic.visits.json
 // Репозиторий: https://github.com/spring-petclinic/spring-petclinic-microservices@9a76b4e
-// Извлечено: 2026-08-17 (arch-analyzer source+config v1)
+// Извлечено: 2026-08-18 (arch-analyzer source+config v1)
 
 model {
   extend petclinic {
@@ -13,7 +13,7 @@ model {
       metadata {
         app-name 'visits-service'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
-        extracted-at '2026-08-17'
+        extracted-at '2026-08-18'
       }
 
       api = api 'visits-service API' {

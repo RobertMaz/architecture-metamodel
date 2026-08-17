@@ -69,14 +69,27 @@ class Inventory(private val archRoot: Path) {
         }.sortedBy { it.id }
     }
 
+    /** Открытые нераспознанные цели по вызывающим — из журнала ПОСЛЕ разрешения. */
+    private fun unresolvedByCaller(): Map<String, Int> {
+        val node = readJson(archRoot.resolve("registry/unresolved.json"))?.get("unresolved") ?: return emptyMap()
+        val counts = mutableMapOf<String, Int>()
+        for (entry in node) {
+            for (caller in entry.path("callers")) {
+                val id = caller.path("container").asText()
+                counts[id] = (counts[id] ?: 0) + 1
+            }
+        }
+        return counts
+    }
+
     fun containers(): List<ContainerDto> {
         val file = archRoot.resolve("registry/repos.yml")
         if (!file.exists()) return emptyList()
         val repos = yaml.readTree(file.toFile())?.get("repos") ?: return emptyList()
+        val unresolvedCounts = unresolvedByCaller()
         val out = mutableListOf<ContainerDto>()
         repos.fields().forEach { (id, node) ->
             val doc = readJson(archRoot.resolve("tools/api-source/$id.json"))
-            val report = readJson(archRoot.resolve("workspace/$id/reconcile-report.json"))
             val status = readJson(archRoot.resolve("workspace/$id/status.json"))
             out += ContainerDto(
                 id = id,
@@ -91,7 +104,7 @@ class Inventory(private val archRoot: Path) {
                 stores = doc?.get("stores")?.size() ?: 0,
                 subscribes = doc?.get("subscribes")?.size() ?: 0,
                 publishes = doc?.get("publishes")?.size() ?: 0,
-                unresolvedCalls = report?.get("unresolvedCalls")?.asInt() ?: 0,
+                unresolvedCalls = unresolvedCounts[id] ?: 0,
             )
         }
         return out.sortedBy { it.id }

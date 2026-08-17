@@ -1,0 +1,45 @@
+// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
+// Источник: tools/api-source/petclinic.genai.json
+// Репозиторий: https://github.com/spring-petclinic/spring-petclinic-microservices@9a76b4e
+// Извлечено: 2026-08-18 (arch-analyzer source+config v1)
+
+model {
+  extend petclinic {
+
+    genai = service 'genai-service' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'genai-service'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        extracted-at '2026-08-18'
+      }
+
+      api = api 'genai-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/chatclient'
+        }
+
+        post_chatclient = operation 'POST /chatclient' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/chatclient'
+            request 'String'
+            responses 'String'
+            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57'
+            confidence '0.95'
+          }
+        }
+      }
+    }
+  }
+
+  petclinic.genai -[call]-> petclinic.customers.api.get_owners 'GET /owners'
+  petclinic.genai -[call]-> petclinic.customers.api.post_owners 'POST /owners'
+  petclinic.genai -[call]-> petclinic.customers.api.post_owners_p_pets 'POST /owners/{_}/pets'
+  petclinic.genai -[call]-> petclinic.vets.api 'GET'
+}

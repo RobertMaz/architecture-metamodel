@@ -3,3 +3,5 @@
 resolutions:
   unknown.pets_visits:
     container: petclinic.visits
+  unknown.vets:
+    container: petclinic.vets
