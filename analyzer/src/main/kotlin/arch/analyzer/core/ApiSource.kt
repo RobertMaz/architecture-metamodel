@@ -99,4 +99,5 @@ data class ReconcileReport(
     val conflicts: List<String> = emptyList(),
     val lowConfidence: List<String> = emptyList(),
     val unresolvedCalls: Int = 0,
+    val llmReview: List<String> = emptyList(),
 )

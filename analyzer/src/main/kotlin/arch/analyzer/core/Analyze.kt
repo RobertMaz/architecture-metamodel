@@ -25,14 +25,28 @@ object Analyze {
         val report: ReconcileReport,
     )
 
-    fun defaultLanes(archRoot: Path? = null): List<Lane> = listOf(
-        SourceLane(),
-        ConfigLane(),
-        BytecodeLane(),
-        JqassistantLane(
-            adapter = (archRoot ?: Paths.get(".")).resolve("analyzer/jqassistant/extract.sh"),
-        ),
-    )
+    fun llmClient(archRoot: Path): Pair<arch.analyzer.llm.LlmClient, arch.analyzer.llm.LlmConfig>? {
+        val cfg = arch.analyzer.llm.LlmConfig.load(archRoot) ?: return null
+        val cached = arch.analyzer.llm.CachedLlm(
+            arch.analyzer.llm.OpenAiClient(cfg),
+            archRoot.resolve("workspace/_llm-cache"),
+            cfg.model,
+        )
+        return cached to cfg
+    }
+
+    fun defaultLanes(archRoot: Path? = null): List<Lane> {
+        val root = archRoot ?: Paths.get(".")
+        val llm = archRoot?.let { llmClient(it) }
+        return listOf(
+            SourceLane(),
+            ConfigLane(),
+            BytecodeLane(),
+            JqassistantLane(adapter = root.resolve("analyzer/jqassistant/extract.sh")),
+            // LLM — последней: точки внимания вычисляются по свежим evidence других полок.
+            arch.analyzer.llm.LlmLane(root, llm?.first, enrich = llm?.second?.enrich ?: false),
+        )
+    }
 
     fun run(archRoot: Path, containerId: String, date: String, lanes: List<Lane>? = null): Result {
         @Suppress("NAME_SHADOWING") val lanes = lanes ?: defaultLanes(archRoot)
@@ -75,7 +89,22 @@ object Analyze {
             put(containerId.substringAfterLast('.'), containerId)
         }
         val aliasConflicts = Aliases(archRoot).upsert(aliasEntries)
-        val report = baseReport.copy(conflicts = (baseReport.conflicts + aliasConflicts).sorted())
+
+        // LLM-ревью: подозрения на пропуски — только в отчёт, не в факты.
+        val llmReview = llmClient(archRoot)?.let { (client, _) ->
+            val files = Files.walk(repoDir.resolve("src")).use { s ->
+                s.filter { Files.isRegularFile(it) }
+                    .map { repoDir.relativize(it).toString().replace('\\', '/') }
+                    .sorted().toList()
+            }
+            runCatching { arch.analyzer.llm.LlmReviewer(client).review(doc, files) }
+                .getOrElse { listOf("LLM-ревью упало: ${it.message}") }
+        } ?: emptyList()
+
+        val report = baseReport.copy(
+            conflicts = (baseReport.conflicts + aliasConflicts).sorted(),
+            llmReview = llmReview,
+        )
 
         writeIfChanged(workspace.resolve("reconcile-report.json"), Json.write(report))
         val out = archRoot.resolve("tools/api-source").createDirectories()
