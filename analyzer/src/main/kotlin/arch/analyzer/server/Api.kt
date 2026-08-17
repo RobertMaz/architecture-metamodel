@@ -11,8 +11,10 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.plugins.cors.routing.CORS
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.response.respond
 import io.ktor.server.routing.get
+import io.ktor.server.routing.post
 import io.ktor.server.routing.routing
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -99,6 +101,8 @@ class Inventory(private val archRoot: Path) {
 
 fun buildApp(archRoot: Path): Application.() -> Unit = {
     val inventory = Inventory(archRoot)
+    val runs = Runs(archRoot)
+    val modelDiff = ModelDiff(archRoot)
 
     install(ContentNegotiation) { jackson() }
     install(CORS) {
@@ -112,5 +116,29 @@ fun buildApp(archRoot: Path): Application.() -> Unit = {
         get("/api/health") { call.respond(mapOf("status" to "ok")) }
         get("/api/systems") { call.respond(inventory.systems()) }
         get("/api/containers") { call.respond(inventory.containers()) }
+
+        post("/api/containers/{id}/analyze") {
+            val id = call.parameters["id"]!!
+            when {
+                !runs.isKnown(id) ->
+                    call.respond(HttpStatusCode.NotFound, mapOf("error" to "контейнер «$id» не найден в registry/repos.yml"))
+                !runs.start(id) ->
+                    call.respond(HttpStatusCode.Conflict, mapOf("error" to "анализ «$id» уже идёт"))
+                else -> call.respond(HttpStatusCode.Accepted, mapOf("started" to true))
+            }
+        }
+
+        get("/api/containers/{id}/report") {
+            val id = call.parameters["id"]!!
+            val doc = inventory.readJson(archRoot.resolve("tools/api-source/$id.json"))
+            val report = inventory.readJson(archRoot.resolve("workspace/$id/reconcile-report.json"))
+            if (doc == null) {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "контейнер «$id» ещё не анализировался"))
+            } else {
+                call.respond(mapOf("doc" to doc, "report" to report))
+            }
+        }
+
+        get("/api/diff") { call.respond(modelDiff.diff()) }
     }
 }
