@@ -1,0 +1,85 @@
+/**
+ * Три вида — по одному на вопрос, который люди реально задают.
+ * Новый вид заводится только вместе с новым вопросом.
+ * Вид, который не открывали три месяца, удаляется.
+ */
+views {
+
+  // «Как это всё устроено» — точка входа для новичка
+  view index {
+    title 'Ландшафт'
+    include *
+    global predicate noContracts
+    global style base
+    autoLayout TopBottom
+  }
+
+  // Вопрос 1: что сломается, если я поменяю X
+  view shopContainers of shop {
+    title 'Интернет-магазин: контейнеры'
+    description 'Кто с кем связан. Отсюда видно радиус изменения'
+    include *
+    global predicate noContracts
+    global style base
+    autoLayout TopBottom
+  }
+
+  // Три круга: где кончается наша ответственность
+  view tiers {
+    title 'Круги владения'
+    description 'Глубина модели убывает по мере удаления от нашей зоны'
+
+    include *
+    global predicate noContracts
+    global style base
+
+    group 'Наш продукт' {
+      include element.kind = system
+    }
+    group 'Другие команды компании' {
+      include element.kind = orgSystem
+    }
+    group 'Вне компании' {
+      include element.kind = externalSystem
+    }
+
+    autoLayout TopBottom
+  }
+
+  // Вопрос 2: что именно я ломаю, меняя эндпоинт
+  view ordersApi of shop.orders {
+    title 'Order Service: контракт и потребители'
+    description 'Каждый эндпоинт со своими вызывающими. Метод, путь и параметры — в панели справа'
+
+    include
+      *,
+      shop.orders.api,
+      shop.orders.api.*,
+      shop.gw,
+      shop.pos
+
+    global style base
+    autoLayout LeftRight
+  }
+
+  dynamic view checkout {
+    title 'Сценарий: оплата заказа'
+
+    customer -> shop.mobile 'нажимает «Оплатить»'
+    shop.mobile -> shop.gw 'HTTPS'
+    shop.gw -> auth 'проверка токена'
+    shop.gw -> shop.orders.api.post_api_v1_orders 'POST /api/v1/orders'
+    shop.orders -> shop.ordersDb 'INSERT order (PENDING)'
+    shop.orders -> shop.orderCreated 'publish OrderCreatedV1'
+    shop.orderCreated -> shop.billing 'deliver'
+    shop.billing -> psp 'charge'
+    shop.billing -> shop.billingDb 'INSERT payment'
+    shop.billing -> shop.receipts 'PUT receipt.pdf'
+    shop.billing -> shop.paymentSucceeded 'publish PaymentSucceededV1'
+    shop.paymentSucceeded -> shop.orders 'deliver: заказ -> PAID'
+    shop.paymentSucceeded -> shop.notifier 'deliver'
+    shop.notifier -> sms 'SMS «Заказ оплачен»'
+
+    autoLayout TopBottom
+  }
+}

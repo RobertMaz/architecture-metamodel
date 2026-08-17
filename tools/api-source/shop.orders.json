@@ -1,0 +1,132 @@
+{
+  "container": "shop.orders",
+  "source": {
+    "repo": "acme/orders",
+    "commit": "a1b2c3d",
+    "extractedAt": "2026-08-17",
+    "extractor": "java-deep-analyze v0.3"
+  },
+  "api": {
+    "id": "api",
+    "title": "Orders API",
+    "technology": "HTTP/JSON",
+    "basePath": "/api/v1/orders",
+    "public": true
+  },
+  "operations": [
+    {
+      "method": "POST",
+      "path": "/api/v1/orders",
+      "summary": "Создать заказ",
+      "auth": "oauth2:orders.write",
+      "params": [
+        {
+          "name": "Idempotency-Key",
+          "in": "header",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "request": {
+        "type": "CreateOrderRequest",
+        "contentType": "application/json"
+      },
+      "responses": [
+        {
+          "status": 201,
+          "type": "OrderResponse"
+        },
+        {
+          "status": 409,
+          "type": "Problem"
+        }
+      ],
+      "source": "src/main/java/io/acme/orders/web/OrderController.java#L42",
+      "confidence": 0.96
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/orders/{id}",
+      "summary": "Получить заказ",
+      "auth": "oauth2:orders.read",
+      "params": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "uuid",
+          "required": true
+        },
+        {
+          "name": "expand",
+          "in": "query",
+          "type": "string",
+          "required": false
+        }
+      ],
+      "responses": [
+        {
+          "status": 200,
+          "type": "OrderResponse"
+        },
+        {
+          "status": 404,
+          "type": "Problem"
+        }
+      ],
+      "source": "src/main/java/io/acme/orders/web/OrderController.java#L71",
+      "confidence": 0.98
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/orders/{id}/cancel",
+      "summary": "Отменить заказ",
+      "auth": "oauth2:orders.write",
+      "params": [
+        {
+          "name": "id",
+          "in": "path",
+          "type": "uuid",
+          "required": true
+        }
+      ],
+      "responses": [
+        {
+          "status": 202,
+          "type": "OrderResponse"
+        }
+      ],
+      "source": "src/main/java/io/acme/orders/web/OrderController.java#L98",
+      "confidence": 0.91
+    },
+    {
+      "method": "POST",
+      "path": "/api/orders",
+      "summary": "Создать заказ (v0)",
+      "deprecated": true,
+      "sunset": "2026-11-01",
+      "params": [],
+      "request": {
+        "type": "LegacyOrderRequest",
+        "contentType": "application/json"
+      },
+      "responses": [
+        {
+          "status": 201,
+          "type": "LegacyOrderResponse"
+        }
+      ],
+      "source": "src/main/java/io/acme/orders/web/LegacyController.java#L20",
+      "confidence": 0.74
+    }
+  ],
+  "publishes": [
+    {
+      "channel": "shop.orderCreated",
+      "schema": "OrderCreatedV1",
+      "key": "orderId",
+      "fields": "orderId:uuid, customerId:uuid, amount:decimal, currency:string, items[]",
+      "source": "src/main/java/io/acme/orders/events/OrderCreatedPublisher.java#L18",
+      "confidence": 0.88
+    }
+  ]
+}

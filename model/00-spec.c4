@@ -1,0 +1,195 @@
+/**
+ * СПЕЦИФИКАЦИЯ. Одна страница, дальше не растёт без веской причины.
+ *
+ * Kind заводится, только если он меняет ПРАВИЛА СВЯЗЫВАНИЯ (их проверяет
+ * tools/check.mjs). Если различие меняет только картинку — это style,
+ * если это ортогональный признак — это tag.
+ */
+specification {
+
+  element person {
+    style {
+      shape person
+      color green
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // ГРАНИЦЫ ОТВЕТСТВЕННОСТИ. Три круга — три kind'а.
+  //
+  // Круг меняет ПРАВИЛА (какая глубина разрешена, куда можно ходить),
+  // а значит по нашему же критерию это kind, а не тег и не метаданные.
+  // Он меняется раз в несколько лет — держать его в поле, которое
+  // пересчитывается из справочника команд, было ошибкой: команды
+  // тасуют каждые полгода, а круг при этом стоит на месте.
+  // ---------------------------------------------------------------
+
+  element system {
+    notation 'Наш продукт'
+    style {
+      color primary
+    }
+  }
+
+  element orgSystem {
+    notation 'Другая команда компании'
+    style {
+      color slate
+      border dashed
+    }
+  }
+
+  element externalSystem {
+    notation 'Вне компании'
+    style {
+      color muted
+      border dotted
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Пять классов контейнеров. Различаются тем, что им РАЗРЕШЕНО.
+  //
+  //   kind      инициирует   принимает call   принимает сообщения
+  //   client        да            нет               нет
+  //   service       да            да                да
+  //   worker        да            нет               да
+  //   store         нет           —                 —
+  //   channel     транзит         нет               да
+  // ---------------------------------------------------------------
+
+  element client {
+    notation 'Клиент: мобилка, SPA, терминал, CLI'
+    style {
+      shape mobile
+      color sky
+    }
+  }
+
+  element service {
+    notation 'Принимает синхронные вызовы'
+    style {
+      color blue
+    }
+  }
+
+  element worker {
+    notation 'Только фоновая обработка, публичного API нет'
+    style {
+      color blue
+      border dashed
+    }
+  }
+
+  element store {
+    notation 'Состояние: БД, кэш, бакет'
+    style {
+      shape cylinder
+      color slate
+    }
+  }
+
+  element channel {
+    notation 'Топик или очередь'
+    style {
+      shape queue
+      color amber
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // КОНТРАКТНЫЙ СЛОЙ. Руками не пишется — генерируется из кода
+  // в model/gen/*.gen.c4. Правило простое: если у контейнера есть api,
+  // то входящий call обязан вести в api или в operation, а не в контейнер.
+  // Это и даёт ответ на «кто сломается, если поменять этот эндпоинт».
+  // ---------------------------------------------------------------
+
+  element api {
+    notation 'Опубликованный контракт контейнера'
+    style {
+      color indigo
+      size sm
+    }
+  }
+
+  element operation {
+    notation 'Эндпоинт: метод + путь'
+    style {
+      color muted
+      size xs
+    }
+  }
+
+  element message {
+    notation 'Схема сообщения в канале'
+    style {
+      color amber
+      size xs
+    }
+  }
+
+  // ---------------------------------------------------------------
+  // Пять типов связей. Стрелка = направление данных, всегда.
+  // ---------------------------------------------------------------
+
+  relationship call {
+    notation 'Синхронный вызов'
+    color blue
+  }
+
+  relationship publish {
+    notation 'Отправитель -> канал'
+    color amber
+  }
+
+  relationship deliver {
+    notation 'Канал -> получатель'
+    color amber
+    line dashed
+  }
+
+  relationship read {
+    color slate
+    line dotted
+  }
+
+  relationship write {
+    color slate
+  }
+
+  // ---------------------------------------------------------------
+  // Четыре тега. Тег живёт, только если по нему фильтруют,
+  // красят или падают в CI. Остальное — комментарий.
+  // ---------------------------------------------------------------
+
+  tag public      // доступен снаружи системы
+  tag pii         // персональные данные
+  tag deprecated  // выключаем, идёт миграция
+  tag stub        // наша ДОГАДКА о чужой системе, никем не подтверждена
+  tag inferred    // извлечено анализатором, человек не подтверждал
+}
+
+global {
+  styleGroup base {
+    style element.tag = #deprecated {
+      color red
+      border dashed
+      opacity 40%
+    }
+    style element.tag = #stub {
+      color muted
+      border dotted
+    }
+    style element.tag = #inferred {
+      border dotted
+    }
+  }
+
+  // Контрактный слой прячется по умолчанию: иначе любой обзорный вид
+  // превращается в кашу из сотни эндпоинтов.
+  predicateGroup noContracts {
+    exclude element.kind = api
+    exclude element.kind = operation
+    exclude element.kind = message
+  }
+}

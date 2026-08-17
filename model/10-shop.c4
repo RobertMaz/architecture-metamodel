@@ -1,0 +1,148 @@
+/**
+ * Файл на систему. Владелец файла — команда, которая владеет системой
+ * (см. CODEOWNERS). Так модель не упирается в одного человека.
+ *
+ * Уровень L0: только контейнеры. Ни компонентов, ни эндпоинтов.
+ * Это уже отвечает на 80% вопросов, которые задают модели.
+ */
+model {
+
+  customer = person 'Покупатель'
+  cashier = person 'Кассир'
+
+  shop = system 'Интернет-магазин' {
+    description 'Приём заказов и проведение платежей'
+
+    // --- клиенты ---
+    mobile = client 'Mobile App' {
+      technology 'Kotlin Multiplatform'
+      link https://github.com/acme/mobile 'repo'
+    }
+
+    pos = client 'POS Terminal' {
+      technology 'Android POS'
+      link https://github.com/acme/pos 'repo'
+    }
+
+    // --- периметр ---
+    gw = service 'API Gateway' {
+      #public
+      technology 'Envoy'
+      link https://github.com/acme/gateway 'repo'
+      link https://grafana.acme.io/d/gw 'dashboard'
+      link https://wiki.acme.io/runbooks/gw 'runbook'
+    }
+
+    // --- приложение ---
+    orders = service 'Order Service' {
+      technology 'Kotlin, Spring Boot'
+      link https://github.com/acme/orders 'repo'
+      link https://wiki.acme.io/runbooks/orders 'runbook'
+    }
+
+    billing = service 'Billing Service' {
+      technology 'Kotlin, Spring Boot'
+      link https://github.com/acme/billing 'repo'
+      link https://wiki.acme.io/runbooks/billing 'runbook'
+    }
+
+    notifier = worker 'Notification Worker' {
+      technology 'Kotlin'
+      link https://github.com/acme/notifier 'repo'
+    }
+
+    // --- состояние ---
+    ordersDb = store 'orders-db' {
+      #pii
+      technology 'PostgreSQL'
+      description 'Владелец: Order Service. Больше туда не пишет никто'
+    }
+
+    billingDb = store 'billing-db' {
+      #pii
+      technology 'PostgreSQL'
+    }
+
+    receipts = store 'receipts' {
+      technology 'S3'
+    }
+
+    // --- каналы. Канал — узел, а не подпись на стрелке ---
+    orderCreated = channel 'order.created' {
+      technology 'Kafka topic, 12 partitions'
+      description 'OrderCreatedV1: orderId, customerId, amount, items[]'
+    }
+
+    paymentSucceeded = channel 'payment.succeeded' {
+      technology 'Kafka topic, 6 partitions'
+      description 'PaymentSucceededV1: orderId, paymentId, amount, paidAt'
+    }
+  }
+
+  // --- чужое ---
+  // Другая команда компании. Внутренности не описываем: их модель —
+  // их ответственность. Здесь только то, что мы реально вызываем.
+  auth = orgSystem 'Auth Platform' {
+    #public
+    description 'SSO компании'
+    link https://wiki.acme.io/platform/auth 'confluence'
+    metadata {
+      contact '#platform-support'
+    }
+  }
+
+  // Вне компании: чёрный ящик. Owner — наша команда, отвечающая
+  // за интеграцию; provider — тот, кто это эксплуатирует.
+  psp = externalSystem 'Payment Provider' {
+    #public #stub
+    description 'Эквайринг, 3DS'
+    link https://wiki.acme.io/integrations/psp 'confluence'
+    metadata {
+      contract 'MSA-2024-118, SLA 99.9'
+      contact 'support@psp.example'
+    }
+  }
+
+  sms = externalSystem 'SMS Gateway' {
+    #public #stub
+    description 'Внешний провайдер'
+    link https://wiki.acme.io/integrations/sms 'confluence'
+    metadata {
+      contract 'MSA-2025-042'
+    }
+  }
+
+  // =====================================================================
+  // Связи. Стрелка = направление данных.
+  // =====================================================================
+
+  customer -[call]-> shop.mobile 'оформляет заказ'
+  cashier  -[call]-> shop.pos 'проводит оплату'
+
+  shop.mobile -[call]-> shop.gw 'HTTPS, OAuth2'
+  shop.pos    -[call]-> shop.gw 'mTLS'
+  shop.pos    -[call]-> shop.orders.api.post_api_orders 'напрямую, legacy'
+
+  // У orders есть контрактный слой -> звоним в конкретные эндпоинты.
+  // У billing его ещё нет -> пока в контейнер. Линтер разрешает и то, и то,
+  // но запрещает звонить в контейнер, у которого контракт уже описан.
+  shop.gw -[call]-> shop.orders.api.post_api_v1_orders
+  shop.gw -[call]-> shop.orders.api.get_api_v1_orders_p
+  shop.gw -[call]-> shop.orders.api.post_api_v1_orders_p_cancel
+  shop.gw -[call]-> shop.billing 'POST /api/v1/payments'
+  shop.gw -[call]-> auth 'проверка токена'
+
+  shop.orders  -[write]-> shop.ordersDb
+  shop.billing -[write]-> shop.billingDb
+  shop.billing -[write]-> shop.receipts 'PUT receipt.pdf'
+
+  shop.orders -[publish]-> shop.orderCreated 'OrderCreatedV1'
+  shop.orderCreated -[deliver]-> shop.billing 'group: billing-cg'
+
+  shop.billing -[publish]-> shop.paymentSucceeded 'PaymentSucceededV1'
+  shop.paymentSucceeded -[deliver]-> shop.orders 'group: orders-cg'
+  shop.paymentSucceeded -[deliver]-> shop.notifier 'group: notifier-cg'
+
+  shop.billing  -[call]-> psp 'charge'
+  shop.notifier -[call]-> sms 'send SMS'
+}

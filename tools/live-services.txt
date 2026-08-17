@@ -1,0 +1,12 @@
+# Что реально крутится. Обновляется выгрузкой, не руками:
+#   kubectl get deploy -A -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' > tools/live-services.txt
+gw
+orders
+billing
+notifier
+orders-db
+billing-db
+receipts
+order.created
+payment.succeeded
+loyalty

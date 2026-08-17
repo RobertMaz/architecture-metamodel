@@ -1,0 +1,23 @@
+{
+  "name": "architecture",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "likec4 start model",
+    "gen": "node tools/gen-api.mjs",
+    "check": "npm run gen && likec4 validate model && likec4 export json model -o build/model.json && node tools/check.mjs build/model.json",
+    "impact": "node tools/impact.mjs build/model.json",
+    "drift": "node tools/drift.mjs build/model.json tools/live-services.txt",
+    "build": "likec4 build model -o dist",
+    "png": "likec4 export png model -o build/images",
+    "verify": "node tools/verify.mjs build/model.json",
+    "owners": "node tools/owners.mjs"
+  },
+  "devDependencies": {
+    "likec4": "latest"
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
+  }
+}

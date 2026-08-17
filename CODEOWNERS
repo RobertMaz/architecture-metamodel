@@ -1,0 +1,12 @@
+# Единственный источник правды о владении.
+# Он же назначает ревьюеров — поэтому не может протухнуть незаметно:
+# как только он врёт, PR уходит не тем людям, и это чинят в тот же день.
+
+/model/00-spec.c4        @acme/architecture
+/model/20-views.c4       @acme/architecture
+/tools/                  @acme/architecture
+
+/model/10-shop.c4        @acme/team-checkout
+/model/gen/              @acme/team-checkout
+# /model/11-crm.c4       @acme/team-crm
+# /model/12-logistics.c4 @acme/team-logistics

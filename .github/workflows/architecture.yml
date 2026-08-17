@@ -1,0 +1,63 @@
+name: architecture
+
+on:
+  pull_request:
+    paths: ['model/**', 'tools/**']
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Контрактный слой перегенерируется и не должен разъезжаться с коммитом
+      - name: contracts up to date
+        run: |
+          npm run gen
+          git diff --exit-code model/gen || {
+            echo "model/gen устарел — запусти npm run gen и закоммить"; exit 1;
+          }
+
+      # Синтаксис + инварианты метамодели
+      - run: npm run check
+
+      # Дрейф: что крутится в кластере, но отсутствует в модели.
+      # Пока предупреждение — сделать блокирующим, когда модель догонит реальность.
+      - name: drift
+        continue-on-error: true
+        run: node tools/drift.mjs build/model.json tools/live-services.txt
+
+      # Картинки в комментарий к PR: ревьюер смотрит диаграмму, а не диффы DSL
+      - name: render
+        if: github.event_name == 'pull_request'
+        run: npm run png
+
+      - name: upload
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagrams
+          path: build/images
+
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      # Сайт со всеми видами. Ссылку — в README сервисов и в онбординг.
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist

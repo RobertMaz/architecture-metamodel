@@ -1,0 +1,60 @@
+{
+  "entries": [
+    {
+      "id": "sms",
+      "at": "2026-08-17",
+      "by": "a.petrov",
+      "against": "docs",
+      "hash": "80f8de809d05",
+      "note": "сверено с их публичной докой"
+    },
+    {
+      "id": "shop.orders.api",
+      "at": "2026-08-17",
+      "by": "a.petrov",
+      "against": "probe",
+      "hash": "ec40dd59db09",
+      "note": "сверено с OpenAPI с прода"
+    },
+    {
+      "id": "shop.orderCreated.ordercreatedv1",
+      "at": "2026-08-17",
+      "by": "i.smirnov",
+      "against": "owner",
+      "hash": "cc133f4b06f1",
+      "note": "подтвердил владелец топика"
+    },
+    {
+      "id": "sms",
+      "at": "2026-08-17",
+      "by": "a.petrov",
+      "against": "docs",
+      "hash": "cf0f974f02bf",
+      "note": "сверено с докой провайдера"
+    },
+    {
+      "id": "psp",
+      "at": "2026-08-17",
+      "by": "m.orlov",
+      "against": "owner",
+      "hash": "d9ee7d1f23aa",
+      "note": "подтверждено менеджером договора"
+    },
+    {
+      "id": "psp",
+      "at": "2026-08-17",
+      "by": "m.orlov",
+      "against": "owner",
+      "hash": "e4e4f9ccadfb",
+      "note": ""
+    },
+    {
+      "id": "sms",
+      "at": "2026-08-17",
+      "by": "a.petrov",
+      "against": "docs",
+      "hash": "d776dd71ddb7",
+      "note": ""
+    }
+  ]
+}

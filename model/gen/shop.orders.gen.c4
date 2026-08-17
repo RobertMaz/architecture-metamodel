@@ -1,0 +1,89 @@
+// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
+// Источник: tools/api-source/shop.orders.json
+// Репозиторий: acme/orders@a1b2c3d
+// Извлечено: 2026-08-17 (java-deep-analyze v0.3)
+
+model {
+  extend shop.orders {
+
+    api = api 'Orders API' {
+      #inferred #public
+      technology 'HTTP/JSON'
+      metadata {
+        base-path '/api/v1/orders'
+        source-repo 'acme/orders'
+        extracted-at '2026-08-17'
+      }
+
+      post_api_v1_orders = operation 'POST /api/v1/orders' {
+        #inferred
+        description 'Создать заказ'
+        metadata {
+          method 'POST'
+          path '/api/v1/orders'
+          params 'Idempotency-Key:header:string'
+          request 'CreateOrderRequest'
+          responses '201 OrderResponse, 409 Problem'
+          auth 'oauth2:orders.write'
+          source 'src/main/java/io/acme/orders/web/OrderController.java#L42'
+          confidence '0.96'
+        }
+      }
+
+      get_api_v1_orders_p = operation 'GET /api/v1/orders/{id}' {
+        #inferred
+        description 'Получить заказ'
+        metadata {
+          method 'GET'
+          path '/api/v1/orders/{id}'
+          params 'id:path:uuid, expand:query:string?'
+          responses '200 OrderResponse, 404 Problem'
+          auth 'oauth2:orders.read'
+          source 'src/main/java/io/acme/orders/web/OrderController.java#L71'
+          confidence '0.98'
+        }
+      }
+
+      post_api_v1_orders_p_cancel = operation 'POST /api/v1/orders/{id}/cancel' {
+        #inferred
+        description 'Отменить заказ'
+        metadata {
+          method 'POST'
+          path '/api/v1/orders/{id}/cancel'
+          params 'id:path:uuid'
+          responses '202 OrderResponse'
+          auth 'oauth2:orders.write'
+          source 'src/main/java/io/acme/orders/web/OrderController.java#L98'
+          confidence '0.91'
+        }
+      }
+
+      post_api_orders = operation 'POST /api/orders' {
+        #inferred #deprecated
+        description 'Создать заказ (v0)'
+        metadata {
+          method 'POST'
+          path '/api/orders'
+          request 'LegacyOrderRequest'
+          responses '201 LegacyOrderResponse'
+          sunset '2026-11-01'
+          source 'src/main/java/io/acme/orders/web/LegacyController.java#L20'
+          confidence '0.74'
+        }
+      }
+    }
+  }
+
+  extend shop.orderCreated {
+    ordercreatedv1 = message 'OrderCreatedV1' {
+      #inferred
+      description 'orderId:uuid, customerId:uuid, amount:decimal, currency:string, items[]'
+      metadata {
+        key 'orderId'
+        producer 'shop.orders'
+        source 'src/main/java/io/acme/orders/events/OrderCreatedPublisher.java#L18'
+        confidence '0.88'
+      }
+    }
+  }
+}
