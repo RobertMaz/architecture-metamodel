@@ -3,3 +3,5 @@ build/
 dist/
 workspace/
 analyzer/target/
+ui/node_modules/
+ui/dist/
