@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: customers-service
+  datasource:
+    url: jdbc:hsqldb:mem:petclinic
+  kafka:
+    bootstrap-servers: kafka:9092
+billing:
+  url: http://billing-service/api
