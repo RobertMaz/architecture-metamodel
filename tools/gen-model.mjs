@@ -1,24 +1,34 @@
 #!/usr/bin/env node
 /**
- * Генератор v2: registry/*.yml + tools/api-source/*.json (доки с containerInfo)
- *   -> model/gen/systems/<id>.gen.c4   каркасы систем
- *   -> model/gen/<container>.gen.c4    контейнер #inferred + api + исходящие рёбра
- *   -> model/gen/_shared.gen.c4        общие узлы: сторы, каналы, message, deliver
+ * Генератор v2 + движок разрешения вызовов.
  *
- * Легаси-доки v1 (без containerInfo) обрабатывает tools/gen-api.mjs.
- * Детерминизм: всё отсортировано, файл переписывается только при изменении —
- * чистый git-diff = чистый прогон.
+ * Входы:  registry/systems.yml, registry/aliases.yml, registry/resolutions.yml,
+ *         tools/api-source/*.json (доки с containerInfo; легаси v1 обрабатывает gen-api.mjs)
+ * Выходы: model/gen/systems/<id>.gen.c4      каркасы систем
+ *         model/gen/<container>.gen.c4       контейнер #inferred + api + исходящие рёбра
+ *         model/gen/_shared.gen.c4           сторы, каналы, message, deliver
+ *         model/gen/unknown/<slug>.gen.c4    stub-заглушки нераспознанных целей
+ *         model/gen/unknown/_externals.gen.c4  внешние системы из resolutions.yml
+ *         registry/unresolved.json           журнал нераспознанного (генерируется)
+ *
+ * Разрешение цели вызова (по порядку):
+ *   target.container -> алиас feignName -> алиас host -> алиас первого label host ->
+ *   автосклейка (единственный кандидат, все наблюдённые эндпоинты совпали) ->
+ *   ручное решение из resolutions.yml -> stub в системе unknown.
+ *
+ * Детерминизм: всё отсортировано, файлы переписываются только при изменении,
+ * устаревшие stub-файлы удаляются.
  */
 
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs'
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import { opId, slug, esc } from './ids.mjs'
 
 const systemOf = (id) => id.split('.')[0]
 const shortName = (id) => id.split('.').pop()
+const normPath = (p) => String(p).replace(/\{[^}]*\}/g, '{_p_}')
 
-/** Имя БД из адреса: последний сегмент пути/двоеточия, без query. */
 function storeName(address, containerId) {
   if (!address) return shortName(containerId)
   const base = address.split('?')[0]
@@ -32,19 +42,25 @@ function writeIfChanged(path, content) {
   return true
 }
 
+function readYaml(path, key) {
+  if (!existsSync(path)) return null
+  return parseYaml(readFileSync(path, 'utf8'))?.[key] ?? null
+}
+
 function header(source) {
   return [`// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.`, `// Источник: ${source}`, ``]
 }
 
 export function generate(root = '.') {
   const genDir = join(root, 'model/gen')
+  const unknownDir = join(genDir, 'unknown')
   mkdirSync(join(genDir, 'systems'), { recursive: true })
 
-  // --- системы из registry/systems.yml -------------------------------
-  const systemsFile = join(root, 'registry/systems.yml')
-  const systems = existsSync(systemsFile)
-    ? (parseYaml(readFileSync(systemsFile, 'utf8'))?.systems ?? [])
-    : []
+  // --- реестры ---------------------------------------------------------
+  const systems = readYaml(join(root, 'registry/systems.yml'), 'systems') ?? []
+  const aliases = readYaml(join(root, 'registry/aliases.yml'), 'aliases') ?? {}
+  const resolutions = readYaml(join(root, 'registry/resolutions.yml'), 'resolutions') ?? {}
+
   for (const s of [...systems].sort((a, b) => a.id.localeCompare(b.id))) {
     const L = header('registry/systems.yml')
     L.push(`model {`)
@@ -56,7 +72,7 @@ export function generate(root = '.') {
     writeIfChanged(join(genDir, 'systems', `${s.id}.gen.c4`), L.join('\n'))
   }
 
-  // --- v2-доки ---------------------------------------------------------
+  // --- доки ------------------------------------------------------------
   const srcDir = join(root, 'tools/api-source')
   const docs = (existsSync(srcDir) ? readdirSync(srcDir) : [])
     .filter((f) => f.endsWith('.json'))
@@ -64,13 +80,20 @@ export function generate(root = '.') {
     .map((f) => ({ file: f, d: JSON.parse(readFileSync(join(srcDir, f), 'utf8')) }))
     .filter(({ d }) => d.containerInfo)
 
-  // Общие узлы собираются по всем докам: идентичность — kind|адрес и топик.
-  const stores = new Map() // key -> {id, system, title, technology, address, entities:Set, accessBy:Map(container->access)}
-  const channels = new Map() // topic -> {id, system, topic, messages:Map(schema->{producer,fields,source,confidence}), delivers:[]}
+  // Индекс контрактов: containerId -> {apiId, ops: 'METHOD normPath' -> opId}
+  const apiIndex = new Map()
+  for (const { d } of docs) {
+    if (!d.api) continue
+    const ops = new Map()
+    for (const op of d.operations ?? []) ops.set(`${op.method} ${normPath(op.path)}`, opId(op.method, op.path))
+    apiIndex.set(d.container, { apiId: d.api.id, ops })
+  }
+
+  // --- ПРОХОД 1: общие узлы + сбор вызовов -----------------------------
+  const stores = new Map()
+  const channels = new Map()
 
   const claimStore = (doc, st) => {
-    // Пустой адрес = «свой дефолтный datasource»: идентичность по контейнеру,
-    // иначе неизвестные адреса разных сервисов склеятся в ложный shared database.
     const key = st.address ? `${st.kind}|${st.address}` : `${st.kind}|${doc.container}`
     if (!stores.has(key)) {
       stores.set(key, {
@@ -84,7 +107,6 @@ export function generate(root = '.') {
       })
     }
     const s = stores.get(key)
-    // Размещение — у лексикографически первой системы-писателя (детерминизм).
     if (systemOf(doc.container) < s.system) s.system = systemOf(doc.container)
     for (const e of (st.entities ?? '').split(',').map((x) => x.trim()).filter(Boolean)) s.entities.add(e)
     s.accessBy.set(doc.container, st.access)
@@ -100,8 +122,165 @@ export function generate(root = '.') {
     return c
   }
 
-  let unresolvedCalls = 0
+  // Записи вызовов для глобального разрешения.
+  const callRecords = [] // {caller, call}
+  for (const { d } of docs) {
+    for (const call of d.calls ?? []) callRecords.push({ caller: d.container, call })
+  }
 
+  // --- ПРОХОД 2: разрешение --------------------------------------------
+  const resolveByAlias = (t) => {
+    if (t.container) return t.container
+    if (t.feignName && aliases[t.feignName]) return aliases[t.feignName]
+    if (t.host) {
+      if (aliases[t.host]) return aliases[t.host]
+      const label = t.host.split('.')[0]
+      if (aliases[label]) return aliases[label]
+    }
+    return null
+  }
+
+  /** Ссылка для ребра в известный контейнер: операция -> api -> контейнер. */
+  const targetRef = (cid, call) => {
+    const idx = apiIndex.get(cid)
+    if (idx && call.method && call.path) {
+      const op = idx.ops.get(`${call.method} ${normPath(call.path)}`)
+      if (op) return `${cid}.${idx.apiId}.${op}`
+    }
+    if (idx) return `${cid}.${idx.apiId}`
+    return cid
+  }
+
+  // Группировка неразрешённого по сигнатуре цели.
+  const stubGroups = new Map() // slug -> {...}
+  const looseEntries = [] // записи unresolved без stub-узла
+  const edgesByCaller = new Map() // container -> [edge lines]
+  const externals = new Map() // extId -> {title, contract}
+
+  const addEdge = (caller, ref, label) => {
+    if (!edgesByCaller.has(caller)) edgesByCaller.set(caller, [])
+    edgesByCaller.get(caller).push(`  ${caller} -[call]-> ${ref}${label ? ` '${esc(label)}'` : ''}`)
+  }
+
+  const callLabel = (call) =>
+    call.method && call.path ? `${call.method} ${call.path}` : call.method ?? ''
+
+  for (const { caller, call } of callRecords) {
+    const t = call.target ?? {}
+    const aliased = resolveByAlias(t)
+    if (aliased) {
+      if (apiIndex.has(aliased) || docs.some(({ d }) => d.container === aliased)) {
+        addEdge(caller, targetRef(aliased, call), callLabel(call))
+      } else {
+        looseEntries.push({
+          stubId: null,
+          note: `цель разрешена в «${aliased}», но контейнер ещё не проанализирован`,
+          observedEndpoints: call.method && call.path ? [{ method: call.method, path: call.path }] : [],
+          callers: [{ container: caller, source: call.source }],
+          candidates: [{ container: aliased, score: 1, matched: 'alias' }],
+        })
+      }
+      continue
+    }
+
+    const key = t.feignName ?? t.host ?? t.urlTemplate
+    if (!key) {
+      looseEntries.push({
+        stubId: null,
+        note: 'нет сигнатуры цели (ни host, ни feign, ни url)',
+        observedEndpoints: call.method && call.path ? [{ method: call.method, path: call.path }] : [],
+        callers: [{ container: caller, source: call.source }],
+        candidates: [],
+      })
+      continue
+    }
+
+    const sl = slug(key)
+    if (!stubGroups.has(sl)) {
+      stubGroups.set(sl, {
+        slug: sl,
+        key,
+        feignNames: new Set(),
+        hosts: new Set(),
+        urlTemplates: new Set(),
+        endpoints: new Map(),
+        callers: [],
+        calls: [],
+      })
+    }
+    const g = stubGroups.get(sl)
+    if (t.feignName) g.feignNames.add(t.feignName)
+    if (t.host) g.hosts.add(t.host)
+    if (t.urlTemplate) g.urlTemplates.add(t.urlTemplate)
+    if (call.method && call.path) g.endpoints.set(`${call.method} ${call.path}`, { method: call.method, path: call.path })
+    g.callers.push({ container: caller, source: call.source })
+    g.calls.push({ caller, call })
+  }
+
+  // Кандидаты и автосклейка / ручные решения.
+  const unresolvedEntries = [...looseEntries]
+  const liveStubs = []
+  for (const g of [...stubGroups.values()].sort((a, b) => a.slug.localeCompare(b.slug))) {
+    const stubId = `unknown.${g.slug}`
+    const observed = [...g.endpoints.values()].sort((a, b) => `${a.method} ${a.path}`.localeCompare(`${b.method} ${b.path}`))
+
+    const decision = resolutions[stubId]
+    if (decision?.container) {
+      for (const { caller, call } of g.calls) addEdge(caller, targetRef(decision.container, call), callLabel(call))
+      continue
+    }
+    if (decision?.external) {
+      const e = decision.external
+      externals.set(e.id, { title: e.title ?? e.id, contract: e.contract })
+      for (const { caller, call } of g.calls) addEdge(caller, e.id, callLabel(call))
+      continue
+    }
+
+    const candidates = []
+    if (observed.length) {
+      for (const [cid, idx] of [...apiIndex.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+        const matched = observed.filter((e) => idx.ops.has(`${e.method} ${normPath(e.path)}`))
+        if (matched.length) {
+          candidates.push({
+            container: cid,
+            score: Math.round((matched.length / observed.length) * 100) / 100,
+            matched: matched.map((e) => `${e.method} ${e.path}`).join(', '),
+          })
+        }
+      }
+      candidates.sort((a, b) => b.score - a.score || a.container.localeCompare(b.container))
+    }
+
+    const perfect = candidates.filter((c) => c.score === 1)
+    if (perfect.length === 1 && observed.length > 0) {
+      // Автосклейка: сервис с ровно такими эндпоинтами уже в модели.
+      for (const { caller, call } of g.calls) addEdge(caller, targetRef(perfect[0].container, call), callLabel(call))
+      continue
+    }
+
+    // Остаёмся stub'ом: узел в unknown + запись в журнал.
+    liveStubs.push(g)
+    for (const { caller, call } of g.calls) {
+      const ref =
+        call.method && call.path
+          ? `${stubId}.api.${opId(call.method, call.path)}`
+          : `${stubId}.api`
+      addEdge(caller, ref, callLabel(call))
+    }
+    unresolvedEntries.push({
+      stubId,
+      signature: {
+        feignNames: [...g.feignNames].sort(),
+        hosts: [...g.hosts].sort(),
+        urlTemplates: [...g.urlTemplates].sort(),
+      },
+      observedEndpoints: observed,
+      callers: [...g.callers].sort((a, b) => `${a.container} ${a.source}`.localeCompare(`${b.container} ${b.source}`)),
+      candidates,
+    })
+  }
+
+  // --- РЕНДЕР: файлы контейнеров ---------------------------------------
   for (const { file, d } of docs) {
     const sys = systemOf(d.container)
     const name = shortName(d.container)
@@ -125,7 +304,6 @@ export function generate(root = '.') {
     L.push(`        extracted-at '${esc(d.source.extractedAt)}'`)
     L.push(`      }`)
 
-    // --- контрактный слой (как в gen-api, но версия v2) ---------------
     if (d.api) {
       const tags = ['#inferred', d.api.public ? '#public' : null].filter(Boolean)
       const seen = new Map()
@@ -166,7 +344,6 @@ export function generate(root = '.') {
     L.push(`    }`)
     L.push(`  }`)
 
-    // --- исходящие рёбра контейнера -----------------------------------
     const edges = []
     for (const st of [...(d.stores ?? [])].sort((a, b) => `${a.kind}|${a.address}`.localeCompare(`${b.kind}|${b.address}`))) {
       const s = claimStore(d, st)
@@ -183,10 +360,7 @@ export function generate(root = '.') {
       const c = claimChannel(sys, sub.channel)
       c.delivers.push({ to: d.container, group: sub.group })
     }
-    for (const call of d.calls ?? []) {
-      if (!call.target?.container) unresolvedCalls++
-      // Разрешённые вызовы (target.container) появятся в подпроекте 3.
-    }
+    edges.push(...(edgesByCaller.get(d.container) ?? []))
 
     if (edges.length) {
       L.push(``)
@@ -198,7 +372,7 @@ export function generate(root = '.') {
     console.log(`model/gen/${d.container}.gen.c4  <-  ${file}  (${d.operations?.length ?? 0} операций)`)
   }
 
-  // --- общие узлы ------------------------------------------------------
+  // --- РЕНДЕР: общие узлы ----------------------------------------------
   if (docs.length) {
     const L = [
       `// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.`,
@@ -207,7 +381,6 @@ export function generate(root = '.') {
       `// «у store один писатель» превращается в детектор shared database.`,
       ``,
     ]
-    // Группировка узлов по системам.
     const bySystem = new Map()
     const claimNode = (system, render) => {
       if (!bySystem.has(system)) bySystem.set(system, [])
@@ -276,13 +449,91 @@ export function generate(root = '.') {
     writeIfChanged(join(genDir, `_shared.gen.c4`), L.join('\n'))
   }
 
-  if (unresolvedCalls) {
-    console.log(`вызовов ждут разрешения (подпроект 3 — реестр): ${unresolvedCalls}`)
+  // --- РЕНДЕР: stub'ы в unknown ----------------------------------------
+  const expectedUnknownFiles = new Set()
+  if (liveStubs.length || externals.size) mkdirSync(unknownDir, { recursive: true })
+
+  for (const g of liveStubs) {
+    const file = `${g.slug}.gen.c4`
+    expectedUnknownFiles.add(file)
+    const L = header('registry/unresolved.json (stub нераспознанной цели)')
+    L.push(`model {`)
+    L.push(`  extend unknown {`)
+    L.push(``)
+    L.push(`    ${g.slug} = service '${esc(g.key)}' {`)
+    L.push(`      #stub #inferred`)
+    L.push(`      technology 'неизвестно'`)
+    L.push(`      metadata {`)
+    if (g.hosts.size) L.push(`        hosts '${esc([...g.hosts].sort().join(', '))}'`)
+    if (g.feignNames.size) L.push(`        feign-names '${esc([...g.feignNames].sort().join(', '))}'`)
+    if (g.urlTemplates.size) L.push(`        url-templates '${esc([...g.urlTemplates].sort().join(', '))}'`)
+    L.push(`      }`)
+    L.push(``)
+    L.push(`      api = api '${esc(g.key)} API' {`)
+    L.push(`        #stub #inferred`)
+    L.push(`        technology 'HTTP'`)
+    for (const e of [...g.endpoints.values()].sort((a, b) => `${a.method} ${a.path}`.localeCompare(`${b.method} ${b.path}`))) {
+      L.push(``)
+      L.push(`        ${opId(e.method, e.path)} = operation '${esc(e.method)} ${esc(e.path)}' {`)
+      L.push(`          #stub #inferred`)
+      L.push(`          metadata {`)
+      L.push(`            method '${esc(e.method)}'`)
+      L.push(`            path '${esc(e.path)}'`)
+      L.push(`          }`)
+      L.push(`        }`)
+    }
+    L.push(`      }`)
+    L.push(`    }`)
+    L.push(`  }`)
+    L.push(`}`)
+    L.push(``)
+    writeIfChanged(join(unknownDir, file), L.join('\n'))
   }
-  return { docs: docs.length, stores: stores.size, channels: channels.size, unresolvedCalls }
+
+  if (externals.size) {
+    const file = `_externals.gen.c4`
+    expectedUnknownFiles.add(file)
+    const L = header('registry/resolutions.yml (решение: вне компании)')
+    L.push(`model {`)
+    for (const [id, e] of [...externals.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      L.push(`  ${id} = externalSystem '${esc(e.title)}' {`)
+      L.push(`    #stub`)
+      if (e.contract) {
+        L.push(`    metadata {`)
+        L.push(`      contract '${esc(e.contract)}'`)
+        L.push(`    }`)
+      }
+      L.push(`  }`)
+    }
+    L.push(`}`)
+    L.push(``)
+    writeIfChanged(join(unknownDir, file), L.join('\n'))
+  }
+
+  // Устаревшие stub-файлы удаляются: решённые цели не оставляют мусора.
+  if (existsSync(unknownDir)) {
+    for (const f of readdirSync(unknownDir).filter((f) => f.endsWith('.gen.c4'))) {
+      if (!expectedUnknownFiles.has(f)) unlinkSync(join(unknownDir, f))
+    }
+  }
+
+  // --- журнал нераспознанного ------------------------------------------
+  if (docs.length) {
+    const sorted = [...unresolvedEntries].sort((a, b) =>
+      `${a.stubId ?? ''} ${a.note ?? ''} ${a.callers[0]?.source ?? ''}`.localeCompare(
+        `${b.stubId ?? ''} ${b.note ?? ''} ${b.callers[0]?.source ?? ''}`,
+      ),
+    )
+    mkdirSync(join(root, 'registry'), { recursive: true })
+    writeIfChanged(join(root, 'registry/unresolved.json'), JSON.stringify({ unresolved: sorted }, null, 2) + '\n')
+  }
+
+  const open = unresolvedEntries.length
+  if (open) console.log(`нераспознанных целей: ${open} (registry/unresolved.json, триаж в UI)`)
+  return { docs: docs.length, stores: stores.size, channels: channels.size, unresolved: open, stubs: liveStubs.length }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   const r = generate('.')
-  console.log(`\nv2-доков: ${r.docs}, сторов: ${r.stores}, каналов: ${r.channels}`)
+  console.log(`\nv2-доков: ${r.docs}, сторов: ${r.stores}, каналов: ${r.channels}, stub'ов: ${r.stubs}`)
 }

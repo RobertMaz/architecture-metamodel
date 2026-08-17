@@ -156,3 +156,109 @@ test('легаси-док без containerInfo игнорируется', () => 
   generate(root)
   assert.equal(existsSync(join(root, 'model/gen/shop.legacy.gen.c4')), false)
 })
+
+// ---------- подпроект 3: разрешение вызовов ----------
+
+const visitsDoc = {
+  container: 'petclinic.visits',
+  source: { repo: 'r', commit: 'c', extractedAt: '2026-08-17', extractor: 'x' },
+  containerInfo: { kind: 'service', title: 'visits-service', technology: 'Java' },
+  api: { id: 'api', title: 'visits API', technology: 'HTTP/JSON', basePath: '/', public: true },
+  operations: [
+    { method: 'GET', path: '/pets/visits', source: 's#L1', confidence: 0.95 },
+  ],
+}
+
+function withCall(target, methodPath = { method: 'GET', path: '/pets/visits' }) {
+  return {
+    ...doc,
+    publishes: [],
+    subscribes: [],
+    stores: [],
+    calls: [{ ...methodPath, target, source: 'src/C.java#L9', confidence: 0.8 }],
+  }
+}
+
+test('алиас host -> ребро в операцию цели', () => {
+  const root = makeRoot()
+  writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))
+  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(withCall({ host: 'visits-service' })))
+  writeFileSync(join(root, 'registry/aliases.yml'), 'aliases:\n  visits-service: petclinic.visits\n')
+  generate(root)
+  const text = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api\.get_pets_visits 'GET \/pets\/visits'/)
+})
+
+test('алиас есть, операции нет -> ребро в api цели', () => {
+  const root = makeRoot()
+  writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify(withCall({ host: 'visits-service' }, { method: 'POST', path: '/nope' })),
+  )
+  writeFileSync(join(root, 'registry/aliases.yml'), 'aliases:\n  visits-service: petclinic.visits\n')
+  generate(root)
+  const text = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api 'POST \/nope'/)
+})
+
+test('нет алиаса и кандидатов -> stub в unknown и запись в unresolved', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify(withCall({ host: 'legacy-billing' }, { method: 'POST', path: '/api/v1/invoices' })),
+  )
+  generate(root)
+  const stub = readFileSync(join(root, 'model/gen/unknown/legacy_billing.gen.c4'), 'utf8')
+  assert.match(stub, /legacy_billing = service 'legacy-billing' \{/)
+  assert.match(stub, /#stub #inferred/)
+  assert.match(stub, /post_api_v1_invoices = operation 'POST \/api\/v1\/invoices'/)
+  const caller = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  assert.match(caller, /petclinic\.customers -\[call\]-> unknown\.legacy_billing\.api\.post_api_v1_invoices/)
+  const unresolved = JSON.parse(readFileSync(join(root, 'registry/unresolved.json'), 'utf8'))
+  assert.equal(unresolved.unresolved[0].stubId, 'unknown.legacy_billing')
+  assert.deepEqual(unresolved.unresolved[0].observedEndpoints, [{ method: 'POST', path: '/api/v1/invoices' }])
+})
+
+test('единственный кандидат со score 1.0 -> автосклейка вместо stub', () => {
+  const root = makeRoot()
+  writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))
+  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(withCall({ host: 'visits-internal' })))
+  generate(root)
+  const text = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api\.get_pets_visits/)
+  assert.equal(existsSync(join(root, 'model/gen/unknown/visits_internal.gen.c4')), false)
+})
+
+test('resolutions: container-склейка убирает stub, external рождает externalSystem', () => {
+  const root = makeRoot()
+  writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify({
+      ...withCall({ host: 'legacy-billing' }, { method: 'POST', path: '/x' }),
+      calls: [
+        { method: 'POST', path: '/x', target: { host: 'legacy-billing' }, source: 's#L1', confidence: 0.8 },
+        { method: 'POST', path: '/charge', target: { host: 'api.stripe.com' }, source: 's#L2', confidence: 0.8 },
+      ],
+    }),
+  )
+  // Сначала без решений — оба stub'а на месте
+  generate(root)
+  assert.equal(existsSync(join(root, 'model/gen/unknown/legacy_billing.gen.c4')), true)
+  // Теперь решения: склейка и external
+  writeFileSync(
+    join(root, 'registry/resolutions.yml'),
+    'resolutions:\n' +
+      '  unknown.legacy_billing:\n    container: petclinic.visits\n' +
+      '  unknown.api_stripe_com:\n    external:\n      id: stripe\n      title: Stripe\n      contract: MSA-1\n',
+  )
+  generate(root)
+  assert.equal(existsSync(join(root, 'model/gen/unknown/legacy_billing.gen.c4')), false, 'stub удалён после склейки')
+  const caller = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  assert.match(caller, /petclinic\.customers -\[call\]-> petclinic\.visits\.api 'POST \/x'/)
+  assert.match(caller, /petclinic\.customers -\[call\]-> stripe 'POST \/charge'/)
+  const ext = readFileSync(join(root, 'model/gen/unknown/_externals.gen.c4'), 'utf8')
+  assert.match(ext, /stripe = externalSystem 'Stripe' \{/)
+  assert.match(ext, /contract 'MSA-1'/)
+})
