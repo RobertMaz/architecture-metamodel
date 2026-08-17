@@ -8,6 +8,7 @@ repos:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-vets-service
     jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-vets-service/target/spring-petclinic-vets-service-4.0.1.jar
+    runtimeUrl: http://localhost:9966
   petclinic.visits:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-visits-service
