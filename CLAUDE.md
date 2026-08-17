@@ -14,7 +14,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm install
 npm run dev       # интерактивный просмотр, http://localhost:5173
 npm run check     # полный цикл: gen -> likec4 validate -> export json -> tools/check.mjs (то же, что CI)
-npm run gen       # tools/api-source/*.json -> model/gen/*.gen.c4
+npm run gen       # tools/api-source/*.json -> model/gen/*.gen.c4 (gen-api: легаси v1, gen-model: v2 + системы + рёбра)
+npm run test:tools   # тесты генератора (node:test)
+mvn -q -f analyzer/pom.xml test   # тесты анализатора
+mvn -q -f analyzer/pom.xml compile exec:java -Dexec.args="analyze <id>|--all --date YYYY-MM-DD"   # прогон анализа
 npm run impact -- shop.orders.api.post_api_v1_orders   # кто сломается при изменении
 npm run drift     # сверка build/model.json с tools/live-services.txt
 npm run owners    # владельцы систем из CODEOWNERS
@@ -27,6 +30,9 @@ node tools/verify.mjs build/model.json --list
 
 ## Структура
 
+- `analyzer/` — Kotlin/Maven: полки-источники (source, config) извлекают факты из репозиториев, реконсилятор сливает их в `tools/api-source/*.json` (v2). Спека: `docs/superpowers/specs/2026-08-17-arch-analyzer-design.md`.
+- `registry/systems.yml` — реестр систем (генерятся в `model/gen/systems/`); `registry/repos.yml` — привязка container-id к репозиторию. Владельцы — только в CODEOWNERS.
+- `workspace/` (gitignore) — evidence-файлы полок и отчёты реконсиляции; персистентны, дают дообогащение при появлении новых источников.
 - `model/00-spec.c4` — метамодель: типы элементов, связей, теги. Одна страница, расти не должна. Kind заводится только если он меняет правила связывания (проверяемые в `check.mjs`); если различие меняет только картинку — это style, ортогональный признак — tag.
 - `model/10-shop.c4` — файл на систему; владелец файла — команда в `CODEOWNERS`.
 - `model/20-views.c4` — виды, по одному на реальный вопрос.

@@ -183,6 +183,30 @@ node tools/impact.mjs build/model.json shop.orderCreated
 2. **`confidence` на каждую операцию, а не на файл.** Контроллер со Spring-аннотациями извлекается уверенно, роутинг через самописный диспетчер — нет, и это должно быть видно поэлементно.
 3. **Исходящие вызовы тоже стоит извлекать** (`calls: [{to: "billing", method, path}]`). Тогда рёбра между сервисами перестанут писаться руками — а это самая протухающая часть модели. В текущем формате этого блока нет намеренно: сначала входящие контракты, потом исходящие вызовы, иначе анализатор не взлетит.
 
+## Формат v2 (выход arch-analyzer)
+
+Док с блоком `containerInfo` — это v2: его обрабатывает `tools/gen-model.mjs`
+(контейнер, сторы, каналы и рёбра генерируются целиком), а `gen-api.mjs` его
+пропускает. Легаси-доки v1 без `containerInfo` работают по-старому.
+
+Новые блоки поверх v1:
+
+```json
+{
+  "containerInfo": { "kind": "service|worker", "title": "...", "technology": "...", "appName": "..." },
+  "subscribes": [ { "channel": "topic", "group": "cg", "payload": "Dto", "source": "...", "confidence": 0.9 } ],
+  "calls": [ { "method": "GET", "path": "/x", "target": { "host": "...", "feignName": "...", "urlTemplate": "..." }, "source": "...", "confidence": 0.8 } ],
+  "stores": [ { "kind": "jdbc|redis|s3", "address": "jdbc:...", "technology": "MySQL", "access": "read|write|readwrite", "entities": "A, B", "source": "...", "confidence": 0.9 } ]
+}
+```
+
+Отличия v2 от v1 в операциях: `params`/`request`/`response` — компактные строки
+(`name:in:type?`), не объекты. Пустой `address` стора = «свой дефолтный
+datasource»: такой стор именуется по контейнеру и НЕ склеивается с чужими —
+иначе неизвестные адреса дали бы ложный shared database. `calls` без
+`target.container` ждут разрешения через реестр (подпроект 3) и в рёбра пока
+не генерятся.
+
 ## Чего здесь намеренно нет
 
 - **Полных JSON-схем в графе.** Они в исходном JSON и в OpenAPI. В граф едет только то, по чему ходят.
