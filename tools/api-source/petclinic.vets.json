@@ -16,11 +16,11 @@
   },
   "operations" : [
     {
-      "confidence" : 0.95,
+      "confidence" : 0.99,
       "method" : "GET",
       "path" : "/vets",
       "response" : "Vet",
-      "source" : "src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44"
+      "source" : "src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList"
     }
   ],
   "publishes" : [ ],
@@ -34,10 +34,10 @@
     {
       "access" : "readwrite",
       "address" : "",
-      "confidence" : 0.9,
+      "confidence" : 0.98,
       "entities" : "Vet",
       "kind" : "jdbc",
-      "source" : "src/main/java/org/springframework/samples/petclinic/vets/model/VetRepository.java#L30"
+      "source" : "src/main/java/org/springframework/samples/petclinic/vets/model/VetRepository.java#L30; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.model.VetRepository"
     }
   ],
   "subscribes" : [ ]
