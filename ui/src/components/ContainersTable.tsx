@@ -5,6 +5,7 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
+  type ColumnDef,
   type SortingState,
 } from "@tanstack/react-table"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
@@ -53,7 +54,8 @@ const col = createColumnHelper<ContainerInfo>()
 export function ContainersTable({ containers, loading }: { containers: ContainerInfo[]; loading: boolean }) {
   const [sorting, setSorting] = useState<SortingState>([{ id: "id", desc: false }])
 
-  const columns = useMemo(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const columns = useMemo<ColumnDef<ContainerInfo, any>[]>(
     () => [
       col.accessor("id", {
         header: "Контейнер",
