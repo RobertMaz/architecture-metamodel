@@ -32,6 +32,7 @@ class Reconciler(
         val all = evidences
             .flatMap { e -> e.facts.map { Located(e.lane, it) } }
             .sortedWith(compareBy({ rank(it.lane) }, { it.fact.attrs.toString() }, { it.fact.source }))
+            .let(::alignSpecPaths)
 
         val conflicts = mutableListOf<String>()
         val lowConfidence = mutableListOf<String>()
@@ -193,6 +194,53 @@ class Reconciler(
         )
         return doc to report
     }
+
+    /**
+     * Якорная синхронизация путей спеки: OpenAPI описывает пути относительно
+     * servers.url (например /petclinic/api + /owners), а код и mappings —
+     * servlet-относительно (/api/owners). Из суффиксов path-части servers.url
+     * ('' , /api, /petclinic/api) выбирается тот, при котором максимум путей
+     * спеки совпадает с эндпоинтами других полок, — и применяется ко всем.
+     */
+    private fun alignSpecPaths(all: List<Located>): List<Located> {
+        val specEndpoints = all.filter { it.fact.type == FactType.ENDPOINT && it.fact.attrs.containsKey("specServerPath") }
+        if (specEndpoints.isEmpty()) return all
+        val anchorPaths = all
+            .filter { it.fact.type == FactType.ENDPOINT && !it.fact.attrs.containsKey("specServerPath") }
+            .mapNotNull { it.fact.attrs["path"]?.let { p -> "${it.fact.attrs["method"]} ${normPath(p)}" } }
+            .toSet()
+
+        val base = specEndpoints.first().fact.attrs["specServerPath"] ?: return all
+        val segments = base.split('/').filter { it.isNotEmpty() }
+        val candidates = (segments.indices.map { i -> "/" + segments.drop(i).joinToString("/") } + "")
+        val best = candidates
+            .map { prefix ->
+                prefix to specEndpoints.count {
+                    val p = it.fact.attrs["path"] ?: ""
+                    "${it.fact.attrs["method"]} ${normPath(prefix + p)}" in anchorPaths
+                }
+            }
+            .sortedWith(compareByDescending<Pair<String, Int>> { it.second }.thenBy { it.first.length })
+            .first()
+        if (best.second == 0 || best.first.isEmpty()) {
+            // якоря нет — пути спеки остаются как есть, только чистим служебный атрибут
+            return all.map { strip(it) }
+        }
+        return all.map { located ->
+            if (!located.fact.attrs.containsKey("specServerPath") || located.fact.type != FactType.ENDPOINT) strip(located)
+            else {
+                val attrs = java.util.TreeMap(located.fact.attrs.filterKeys { it != "specServerPath" })
+                attrs["path"] = best.first + (located.fact.attrs["path"] ?: "")
+                located.copy(fact = located.fact.copy(attrs = attrs))
+            }
+        }
+    }
+
+    private fun strip(located: Located): Located =
+        if (!located.fact.attrs.containsKey("specServerPath")) located
+        else located.copy(
+            fact = located.fact.copy(attrs = java.util.TreeMap(located.fact.attrs.filterKeys { it != "specServerPath" })),
+        )
 
     private fun round2(x: Double): Double = (x * 100).roundToInt() / 100.0
 

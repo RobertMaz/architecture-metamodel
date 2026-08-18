@@ -83,7 +83,8 @@ class RuntimeLane : Lane {
                 }
                 return null
             }
-            prop("spring.datasource.url")?.let {
+            // Actuator маскирует секретные значения звёздочками — это не адрес
+            prop("spring.datasource.url")?.takeIf { !it.matches(Regex("\\*+")) }?.let {
                 facts += fact(
                     FactType.STORE_ACCESS, "actuator:/env", 0.97,
                     "kind" to "jdbc", "address" to it,

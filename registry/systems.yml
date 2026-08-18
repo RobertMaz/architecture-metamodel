@@ -4,4 +4,8 @@ systems:
   - id: petclinic
     kind: system
     title: PetClinic
-    description: Демо-ландшафт Spring PetClinic (пилот анализатора)
+    description: "Демо-ландшафт Spring PetClinic (пилот анализатора)"
+  - id: petrest
+    kind: system
+    title: "PetClinic REST"
+    description: "Монолитный REST-бэкенд petclinic (пилот полки openapi)"

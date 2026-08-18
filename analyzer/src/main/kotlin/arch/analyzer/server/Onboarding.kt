@@ -91,7 +91,7 @@ class Onboarding(private val archRoot: Path) {
 
         // Владение живёт там, где у него зубы.
         val owners = archRoot.resolve("CODEOWNERS")
-        val line = "/model/gen/systems/${s.id}.gen.c4  ${s.owner}\n"
+        val line = "/model/systems/${s.id}/  ${s.owner}\n"
         owners.writeText((if (owners.exists()) owners.readText().trimEnd('\n') + "\n" else "") + line)
         return Result.Created
     }

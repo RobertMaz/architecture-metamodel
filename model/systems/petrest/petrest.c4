@@ -1,0 +1,592 @@
+// Файл ведёт генератор (registry/systems.yml + tools/api-source/*.json).
+// Править руками МОЖНО, но регенерация перезапишет: закоммиченные правки
+// вытаскивай обратно через git diff, незакоммиченные — из workspace/_backup/.
+// Вся кухня системы в одном файле: контейнеры, сторы, каналы, связи, виды.
+
+model {
+
+  petrest = system 'PetClinic REST' {
+    description 'Монолитный REST-бэкенд petclinic (пилот полки openapi)'
+
+    backend = service 'backend' {
+      #inferred
+      description 'Сервис petrest.backend предоставляет базовую информацию о сервисе.'
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-rest 'repo'
+      metadata {
+        repo 'https://github.com/spring-petclinic/spring-petclinic-rest'
+        commit '698bd83'
+        extracted-at '2026-08-18'
+      }
+
+      api = api 'backend API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/'
+        }
+
+        get = operation 'GET /' {
+          #inferred
+          description 'Корневой эндпоинт сервиса petrest.backend'
+          metadata {
+            method 'GET'
+            path '/'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/rest/controller/v1/RootRestControllerV1.java#L41; llm:enrich'
+            confidence '1'
+          }
+        }
+
+        get_api_oops = operation 'GET /api/oops' {
+          #inferred
+          description 'Always fails'
+          metadata {
+            method 'GET'
+            path '/api/oops'
+            source 'src/main/resources/openapi.yml'
+            confidence '0.95'
+          }
+        }
+
+        get_api_owners = operation 'GET /api/owners' {
+          #inferred
+          description 'Lists pet owners'
+          metadata {
+            method 'GET'
+            path '/api/owners'
+            params 'lastName:query:string?'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_owners = operation 'POST /api/owners' {
+          #inferred
+          description 'Adds a pet owner'
+          metadata {
+            method 'POST'
+            path '/api/owners'
+            request 'OwnerFields'
+            responses 'Owner'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        delete_api_owners_p = operation 'DELETE /api/owners/{ownerId}' {
+          #inferred
+          description 'Delete an owner by ID'
+          metadata {
+            method 'DELETE'
+            path '/api/owners/{ownerId}'
+            params 'ownerId:path:integer'
+            responses 'Owner'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_owners_p = operation 'GET /api/owners/{ownerId}' {
+          #inferred
+          description 'Get a pet owner by ID'
+          metadata {
+            method 'GET'
+            path '/api/owners/{ownerId}'
+            params 'ownerId:path:integer'
+            responses 'Owner'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        put_api_owners_p = operation 'PUT /api/owners/{ownerId}' {
+          #inferred
+          description 'Update a pet owner\'s details'
+          metadata {
+            method 'PUT'
+            path '/api/owners/{ownerId}'
+            params 'ownerId:path:integer'
+            request 'OwnerFields'
+            responses 'Owner'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_owners_p_pets = operation 'POST /api/owners/{ownerId}/pets' {
+          #inferred
+          description 'Adds a pet to an owner'
+          metadata {
+            method 'POST'
+            path '/api/owners/{ownerId}/pets'
+            params 'ownerId:path:integer'
+            request 'PetFields'
+            responses 'Pet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_owners_p_pets_p = operation 'GET /api/owners/{ownerId}/pets/{petId}' {
+          #inferred
+          description 'Get a pet by ID'
+          metadata {
+            method 'GET'
+            path '/api/owners/{ownerId}/pets/{petId}'
+            params 'ownerId:path:integer, petId:path:integer'
+            responses 'Pet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        put_api_owners_p_pets_p = operation 'PUT /api/owners/{ownerId}/pets/{petId}' {
+          #inferred
+          description 'Update a pet\'s details'
+          metadata {
+            method 'PUT'
+            path '/api/owners/{ownerId}/pets/{petId}'
+            params 'ownerId:path:integer, petId:path:integer'
+            request 'PetFields'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_owners_p_pets_p_visits = operation 'POST /api/owners/{ownerId}/pets/{petId}/visits' {
+          #inferred
+          description 'Adds a vet visit'
+          metadata {
+            method 'POST'
+            path '/api/owners/{ownerId}/pets/{petId}/visits'
+            params 'ownerId:path:integer, petId:path:integer'
+            request 'VisitFields'
+            responses 'Visit'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_pets = operation 'GET /api/pets' {
+          #inferred
+          description 'Lists pet'
+          metadata {
+            method 'GET'
+            path '/api/pets'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        delete_api_pets_p = operation 'DELETE /api/pets/{petId}' {
+          #inferred
+          description 'Delete a pet by ID'
+          metadata {
+            method 'DELETE'
+            path '/api/pets/{petId}'
+            params 'petId:path:integer'
+            responses 'Pet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_pets_p = operation 'GET /api/pets/{petId}' {
+          #inferred
+          description 'Get a pet by ID'
+          metadata {
+            method 'GET'
+            path '/api/pets/{petId}'
+            params 'petId:path:integer'
+            responses 'Pet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        put_api_pets_p = operation 'PUT /api/pets/{petId}' {
+          #inferred
+          description 'Update a pet by ID'
+          metadata {
+            method 'PUT'
+            path '/api/pets/{petId}'
+            params 'petId:path:integer'
+            request 'Pet'
+            responses 'Pet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_pettypes = operation 'GET /api/pettypes' {
+          #inferred
+          description 'Lists pet types'
+          metadata {
+            method 'GET'
+            path '/api/pettypes'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_pettypes = operation 'POST /api/pettypes' {
+          #inferred
+          description 'Create a pet type'
+          metadata {
+            method 'POST'
+            path '/api/pettypes'
+            request 'PetTypeFields'
+            responses 'PetType'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        delete_api_pettypes_p = operation 'DELETE /api/pettypes/{petTypeId}' {
+          #inferred
+          description 'Delete a pet type by ID'
+          metadata {
+            method 'DELETE'
+            path '/api/pettypes/{petTypeId}'
+            params 'petTypeId:path:integer'
+            responses 'PetType'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_pettypes_p = operation 'GET /api/pettypes/{petTypeId}' {
+          #inferred
+          description 'Get a pet type by ID'
+          metadata {
+            method 'GET'
+            path '/api/pettypes/{petTypeId}'
+            params 'petTypeId:path:integer'
+            responses 'PetType'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        put_api_pettypes_p = operation 'PUT /api/pettypes/{petTypeId}' {
+          #inferred
+          description 'Update a pet type by ID'
+          metadata {
+            method 'PUT'
+            path '/api/pettypes/{petTypeId}'
+            params 'petTypeId:path:integer'
+            request 'PetType'
+            responses 'PetType'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_specialties = operation 'GET /api/specialties' {
+          #inferred
+          description 'Lists specialties'
+          metadata {
+            method 'GET'
+            path '/api/specialties'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_specialties = operation 'POST /api/specialties' {
+          #inferred
+          description 'Create a specialty'
+          metadata {
+            method 'POST'
+            path '/api/specialties'
+            request 'Specialty'
+            responses 'Specialty'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        delete_api_specialties_p = operation 'DELETE /api/specialties/{specialtyId}' {
+          #inferred
+          description 'Delete a specialty by ID'
+          metadata {
+            method 'DELETE'
+            path '/api/specialties/{specialtyId}'
+            params 'specialtyId:path:integer'
+            responses 'Specialty'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_specialties_p = operation 'GET /api/specialties/{specialtyId}' {
+          #inferred
+          description 'Get a specialty by ID'
+          metadata {
+            method 'GET'
+            path '/api/specialties/{specialtyId}'
+            params 'specialtyId:path:integer'
+            responses 'Specialty'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        put_api_specialties_p = operation 'PUT /api/specialties/{specialtyId}' {
+          #inferred
+          description 'Update a specialty by ID'
+          metadata {
+            method 'PUT'
+            path '/api/specialties/{specialtyId}'
+            params 'specialtyId:path:integer'
+            request 'Specialty'
+            responses 'Specialty'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_users = operation 'POST /api/users' {
+          #inferred
+          description 'Create a user'
+          metadata {
+            method 'POST'
+            path '/api/users'
+            request 'User'
+            responses 'User'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_v2_owners = operation 'GET /api/v2/owners' {
+          #inferred
+          description 'Lists pet owners with pagination'
+          metadata {
+            method 'GET'
+            path '/api/v2/owners'
+            params 'lastName:query:string?, page:query:integer?, size:query:integer?'
+            responses 'OwnerPage'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_v2_pets = operation 'GET /api/v2/pets' {
+          #inferred
+          description 'Lists pets with pagination.'
+          metadata {
+            method 'GET'
+            path '/api/v2/pets'
+            params 'page:query:integer?, size:query:integer?'
+            responses 'PetPage'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_vets = operation 'GET /api/vets' {
+          #inferred
+          description 'Lists vets'
+          metadata {
+            method 'GET'
+            path '/api/vets'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_vets = operation 'POST /api/vets' {
+          #inferred
+          description 'Create a Vet'
+          metadata {
+            method 'POST'
+            path '/api/vets'
+            request 'Vet'
+            responses 'Vet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        delete_api_vets_p = operation 'DELETE /api/vets/{vetId}' {
+          #inferred
+          description 'Delete a vet by ID'
+          metadata {
+            method 'DELETE'
+            path '/api/vets/{vetId}'
+            params 'vetId:path:integer'
+            responses 'Vet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_vets_p = operation 'GET /api/vets/{vetId}' {
+          #inferred
+          description 'Get a vet by ID'
+          metadata {
+            method 'GET'
+            path '/api/vets/{vetId}'
+            params 'vetId:path:integer'
+            responses 'Vet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        put_api_vets_p = operation 'PUT /api/vets/{vetId}' {
+          #inferred
+          description 'Update a vet  by ID'
+          metadata {
+            method 'PUT'
+            path '/api/vets/{vetId}'
+            params 'vetId:path:integer'
+            request 'Vet'
+            responses 'Vet'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_visits = operation 'GET /api/visits' {
+          #inferred
+          description 'Lists visits'
+          metadata {
+            method 'GET'
+            path '/api/visits'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        post_api_visits = operation 'POST /api/visits' {
+          #inferred
+          description 'Create a visit'
+          metadata {
+            method 'POST'
+            path '/api/visits'
+            request 'Visit'
+            responses 'Visit'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        delete_api_visits_p = operation 'DELETE /api/visits/{visitId}' {
+          #inferred
+          description 'Delete a visit by ID'
+          metadata {
+            method 'DELETE'
+            path '/api/visits/{visitId}'
+            params 'visitId:path:integer'
+            responses 'Visit'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_api_visits_p = operation 'GET /api/visits/{visitId}' {
+          #inferred
+          description 'Get a visit by ID'
+          metadata {
+            method 'GET'
+            path '/api/visits/{visitId}'
+            params 'visitId:path:integer'
+            responses 'Visit'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        put_api_visits_p = operation 'PUT /api/visits/{visitId}' {
+          #inferred
+          description 'Update a visit by ID'
+          metadata {
+            method 'PUT'
+            path '/api/visits/{visitId}'
+            params 'visitId:path:integer'
+            request 'VisitFields'
+            responses 'Visit'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+
+        get_swagger_ui_html = operation 'GET /swagger-ui.html' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/swagger-ui.html'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+
+        get_v3_api_docs = operation 'GET /v3/api-docs' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/v3/api-docs'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+
+        get_v3_api_docs_yaml = operation 'GET /v3/api-docs.yaml' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/v3/api-docs.yaml'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+
+        get_v3_api_docs_swagger_config = operation 'GET /v3/api-docs/swagger-config' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/v3/api-docs/swagger-config'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+      }
+    }
+
+    db_backend = store 'backend' {
+      #inferred
+      technology 'JDBC'
+      metadata {
+        entities 'Owner, Pet, PetType, Specialty, User, Vet, Visit'
+      }
+    }
+  }
+
+  petrest.backend -[read]-> petrest.db_backend
+  petrest.backend -[write]-> petrest.db_backend
+}
+
+views 'PetClinic REST' {
+
+  view petrest_containers of petrest {
+    title 'Контейнеры'
+    description 'Кто с кем связан. Отсюда видно радиус изменения'
+    include *
+    global predicate noContracts
+    global style base
+    autoLayout TopBottom
+  }
+
+  view petrest_backend_api of petrest.backend {
+    title 'API / backend'
+    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    include *
+    include petrest.backend.api
+    include petrest.backend.api.*
+    include * -> petrest.backend.api.*
+    global style base
+    autoLayout LeftRight
+  }
+}

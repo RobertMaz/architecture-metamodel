@@ -42,7 +42,7 @@ class OnboardingTest {
         assertTrue(yml.indexOf("id: alpha") < yml.indexOf("id: zeta"), "сортировка по id:\n$yml")
         assertTrue(yml.contains("title: Альфа"))
         val owners = root.resolve("CODEOWNERS").readText()
-        assertTrue(owners.contains("/model/gen/systems/alpha.gen.c4"), owners)
+        assertTrue(owners.contains("/model/systems/alpha/"), owners)
         assertTrue(owners.contains("@acme/team-a"), owners)
     }
 

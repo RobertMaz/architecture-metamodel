@@ -124,6 +124,31 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `пути спеки выравниваются по якорному префиксу из servers url`() {
+        val source = ev(
+            "source",
+            fact(FactType.ENDPOINT, "src/A.java#L1", 0.95, "method" to "GET", "path" to "/api/owners"),
+            fact(FactType.ENDPOINT, "src/A.java#L2", 0.95, "method" to "GET", "path" to "/api/owners/{id}"),
+        )
+        val openapi = ev(
+            "openapi",
+            fact(FactType.ENDPOINT, "openapi.yml", 0.95, "method" to "GET", "path" to "/owners", "specServerPath" to "/petclinic/api", "summary" to "Все владельцы"),
+            fact(FactType.ENDPOINT, "openapi.yml", 0.95, "method" to "GET", "path" to "/owners/{ownerId}", "specServerPath" to "/petclinic/api"),
+            fact(FactType.ENDPOINT, "openapi.yml", 0.95, "method" to "POST", "path" to "/owners", "specServerPath" to "/petclinic/api"),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(source, openapi), meta)
+
+        val sigs = doc.operations.map { "${it.method} ${it.path}" }.sorted()
+        // имя параметра — от приоритетной полки openapi ({ownerId}), идентичность от него не зависит
+        assertEquals(listOf("GET /api/owners", "GET /api/owners/{ownerId}", "POST /api/owners"), sigs, "дублей нет: /api выбран якорем")
+        val owners = doc.operations.single { it.method == "GET" && it.path == "/api/owners" }
+        assertEquals("Все владельцы", owners.summary, "детали спеки слились")
+        assertEquals(1.0, owners.confidence, "подтверждение двумя полками (0.95+0.95 -> округление к 1.0)")
+        // непересекающийся эндпоинт спеки тоже переехал под якорь
+        assertTrue(doc.operations.any { it.method == "POST" && it.path == "/api/owners" })
+    }
+
+    @Test
     fun `runtime побеждает source в деталях`() {
         val source = ev(
             "source",

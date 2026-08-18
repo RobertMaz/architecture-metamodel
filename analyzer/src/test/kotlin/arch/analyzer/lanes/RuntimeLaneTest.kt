@@ -25,6 +25,8 @@ class RuntimeLaneTest {
     {"propertySources":[{"name":"applicationConfig","properties":{
       "spring.datasource.url":{"value":"jdbc:hsqldb:mem:vets"},
       "spring.application.name":{"value":"vets-service"}
+    }},{"name":"masked","properties":{
+      "spring.datasource.url":{"value":"******"}
     }}]}
     """.trimIndent()
 

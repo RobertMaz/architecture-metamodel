@@ -2,6 +2,8 @@ openapi: 3.0.3
 info:
   title: Orders API
   version: '1.0'
+servers:
+  - url: http://localhost:9966/petclinic/api
 paths:
   /api/v1/orders:
     post:

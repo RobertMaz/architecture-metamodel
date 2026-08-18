@@ -36,6 +36,10 @@ class OpenApiLaneTest {
         assertEquals("id:path:string, expand:query:string?", get.attrs["params"])
 
         assertEquals("true", eps.single { it.attrs["method"] == "DELETE" }.attrs["deprecated"])
+        assertTrue(
+            eps.all { it.attrs["specServerPath"] == "/petclinic/api" },
+            "path-часть servers.url едет атрибутом — реконсилятор согласует префиксы",
+        )
     }
 
     @Test

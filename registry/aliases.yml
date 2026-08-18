@@ -4,6 +4,7 @@ aliases:
   admin: petclinic.admin
   admin-server: petclinic.admin
   api-gateway: petclinic.gateway
+  backend: petrest.backend
   config: petclinic.config
   customers: petclinic.customers
   customers-service: petclinic.customers

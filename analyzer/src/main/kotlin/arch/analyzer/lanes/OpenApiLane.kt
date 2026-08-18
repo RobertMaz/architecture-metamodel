@@ -48,6 +48,12 @@ class OpenApiLane : Lane {
         val source = input.repoDir.relativize(file).toString().replace('\\', '/')
             .ifEmpty { file.name }
 
+        // path-часть servers.url — кандидат в префикс путей; согласует реконсилятор
+        val serverPath = root.path("servers").firstOrNull()?.path("url")?.asText("")
+            ?.let { runCatching { java.net.URI(it).path }.getOrNull() ?: it.takeIf { u -> u.startsWith("/") } }
+            ?.trimEnd('/')
+            ?.takeIf { it.isNotEmpty() }
+
         val facts = mutableListOf<Fact>()
         root.path("paths").fields().forEach { (path, ops) ->
             ops.fields().forEach { (method, op) ->
@@ -56,6 +62,7 @@ class OpenApiLane : Lane {
                     "method" to method.uppercase(),
                     "path" to path,
                 )
+                serverPath?.let { attrs += "specServerPath" to it }
                 op.path("summary").asText("").takeIf { it.isNotEmpty() }?.let { attrs += "summary" to it }
                 params(op)?.let { attrs += "params" to it }
                 refName(op.path("requestBody"))?.let { attrs += "request" to it }

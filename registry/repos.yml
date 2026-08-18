@@ -42,3 +42,8 @@ repos:
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-visits-service
     jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-visits-service/target/spring-petclinic-visits-service-4.0.1.jar
     runtimeUrl: http://localhost:9102
+  petrest.backend:
+    repo: https://github.com/spring-petclinic/spring-petclinic-rest
+    path: /home/rmazitov/IdeaProjects/spring-petclinic-rest
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-rest/target/spring-petclinic-rest-4.0.2.jar
+    runtimeUrl: http://localhost:9966/petclinic

@@ -1,0 +1,396 @@
+{
+  "api" : {
+    "basePath" : "/",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "backend API"
+  },
+  "calls" : [ ],
+  "container" : "petrest.backend",
+  "containerInfo" : {
+    "description" : "Сервис petrest.backend предоставляет базовую информацию о сервисе.",
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "backend"
+  },
+  "operations" : [
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "path" : "/",
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/rest/controller/v1/RootRestControllerV1.java#L41; llm:enrich",
+      "summary" : "Корневой эндпоинт сервиса petrest.backend"
+    },
+    {
+      "confidence" : 0.95,
+      "method" : "GET",
+      "path" : "/api/oops",
+      "source" : "src/main/resources/openapi.yml",
+      "summary" : "Always fails"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "lastName:query:string?",
+      "path" : "/api/owners",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists pet owners"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "path" : "/api/owners",
+      "request" : "OwnerFields",
+      "response" : "Owner",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Adds a pet owner"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "DELETE",
+      "params" : "ownerId:path:integer",
+      "path" : "/api/owners/{ownerId}",
+      "response" : "Owner",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Delete an owner by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "ownerId:path:integer",
+      "path" : "/api/owners/{ownerId}",
+      "response" : "Owner",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Get a pet owner by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "PUT",
+      "params" : "ownerId:path:integer",
+      "path" : "/api/owners/{ownerId}",
+      "request" : "OwnerFields",
+      "response" : "Owner",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Update a pet owner's details"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "params" : "ownerId:path:integer",
+      "path" : "/api/owners/{ownerId}/pets",
+      "request" : "PetFields",
+      "response" : "Pet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Adds a pet to an owner"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "ownerId:path:integer, petId:path:integer",
+      "path" : "/api/owners/{ownerId}/pets/{petId}",
+      "response" : "Pet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Get a pet by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "PUT",
+      "params" : "ownerId:path:integer, petId:path:integer",
+      "path" : "/api/owners/{ownerId}/pets/{petId}",
+      "request" : "PetFields",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Update a pet's details"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "params" : "ownerId:path:integer, petId:path:integer",
+      "path" : "/api/owners/{ownerId}/pets/{petId}/visits",
+      "request" : "VisitFields",
+      "response" : "Visit",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Adds a vet visit"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "path" : "/api/pets",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists pet"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "DELETE",
+      "params" : "petId:path:integer",
+      "path" : "/api/pets/{petId}",
+      "response" : "Pet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Delete a pet by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "petId:path:integer",
+      "path" : "/api/pets/{petId}",
+      "response" : "Pet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Get a pet by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "PUT",
+      "params" : "petId:path:integer",
+      "path" : "/api/pets/{petId}",
+      "request" : "Pet",
+      "response" : "Pet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Update a pet by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "path" : "/api/pettypes",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists pet types"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "path" : "/api/pettypes",
+      "request" : "PetTypeFields",
+      "response" : "PetType",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Create a pet type"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "DELETE",
+      "params" : "petTypeId:path:integer",
+      "path" : "/api/pettypes/{petTypeId}",
+      "response" : "PetType",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Delete a pet type by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "petTypeId:path:integer",
+      "path" : "/api/pettypes/{petTypeId}",
+      "response" : "PetType",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Get a pet type by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "PUT",
+      "params" : "petTypeId:path:integer",
+      "path" : "/api/pettypes/{petTypeId}",
+      "request" : "PetType",
+      "response" : "PetType",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Update a pet type by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "path" : "/api/specialties",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists specialties"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "path" : "/api/specialties",
+      "request" : "Specialty",
+      "response" : "Specialty",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Create a specialty"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "DELETE",
+      "params" : "specialtyId:path:integer",
+      "path" : "/api/specialties/{specialtyId}",
+      "response" : "Specialty",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Delete a specialty by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "specialtyId:path:integer",
+      "path" : "/api/specialties/{specialtyId}",
+      "response" : "Specialty",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Get a specialty by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "PUT",
+      "params" : "specialtyId:path:integer",
+      "path" : "/api/specialties/{specialtyId}",
+      "request" : "Specialty",
+      "response" : "Specialty",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Update a specialty by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "path" : "/api/users",
+      "request" : "User",
+      "response" : "User",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Create a user"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "lastName:query:string?, page:query:integer?, size:query:integer?",
+      "path" : "/api/v2/owners",
+      "response" : "OwnerPage",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists pet owners with pagination"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "page:query:integer?, size:query:integer?",
+      "path" : "/api/v2/pets",
+      "response" : "PetPage",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists pets with pagination."
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "path" : "/api/vets",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists vets"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "path" : "/api/vets",
+      "request" : "Vet",
+      "response" : "Vet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Create a Vet"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "DELETE",
+      "params" : "vetId:path:integer",
+      "path" : "/api/vets/{vetId}",
+      "response" : "Vet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Delete a vet by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "vetId:path:integer",
+      "path" : "/api/vets/{vetId}",
+      "response" : "Vet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Get a vet by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "PUT",
+      "params" : "vetId:path:integer",
+      "path" : "/api/vets/{vetId}",
+      "request" : "Vet",
+      "response" : "Vet",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Update a vet  by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "path" : "/api/visits",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Lists visits"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "POST",
+      "path" : "/api/visits",
+      "request" : "Visit",
+      "response" : "Visit",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Create a visit"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "DELETE",
+      "params" : "visitId:path:integer",
+      "path" : "/api/visits/{visitId}",
+      "response" : "Visit",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Delete a visit by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "GET",
+      "params" : "visitId:path:integer",
+      "path" : "/api/visits/{visitId}",
+      "response" : "Visit",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Get a visit by ID"
+    },
+    {
+      "confidence" : 1.0,
+      "method" : "PUT",
+      "params" : "visitId:path:integer",
+      "path" : "/api/visits/{visitId}",
+      "request" : "VisitFields",
+      "response" : "Visit",
+      "source" : "actuator:/mappings; src/main/resources/openapi.yml",
+      "summary" : "Update a visit by ID"
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/swagger-ui.html",
+      "source" : "actuator:/mappings"
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/v3/api-docs",
+      "source" : "actuator:/mappings"
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/v3/api-docs.yaml",
+      "source" : "actuator:/mappings"
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/v3/api-docs/swagger-config",
+      "source" : "actuator:/mappings"
+    }
+  ],
+  "publishes" : [ ],
+  "source" : {
+    "commit" : "698bd83",
+    "extractedAt" : "2026-08-18",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "https://github.com/spring-petclinic/spring-petclinic-rest"
+  },
+  "stores" : [
+    {
+      "access" : "readwrite",
+      "address" : "",
+      "confidence" : 0.9,
+      "entities" : "Owner, Pet, PetType, Specialty, User, Vet, Visit",
+      "kind" : "jdbc",
+      "source" : "src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataOwnerRepository.java#L36; src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetRepository.java#L37; src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataPetTypeRepository.java#L29; src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataSpecialtyRepository.java#L30; src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataUserRepository.java#L8; src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataVetRepository.java#L30; src/main/java/org/springframework/samples/petclinic/repository/springdatajpa/SpringDataVisitRepository.java#L30"
+    }
+  ],
+  "subscribes" : [ ]
+}
