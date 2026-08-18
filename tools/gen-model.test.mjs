@@ -139,8 +139,8 @@ test('views: обзорный вид системы и api-вид контейн
   assert.match(text, /global predicate noContracts/)
   assert.match(text, /view petclinic_customers_api of petclinic\.customers \{/)
   assert.match(text, /title 'API \/ customers-service'/, 'api-виды в подпапке API')
-  assert.match(text, /include petclinic\.customers\.api\.\*/)
-  assert.match(text, /include \* -> petclinic\.customers\.api\.\*/)
+  assert.match(text, /include petclinic\.customers\.\*\*/, 'три уровня через .**')
+  assert.match(text, /include \* -> petclinic\.customers\.\*\*/)
 })
 
 test('повторный прогон не переписывает файлы', () => {
