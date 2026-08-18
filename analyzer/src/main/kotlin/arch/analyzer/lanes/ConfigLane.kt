@@ -50,8 +50,9 @@ class ConfigLane : Lane {
 
         for (file in defaults) {
             val rel = "src/main/resources/${file.name}"
-            val flat = flatten(file)
-            facts += recognize(flat, rel)
+            val docs = readDocs(file)
+            facts += recognize(flatten(docs), rel)
+            facts += gatewayRoutes(docs, rel)
         }
         if (profiles.isNotEmpty()) {
             facts += fact(
@@ -62,27 +63,64 @@ class ConfigLane : Lane {
         return facts
     }
 
-    /** Вложенный yml/properties -> плоская map "a.b.c" -> значение. */
-    private fun flatten(file: Path): Map<String, String> {
-        val out = sortedMapOf<String, String>()
+    /** Все документы multi-doc yml (---); properties — один «документ». */
+    private fun readDocs(file: Path): List<com.fasterxml.jackson.databind.JsonNode> {
         if (file.name.endsWith(".properties")) {
             val p = Properties()
             file.readText().reader().use { p.load(it) }
-            for (k in p.stringPropertyNames()) out[k] = p.getProperty(k)
-            return out
+            val node = yaml.createObjectNode()
+            for (k in p.stringPropertyNames().sorted()) node.put(k, p.getProperty(k))
+            return listOf(node)
         }
-        val root = yaml.readTree(file.toFile()) ?: return out
+        val parser = yaml.factory.createParser(file.toFile())
+        return yaml.readValues(parser, com.fasterxml.jackson.databind.JsonNode::class.java)
+            .readAll()
+            .filterNotNull()
+    }
+
+    /** Документы -> плоская map "a.b.c" -> значение; первый документ побеждает. */
+    private fun flatten(docs: List<com.fasterxml.jackson.databind.JsonNode>): Map<String, String> {
+        val out = sortedMapOf<String, String>()
         fun walk(prefix: String, node: com.fasterxml.jackson.databind.JsonNode) {
             when {
                 node.isObject -> node.fields().forEach { (k, v) ->
                     walk(if (prefix.isEmpty()) k else "$prefix.$k", v)
                 }
-                node.isArray -> out[prefix] = node.joinToString(",") { it.asText() }
-                else -> out[prefix] = node.asText()
+                node.isArray -> out.putIfAbsent(prefix, node.joinToString(",") { it.asText() })
+                else -> out.putIfAbsent(prefix, node.asText())
             }
         }
-        walk("", root)
+        for (doc in docs) walk("", doc)
         return out
+    }
+
+    /**
+     * Маршруты Spring Cloud Gateway — рёбра, живущие в yml, а не в коде.
+     * Оба пути конфига: spring.cloud.gateway.routes и .gateway.server.webflux.routes.
+     */
+    private fun gatewayRoutes(docs: List<com.fasterxml.jackson.databind.JsonNode>, source: String): List<Fact> {
+        val facts = mutableListOf<Fact>()
+        for (doc in docs) {
+            val gateway = doc.path("spring").path("cloud").path("gateway")
+            for (routes in listOf(gateway.path("routes"), gateway.path("server").path("webflux").path("routes"))) {
+                if (!routes.isArray) continue
+                for (r in routes) {
+                    val uri = r.path("uri").asText("")
+                    if (uri.isEmpty()) continue
+                    val host = when {
+                        uri.startsWith("lb://") -> uri.removePrefix("lb://")
+                        uri.startsWith("http://") || uri.startsWith("https://") -> hostOf(uri) ?: continue
+                        else -> continue
+                    }
+                    val path = r.path("predicates").firstOrNull { it.asText().startsWith("Path=") }
+                        ?.asText()?.removePrefix("Path=")
+                    val attrs = mutableListOf("host" to host, "urlTemplate" to uri)
+                    path?.let { attrs += "route" to it }
+                    facts += fact(FactType.OUTGOING_CALL, source, 0.9, *attrs.toTypedArray())
+                }
+            }
+        }
+        return facts
     }
 
     private fun jdbcTechnology(url: String): String {

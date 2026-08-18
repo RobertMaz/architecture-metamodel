@@ -1,0 +1,25 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: vets-service
+              uri: lb://vets-service
+              predicates:
+                - Path=/api/vet/**
+              filters:
+                - StripPrefix=2
+---
+spring:
+  application:
+    name: не-должно-победить
+  cloud:
+    gateway:
+      routes:
+        - id: customers-service
+          uri: lb://customers-service
+          predicates:
+            - Path=/api/customer/**

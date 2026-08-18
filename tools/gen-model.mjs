@@ -181,7 +181,11 @@ export function generate(root = '.') {
   }
 
   const callLabel = (call) =>
-    call.method && call.path ? `${call.method} ${call.path}` : call.method ?? ''
+    call.method && call.path
+      ? `${call.method} ${call.path}`
+      : call.target?.route
+        ? `route ${call.target.route}`
+        : call.method ?? ''
 
   for (const { caller, call } of callRecords) {
     const t = call.target ?? {}

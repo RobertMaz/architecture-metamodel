@@ -107,6 +107,21 @@ class RuntimeLaneTest {
     }
 
     @Test
+    fun `otel json-lines - OTLP-обёртки построчно и peer service вместо localhost`() {
+        val traces = Files.createTempDirectory("otel").resolve("spans.jsonl")
+        val line =
+            """{"resourceSpans":[{"scopeSpans":[{"spans":[{"traceId":"t9","kind":3,"attributes":[""" +
+                """{"key":"http.request.method","value":{"stringValue":"GET"}},""" +
+                """{"key":"url.full","value":{"stringValue":"http://localhost:9101/owners"}},""" +
+                """{"key":"peer.service","value":{"stringValue":"customers-service"}}]}]}]}]}"""
+        traces.writeText("$line\n$line\n")
+        val facts = RuntimeLane().extract(RepoInput("x", Files.createTempDirectory("r"), traces = traces))
+        val call = facts.single { it.type == FactType.OUTGOING_CALL }
+        assertEquals("customers-service", call.attrs["host"], "peer.service побеждает localhost")
+        assertEquals("/owners", call.attrs["path"])
+    }
+
+    @Test
     fun `не применима без runtimeUrl и traces`() {
         assertTrue(!RuntimeLane().applicable(RepoInput("x", Files.createTempDirectory("r"))))
     }

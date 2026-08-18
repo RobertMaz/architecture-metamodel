@@ -44,4 +44,21 @@ class ConfigLaneTest {
     fun `не применима без конфигов`() {
         assertTrue(!lane.applicable(RepoInput("x", Paths.get("/nonexistent"))))
     }
+
+    @Test
+    fun `multi-doc yml и маршруты spring cloud gateway`() {
+        val gw = Paths.get("src/test/resources/fixtures/gateway-app")
+        val facts = lane.extract(RepoInput("test.gw", gw))
+
+        // первый документ побеждает: appName из первого
+        assertTrue(facts.any { it.type == FactType.CONTAINER_HINT && it.attrs["appName"] == "api-gateway" })
+
+        val routes = facts.filter { it.type == FactType.OUTGOING_CALL && it.attrs.containsKey("route") }
+        assertEquals(2, routes.size, "оба стиля пути роутов: $routes")
+        val vets = routes.single { it.attrs["host"] == "vets-service" }
+        assertEquals("lb://vets-service", vets.attrs["urlTemplate"])
+        assertEquals("/api/vet/**", vets.attrs["route"])
+        assertEquals(0.9, vets.confidence)
+        assertTrue(routes.any { it.attrs["host"] == "customers-service" })
+    }
 }

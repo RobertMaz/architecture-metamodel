@@ -107,14 +107,24 @@ class RuntimeLane : Lane {
     private fun otelFacts(file: Path): List<Fact> {
         val spans = mutableListOf<JsonNode>()
         val text = file.readText().trim()
-        if (text.startsWith("{") && text.contains("resourceSpans")) {
-            val root = json.readTree(text)
-            for (rs in root.path("resourceSpans"))
-                for (ss in rs.path("scopeSpans"))
-                    for (s in ss.path("spans")) spans.add(s)
+        fun unwrap(node: JsonNode) {
+            if (node.has("resourceSpans")) {
+                for (rs in node.path("resourceSpans"))
+                    for (ss in rs.path("scopeSpans"))
+                        for (s in ss.path("spans")) spans.add(s)
+            } else {
+                spans.add(node)
+            }
+        }
+        if (text.startsWith("{") && !text.contains('\n')) {
+            runCatching { json.readTree(text) }.getOrNull()?.let { unwrap(it) }
+        } else if (text.startsWith("{") && text.contains("resourceSpans") && runCatching { json.readTree(text) }.getOrNull() != null) {
+            // один многострочный OTLP-документ
+            unwrap(json.readTree(text))
         } else {
+            // JSON-lines: каждая строка — либо OTLP-обёртка (logging-otlp экспортер), либо спан
             for (line in text.lines().filter { it.isNotBlank() }) {
-                runCatching { json.readTree(line) }.getOrNull()?.let { spans.add(it) }
+                runCatching { json.readTree(line) }.getOrNull()?.let { unwrap(it) }
             }
         }
 
@@ -140,7 +150,8 @@ class RuntimeLane : Lane {
                     else {
                         val uri = runCatching { URI(url) }.getOrNull()
                         val pairs = mutableListOf("method" to method)
-                        uri?.host?.let { pairs += "host" to it }
+                        // peer.service точнее хоста: lb уже отрезолвил URL в localhost:порт
+                        (attrs["peer.service"] ?: uri?.host)?.let { pairs += "host" to it }
                         uri?.path?.takeIf { it.isNotEmpty() }?.let { pairs += "path" to it }
                         fact(FactType.OUTGOING_CALL, src, 0.97, *pairs.toTypedArray())
                     }
