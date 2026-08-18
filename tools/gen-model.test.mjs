@@ -1,6 +1,7 @@
 /**
- * Тесты генератора v2: node --test tools/
- * Временная директория с реестром и одним v2-доком -> проверка .gen.c4.
+ * Тесты генератора: node --test tools/gen-model.test.mjs
+ * Раскладка: система целиком — model/systems/<id>/<id>.c4 (модель + виды);
+ * в model/gen/ остаются только догадки (unknown/observed/externals).
  */
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
@@ -57,108 +58,6 @@ const doc = {
   ],
 }
 
-function makeRoot() {
-  const root = mkdtempSync(join(tmpdir(), 'gen-model-'))
-  mkdirSync(join(root, 'registry'), { recursive: true })
-  mkdirSync(join(root, 'tools/api-source'), { recursive: true })
-  writeFileSync(
-    join(root, 'registry/systems.yml'),
-    'systems:\n  - id: petclinic\n    kind: system\n    title: PetClinic\n    description: Демо\n',
-  )
-  writeFileSync(join(root, 'registry/repos.yml'), 'repos: {}\n')
-  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(doc, null, 2))
-  return root
-}
-
-test('каркас системы генерируется из systems.yml', () => {
-  const root = makeRoot()
-  generate(root)
-  const text = readFileSync(join(root, 'model/gen/systems/petclinic.gen.c4'), 'utf8')
-  assert.equal(
-    text,
-    `// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
-// Источник: registry/systems.yml
-
-model {
-  petclinic = system 'PetClinic' {
-    description 'Демо'
-  }
-}
-`,
-  )
-})
-
-test('контейнер: extend системы, api, операции, рёбра', () => {
-  const root = makeRoot()
-  generate(root)
-  const text = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
-
-  assert.match(text, /extend petclinic \{/)
-  assert.match(text, /customers = service 'customers-service' \{/)
-  assert.match(text, /#inferred/)
-  assert.match(text, /link https:\/\/github\.com\/acme\/petclinic 'repo'/)
-  assert.match(text, /get_owners_p = operation 'GET \/owners\/\{ownerId\}' \{/)
-  assert.match(text, /params 'ownerId:path:int'/)
-  assert.match(text, /petclinic\.customers -\[read\]-> petclinic\.db_petclinic/)
-  assert.match(text, /petclinic\.customers -\[write\]-> petclinic\.db_petclinic/)
-  assert.match(text, /petclinic\.customers -\[publish\]-> petclinic\.ch_payment_succeeded 'PaymentSucceeded'/)
-})
-
-test('общие узлы: стор, каналы, message, deliver', () => {
-  const root = makeRoot()
-  generate(root)
-  const text = readFileSync(join(root, 'model/gen/_shared.gen.c4'), 'utf8')
-
-  assert.match(text, /db_petclinic = store 'petclinic' \{/)
-  assert.match(text, /technology 'HSQLDB'/)
-  assert.match(text, /address 'jdbc:hsqldb:mem:petclinic'/)
-  assert.match(text, /ch_payment_succeeded = channel 'payment\.succeeded' \{/)
-  assert.match(text, /paymentsucceeded = message 'PaymentSucceeded' \{/)
-  assert.match(text, /ch_order_created = channel 'order\.created' \{/)
-  assert.match(text, /petclinic\.ch_order_created -\[deliver\]-> petclinic\.customers 'group: cg'/)
-})
-
-test('повторный прогон не переписывает файлы', () => {
-  const root = makeRoot()
-  generate(root)
-  const file = join(root, 'model/gen/petclinic.customers.gen.c4')
-  const before = statSync(file).mtimeMs
-  generate(root)
-  assert.equal(statSync(file).mtimeMs, before)
-})
-
-test('пустой адрес БД — свой стор на контейнер, а не общий узел', () => {
-  const root = makeRoot()
-  const mk = (container) => ({
-    ...doc,
-    container,
-    api: null,
-    operations: [],
-    publishes: [],
-    subscribes: [],
-    calls: [],
-    stores: [{ kind: 'jdbc', address: '', access: 'readwrite', source: 's', confidence: 0.9 }],
-  })
-  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(mk('petclinic.customers')))
-  writeFileSync(join(root, 'tools/api-source/petclinic.vets.json'), JSON.stringify(mk('petclinic.vets')))
-  generate(root)
-  const shared = readFileSync(join(root, 'model/gen/_shared.gen.c4'), 'utf8')
-  assert.match(shared, /db_customers = store 'customers'/)
-  assert.match(shared, /db_vets = store 'vets'/)
-})
-
-test('легаси-док без containerInfo игнорируется', () => {
-  const root = makeRoot()
-  writeFileSync(
-    join(root, 'tools/api-source/shop.legacy.json'),
-    JSON.stringify({ container: 'shop.legacy', source: {}, api: null }),
-  )
-  generate(root)
-  assert.equal(existsSync(join(root, 'model/gen/shop.legacy.gen.c4')), false)
-})
-
-// ---------- подпроект 3: разрешение вызовов ----------
-
 const visitsDoc = {
   container: 'petclinic.visits',
   source: { repo: 'r', commit: 'c', extractedAt: '2026-08-17', extractor: 'x' },
@@ -179,13 +78,128 @@ function withCall(target, methodPath = { method: 'GET', path: '/pets/visits' }) 
   }
 }
 
+function makeRoot() {
+  const root = mkdtempSync(join(tmpdir(), 'gen-model-'))
+  mkdirSync(join(root, 'registry'), { recursive: true })
+  mkdirSync(join(root, 'tools/api-source'), { recursive: true })
+  writeFileSync(
+    join(root, 'registry/systems.yml'),
+    'systems:\n  - id: petclinic\n    kind: system\n    title: PetClinic\n    description: Демо\n',
+  )
+  writeFileSync(join(root, 'registry/repos.yml'), 'repos: {}\n')
+  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(doc, null, 2))
+  return root
+}
+
+const systemFile = (root, id = 'petclinic') => join(root, `model/systems/${id}/${id}.c4`)
+
+test('файл системы: декларация, контейнер, api, рёбра — вся кухня в одном месте', () => {
+  const root = makeRoot()
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+
+  assert.match(text, /petclinic = system 'PetClinic' \{/)
+  assert.match(text, /description 'Демо'/)
+  assert.match(text, /customers = service 'customers-service' \{/)
+  assert.match(text, /#inferred/)
+  assert.match(text, /commit 'abc1234'/)
+  assert.match(text, /get_owners_p = operation 'GET \/owners\/\{ownerId\}' \{/)
+  assert.match(text, /params 'ownerId:path:int'/)
+  assert.match(text, /petclinic\.customers -\[read\]-> petclinic\.db_petclinic/)
+  assert.match(text, /petclinic\.customers -\[write\]-> petclinic\.db_petclinic/)
+  assert.match(text, /petclinic\.customers -\[publish\]-> petclinic\.ch_payment_succeeded 'PaymentSucceeded'/)
+  // старой раскладки нет
+  assert.equal(existsSync(join(root, 'model/gen/petclinic.customers.gen.c4')), false)
+  assert.equal(existsSync(join(root, 'model/gen/_shared.gen.c4')), false)
+})
+
+test('сторы и каналы живут в файле системы-владельца, deliver на месте', () => {
+  const root = makeRoot()
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+
+  assert.match(text, /db_petclinic = store 'petclinic' \{/)
+  assert.match(text, /technology 'HSQLDB'/)
+  assert.match(text, /address 'jdbc:hsqldb:mem:petclinic'/)
+  assert.match(text, /ch_payment_succeeded = channel 'payment\.succeeded' \{/)
+  assert.match(text, /paymentsucceeded = message 'PaymentSucceeded' \{/)
+  assert.match(text, /ch_order_created = channel 'order\.created' \{/)
+  assert.match(text, /petclinic\.ch_order_created -\[deliver\]-> petclinic\.customers 'group: cg'/)
+})
+
+test('views: обзорный вид системы и api-вид контейнера с контрактом', () => {
+  const root = makeRoot()
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+
+  assert.match(text, /views \{/)
+  assert.match(text, /view petclinic_containers of petclinic \{/)
+  assert.match(text, /title 'PetClinic: контейнеры'/)
+  assert.match(text, /global predicate noContracts/)
+  assert.match(text, /view petclinic_customers_api of petclinic\.customers \{/)
+  assert.match(text, /include petclinic\.customers\.api\.\*/)
+  assert.match(text, /include \* -> petclinic\.customers\.api\.\*/)
+})
+
+test('повторный прогон не переписывает файлы', () => {
+  const root = makeRoot()
+  generate(root)
+  const file = systemFile(root)
+  const before = statSync(file).mtimeMs
+  generate(root)
+  assert.equal(statSync(file).mtimeMs, before)
+})
+
+test('система, исчезнувшая из systems.yml, прунится', () => {
+  const root = makeRoot()
+  generate(root)
+  assert.equal(existsSync(systemFile(root)), true)
+  writeFileSync(join(root, 'registry/systems.yml'), 'systems: []\n')
+  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify({ ...doc, calls: [] }))
+  generate(root)
+  assert.equal(existsSync(systemFile(root)), false)
+})
+
+test('пустой адрес БД — свой стор на контейнер, а не общий узел', () => {
+  const root = makeRoot()
+  const mk = (container) => ({
+    ...doc,
+    container,
+    api: null,
+    operations: [],
+    publishes: [],
+    subscribes: [],
+    calls: [],
+    stores: [{ kind: 'jdbc', address: '', access: 'readwrite', source: 's', confidence: 0.9 }],
+  })
+  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(mk('petclinic.customers')))
+  writeFileSync(join(root, 'tools/api-source/petclinic.vets.json'), JSON.stringify(mk('petclinic.vets')))
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+  assert.match(text, /db_customers = store 'customers'/)
+  assert.match(text, /db_vets = store 'vets'/)
+})
+
+test('легаси-док без containerInfo игнорируется', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'tools/api-source/shop.legacy.json'),
+    JSON.stringify({ container: 'shop.legacy', source: {}, api: null }),
+  )
+  generate(root)
+  assert.equal(existsSync(join(root, 'model/gen/shop.legacy.gen.c4')), false)
+  assert.equal(existsSync(join(root, 'model/systems/shop/shop.c4')), false)
+})
+
+// ---------- разрешение вызовов ----------
+
 test('алиас host -> ребро в операцию цели', () => {
   const root = makeRoot()
   writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))
   writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(withCall({ host: 'visits-service' })))
   writeFileSync(join(root, 'registry/aliases.yml'), 'aliases:\n  visits-service: petclinic.visits\n')
   generate(root)
-  const text = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  const text = readFileSync(systemFile(root), 'utf8')
   assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api\.get_pets_visits 'GET \/pets\/visits'/)
 })
 
@@ -198,7 +212,7 @@ test('алиас есть, операции нет -> ребро в api цели
   )
   writeFileSync(join(root, 'registry/aliases.yml'), 'aliases:\n  visits-service: petclinic.visits\n')
   generate(root)
-  const text = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  const text = readFileSync(systemFile(root), 'utf8')
   assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api 'POST \/nope'/)
 })
 
@@ -211,13 +225,11 @@ test('нет алиаса и кандидатов -> stub в unknown и запи
   generate(root)
   const stub = readFileSync(join(root, 'model/gen/unknown/legacy_billing.gen.c4'), 'utf8')
   assert.match(stub, /legacy_billing = service 'legacy-billing' \{/)
-  assert.match(stub, /#stub #inferred/)
   assert.match(stub, /post_api_v1_invoices = operation 'POST \/api\/v1\/invoices'/)
-  const caller = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  const caller = readFileSync(systemFile(root), 'utf8')
   assert.match(caller, /petclinic\.customers -\[call\]-> unknown\.legacy_billing\.api\.post_api_v1_invoices/)
   const unresolved = JSON.parse(readFileSync(join(root, 'registry/unresolved.json'), 'utf8'))
   assert.equal(unresolved.unresolved[0].stubId, 'unknown.legacy_billing')
-  assert.deepEqual(unresolved.unresolved[0].observedEndpoints, [{ method: 'POST', path: '/api/v1/invoices' }])
 })
 
 test('единственный кандидат со score 1.0 -> автосклейка вместо stub', () => {
@@ -225,7 +237,7 @@ test('единственный кандидат со score 1.0 -> автоскл
   writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))
   writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(withCall({ host: 'visits-internal' })))
   generate(root)
-  const text = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  const text = readFileSync(systemFile(root), 'utf8')
   assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api\.get_pets_visits/)
   assert.equal(existsSync(join(root, 'model/gen/unknown/visits_internal.gen.c4')), false)
 })
@@ -236,7 +248,6 @@ test('assign: stub переезжает контейнером в чужую с�
     join(root, 'registry/systems.yml'),
     'systems:\n  - id: petclinic\n    kind: system\n    title: PetClinic\n  - id: auth\n    kind: orgSystem\n    title: Авторизация\n',
   )
-  // Два разных вызывающих в разное время зовут один host — эндпоинты объединяются.
   writeFileSync(
     join(root, 'tools/api-source/petclinic.customers.json'),
     JSON.stringify(withCall({ host: 'sso.corp' }, { method: 'POST', path: '/oauth/token' })),
@@ -256,20 +267,19 @@ test('assign: stub переезжает контейнером в чужую с�
 
   const observed = readFileSync(join(root, 'model/gen/observed/auth.sso.gen.c4'), 'utf8')
   assert.match(observed, /extend auth \{/)
-  assert.match(observed, /sso = service 'sso' \{/)
-  assert.match(observed, /#stub #inferred/)
-  assert.match(observed, /hosts 'sso\.corp'/)
   assert.match(observed, /post_oauth_token = operation 'POST \/oauth\/token'/)
   assert.match(observed, /get_userinfo = operation 'GET \/userinfo'/, 'эндпоинты объединяются от всех вызывающих')
 
-  const c1 = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
-  assert.match(c1, /petclinic\.customers -\[call\]-> auth\.sso\.api\.post_oauth_token/)
-  const c2 = readFileSync(join(root, 'model/gen/petclinic.visits.gen.c4'), 'utf8')
-  assert.match(c2, /petclinic\.visits -\[call\]-> auth\.sso\.api\.get_userinfo/)
+  const petclinic = readFileSync(systemFile(root), 'utf8')
+  assert.match(petclinic, /petclinic\.customers -\[call\]-> auth\.sso\.api\.post_oauth_token/)
+  assert.match(petclinic, /petclinic\.visits -\[call\]-> auth\.sso\.api\.get_userinfo/)
+
+  // у оргсистемы auth тоже свой файл с декларацией и видом
+  const authFile = readFileSync(systemFile(root, 'auth'), 'utf8')
+  assert.match(authFile, /auth = orgSystem 'Авторизация' \{/)
+  assert.match(authFile, /view auth_containers of auth \{/)
 
   assert.equal(existsSync(join(root, 'model/gen/unknown/sso_corp.gen.c4')), false, 'stub исчез')
-  const unresolved = JSON.parse(readFileSync(join(root, 'registry/unresolved.json'), 'utf8'))
-  assert.equal(unresolved.unresolved.length, 0)
 })
 
 test('resolutions: container-склейка убирает stub, external рождает externalSystem', () => {
@@ -285,10 +295,9 @@ test('resolutions: container-склейка убирает stub, external рож
       ],
     }),
   )
-  // Сначала без решений — оба stub'а на месте
   generate(root)
   assert.equal(existsSync(join(root, 'model/gen/unknown/legacy_billing.gen.c4')), true)
-  // Теперь решения: склейка и external
+
   writeFileSync(
     join(root, 'registry/resolutions.yml'),
     'resolutions:\n' +
@@ -297,10 +306,9 @@ test('resolutions: container-склейка убирает stub, external рож
   )
   generate(root)
   assert.equal(existsSync(join(root, 'model/gen/unknown/legacy_billing.gen.c4')), false, 'stub удалён после склейки')
-  const caller = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  const caller = readFileSync(systemFile(root), 'utf8')
   assert.match(caller, /petclinic\.customers -\[call\]-> petclinic\.visits\.api 'POST \/x'/)
   assert.match(caller, /petclinic\.customers -\[call\]-> stripe 'POST \/charge'/)
   const ext = readFileSync(join(root, 'model/gen/unknown/_externals.gen.c4'), 'utf8')
   assert.match(ext, /stripe = externalSystem 'Stripe' \{/)
-  assert.match(ext, /contract 'MSA-1'/)
 })

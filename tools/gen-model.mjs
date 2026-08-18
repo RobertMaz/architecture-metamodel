@@ -4,10 +4,10 @@
  *
  * Входы:  registry/systems.yml, registry/aliases.yml, registry/resolutions.yml,
  *         tools/api-source/*.json (доки с containerInfo; легаси v1 обрабатывает gen-api.mjs)
- * Выходы: model/gen/systems/<id>.gen.c4      каркасы систем
- *         model/gen/<container>.gen.c4       контейнер #inferred + api + исходящие рёбра
- *         model/gen/_shared.gen.c4           сторы, каналы, message, deliver
- *         model/gen/unknown/<slug>.gen.c4    stub-заглушки нераспознанных целей
+ * Выходы: model/systems/<id>/<id>.c4         система целиком: контейнеры, сторы,
+ *                                            каналы, связи и views (один файл — вся кухня)
+ *         model/gen/unknown/<slug>.gen.c4    stub-заглушки нераспознанных целей (догадки)
+ *         model/gen/observed/<cid>.gen.c4    наблюдаемые контейнеры чужих систем (assign)
  *         model/gen/unknown/_externals.gen.c4  внешние системы из resolutions.yml
  *         registry/unresolved.json           журнал нераспознанного (генерируется)
  *
@@ -20,7 +20,7 @@
  * устаревшие stub-файлы удаляются.
  */
 
-import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync } from 'node:fs'
+import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, rmdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import { opId, slug, esc } from './ids.mjs'
@@ -54,23 +54,13 @@ function header(source) {
 export function generate(root = '.') {
   const genDir = join(root, 'model/gen')
   const unknownDir = join(genDir, 'unknown')
-  mkdirSync(join(genDir, 'systems'), { recursive: true })
+  mkdirSync(genDir, { recursive: true })
 
   // --- реестры ---------------------------------------------------------
   const systems = readYaml(join(root, 'registry/systems.yml'), 'systems') ?? []
   const aliases = readYaml(join(root, 'registry/aliases.yml'), 'aliases') ?? {}
   const resolutions = readYaml(join(root, 'registry/resolutions.yml'), 'resolutions') ?? {}
-
-  for (const s of [...systems].sort((a, b) => a.id.localeCompare(b.id))) {
-    const L = header('registry/systems.yml')
-    L.push(`model {`)
-    L.push(`  ${s.id} = ${s.kind} '${esc(s.title)}' {`)
-    if (s.description) L.push(`    description '${esc(s.description)}'`)
-    L.push(`  }`)
-    L.push(`}`)
-    L.push(``)
-    writeIfChanged(join(genDir, 'systems', `${s.id}.gen.c4`), L.join('\n'))
-  }
+  const knownSystems = new Set(systems.map((s) => s.id))
 
   // --- доки ------------------------------------------------------------
   const srcDir = join(root, 'tools/api-source')
@@ -307,20 +297,30 @@ export function generate(root = '.') {
     })
   }
 
-  // --- РЕНДЕР: файлы контейнеров ---------------------------------------
+  // --- РЕНДЕР-ПОДГОТОВКА: блоки и рёбра раскладываются по системам ------
+  // Система анализатора = один файл со всей кухней (model/systems/<id>/<id>.c4):
+  // контейнеры, сторы, каналы, связи и виды. В model/gen/ остаются только догадки.
+  const containerBlocks = new Map() // system -> [[lines]]
+  const systemEdges = new Map() // system -> [edge lines]
+  const apiViews = new Map() // system -> [{name, title}]
+  const pushBlock = (sys, lines) => {
+    if (!containerBlocks.has(sys)) containerBlocks.set(sys, [])
+    containerBlocks.get(sys).push(lines)
+  }
+  const pushEdges = (sys, lines) => {
+    if (!systemEdges.has(sys)) systemEdges.set(sys, [])
+    systemEdges.get(sys).push(...lines)
+  }
+
   for (const { file, d } of docs) {
     const sys = systemOf(d.container)
     const name = shortName(d.container)
     const info = d.containerInfo
-    const L = header(`tools/api-source/${file}`)
-    L.splice(2, 0,
-      `// Репозиторий: ${d.source.repo}@${d.source.commit}`,
-      `// Извлечено: ${d.source.extractedAt} (${d.source.extractor})`,
-    )
-
-    L.push(`model {`)
-    L.push(`  extend ${sys} {`)
-    L.push(``)
+    if (!knownSystems.has(sys)) {
+      console.error(`ПРОПУСК ${d.container}: система «${sys}» не заведена в registry/systems.yml`)
+      continue
+    }
+    const L = []
     L.push(`    ${name} = ${info.kind} '${esc(info.title)}' {`)
     L.push(`      #inferred`)
     if (info.description) L.push(`      description '${esc(info.description)}'`)
@@ -329,6 +329,7 @@ export function generate(root = '.') {
     L.push(`      metadata {`)
     if (info.appName) L.push(`        app-name '${esc(info.appName)}'`)
     L.push(`        repo '${esc(d.source.repo)}'`)
+    L.push(`        commit '${esc(d.source.commit)}'`)
     L.push(`        extracted-at '${esc(d.source.extractedAt)}'`)
     L.push(`      }`)
 
@@ -370,7 +371,11 @@ export function generate(root = '.') {
     }
 
     L.push(`    }`)
-    L.push(`  }`)
+    pushBlock(sys, L)
+    if ((d.operations ?? []).length) {
+      if (!apiViews.has(sys)) apiViews.set(sys, [])
+      apiViews.get(sys).push({ name, title: info.title })
+    }
 
     const edges = []
     for (const st of [...(d.stores ?? [])].sort((a, b) => `${a.kind}|${a.address}`.localeCompare(`${b.kind}|${b.address}`))) {
@@ -389,92 +394,116 @@ export function generate(root = '.') {
       c.delivers.push({ to: d.container, group: sub.group })
     }
     edges.push(...(edgesByCaller.get(d.container) ?? []))
-
-    if (edges.length) {
-      L.push(``)
-      L.push(...edges.sort())
-    }
-    L.push(`}`)
-    L.push(``)
-    writeIfChanged(join(genDir, `${d.container}.gen.c4`), L.join('\n'))
-    console.log(`model/gen/${d.container}.gen.c4  <-  ${file}  (${d.operations?.length ?? 0} операций)`)
+    pushEdges(sys, edges)
+    console.log(`${d.container}  <-  ${file}  (${d.operations?.length ?? 0} операций)`)
   }
 
-  // --- РЕНДЕР: общие узлы ----------------------------------------------
-  if (docs.length) {
+  // --- Узлы сторов/каналов — в файл системы-владельца -------------------
+  // Идентичность общих узлов не меняется: два сервиса с одним адресом сходятся
+  // в один узел, и инвариант «у store один писатель» ловит shared database.
+  for (const [, c] of [...channels.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const B = []
+    B.push(`    ${c.id} = channel '${esc(c.topic)}' {`)
+    B.push(`      #inferred`)
+    B.push(`      technology 'Kafka topic'`)
+    for (const [schema, m] of [...c.messages.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      B.push(``)
+      B.push(`      ${slug(schema)} = message '${esc(schema)}' {`)
+      B.push(`        #inferred`)
+      if (m.fields) B.push(`        description '${esc(m.fields)}'`)
+      B.push(`        metadata {`)
+      B.push(`          producer '${esc(m.producer)}'`)
+      B.push(`          source '${esc(m.source)}'`)
+      B.push(`          confidence '${m.confidence}'`)
+      B.push(`        }`)
+      B.push(`      }`)
+    }
+    B.push(`    }`)
+    pushBlock(c.system, B)
+    pushEdges(
+      c.system,
+      [...c.delivers]
+        .sort((a, b) => a.to.localeCompare(b.to))
+        .map((dlv) => `  ${c.system}.${c.id} -[deliver]-> ${dlv.to}${dlv.group ? ` 'group: ${esc(dlv.group)}'` : ''}`),
+    )
+  }
+  for (const [, s] of [...stores.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const B = []
+    B.push(`    ${s.id} = store '${esc(s.title)}' {`)
+    B.push(`      #inferred`)
+    B.push(`      technology '${esc(s.technology)}'`)
+    B.push(`      metadata {`)
+    if (s.address) B.push(`        address '${esc(s.address)}'`)
+    const entities = [...s.entities].sort().join(', ')
+    if (entities) B.push(`        entities '${esc(entities)}'`)
+    B.push(`      }`)
+    B.push(`    }`)
+    pushBlock(s.system, B)
+  }
+
+  // --- РЕНДЕР: файл на систему — модель и виды ---------------------------
+  const systemsDir = join(root, 'model/systems')
+  if (systems.length) mkdirSync(systemsDir, { recursive: true })
+  for (const s of [...systems].sort((a, b) => a.id.localeCompare(b.id))) {
     const L = [
-      `// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.`,
-      `// Общие узлы: сторы и каналы. Идентичность — нормализованный адрес/топик:`,
-      `// два сервиса с одним адресом сходятся в один узел, и инвариант`,
-      `// «у store один писатель» превращается в детектор shared database.`,
+      `// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ. Правки человека — в model/overrides.c4.`,
+      `// Источник: registry/systems.yml + tools/api-source/*.json`,
+      `// Вся кухня системы в одном файле: контейнеры, сторы, каналы, связи, виды.`,
       ``,
     ]
-    const bySystem = new Map()
-    const claimNode = (system, render) => {
-      if (!bySystem.has(system)) bySystem.set(system, [])
-      bySystem.get(system).push(render)
-    }
-    for (const [, c] of [...channels.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-      claimNode(c.system, () => {
-        const B = []
-        B.push(`    ${c.id} = channel '${esc(c.topic)}' {`)
-        B.push(`      #inferred`)
-        B.push(`      technology 'Kafka topic'`)
-        for (const [schema, m] of [...c.messages.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-          B.push(``)
-          B.push(`      ${slug(schema)} = message '${esc(schema)}' {`)
-          B.push(`        #inferred`)
-          if (m.fields) B.push(`        description '${esc(m.fields)}'`)
-          B.push(`        metadata {`)
-          B.push(`          producer '${esc(m.producer)}'`)
-          B.push(`          source '${esc(m.source)}'`)
-          B.push(`          confidence '${m.confidence}'`)
-          B.push(`        }`)
-          B.push(`      }`)
-        }
-        B.push(`    }`)
-        return B
-      })
-    }
-    for (const [, s] of [...stores.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-      claimNode(s.system, () => {
-        const B = []
-        B.push(`    ${s.id} = store '${esc(s.title)}' {`)
-        B.push(`      #inferred`)
-        B.push(`      technology '${esc(s.technology)}'`)
-        B.push(`      metadata {`)
-        if (s.address) B.push(`        address '${esc(s.address)}'`)
-        const entities = [...s.entities].sort().join(', ')
-        if (entities) B.push(`        entities '${esc(entities)}'`)
-        B.push(`      }`)
-        B.push(`    }`)
-        return B
-      })
-    }
-
     L.push(`model {`)
-    for (const [system, nodes] of [...bySystem.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-      L.push(`  extend ${system} {`)
-      nodes.forEach((render, i) => {
-        if (i > 0) L.push(``)
-        L.push(...render())
-      })
-      L.push(`  }`)
-    }
-
-    const delivers = []
-    for (const [, c] of [...channels.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-      for (const dlv of [...c.delivers].sort((a, b) => a.to.localeCompare(b.to))) {
-        delivers.push(`  ${c.system}.${c.id} -[deliver]-> ${dlv.to}${dlv.group ? ` 'group: ${esc(dlv.group)}'` : ''}`)
-      }
-    }
-    if (delivers.length) {
+    L.push(``)
+    L.push(`  ${s.id} = ${s.kind} '${esc(s.title)}' {`)
+    if (s.description) L.push(`    description '${esc(s.description)}'`)
+    for (const block of containerBlocks.get(s.id) ?? []) {
       L.push(``)
-      L.push(...delivers)
+      L.push(...block)
+    }
+    L.push(`  }`)
+    const edges = [...(systemEdges.get(s.id) ?? [])].sort()
+    if (edges.length) {
+      L.push(``)
+      L.push(...edges)
+    }
+    L.push(`}`)
+
+    L.push(``)
+    L.push(`views {`)
+    L.push(``)
+    L.push(`  view ${s.id}_containers of ${s.id} {`)
+    L.push(`    title '${esc(s.title)}: контейнеры'`)
+    L.push(`    description 'Кто с кем связан. Отсюда видно радиус изменения'`)
+    L.push(`    include *`)
+    L.push(`    global predicate noContracts`)
+    L.push(`    global style base`)
+    L.push(`    autoLayout TopBottom`)
+    L.push(`  }`)
+    for (const v of [...(apiViews.get(s.id) ?? [])].sort((a, b) => a.name.localeCompare(b.name))) {
+      const cid = `${s.id}.${v.name}`
+      L.push(``)
+      L.push(`  view ${s.id}_${v.name}_api of ${cid} {`)
+      L.push(`    title '${esc(v.title)}: контракт и потребители'`)
+      L.push(`    include *`)
+      L.push(`    include ${cid}.api`)
+      L.push(`    include ${cid}.api.*`)
+      L.push(`    include * -> ${cid}.api.*`)
+      L.push(`    global style base`)
+      L.push(`    autoLayout LeftRight`)
+      L.push(`  }`)
     }
     L.push(`}`)
     L.push(``)
-    writeIfChanged(join(genDir, `_shared.gen.c4`), L.join('\n'))
+    mkdirSync(join(systemsDir, s.id), { recursive: true })
+    writeIfChanged(join(systemsDir, s.id, `${s.id}.c4`), L.join('\n'))
+  }
+  // Прунинг: системы, исчезнувшие из systems.yml, не оставляют файлов.
+  if (existsSync(systemsDir)) {
+    for (const dir of readdirSync(systemsDir)) {
+      if (knownSystems.has(dir)) continue
+      const f = join(systemsDir, dir, `${dir}.c4`)
+      if (existsSync(f)) unlinkSync(f)
+      try { rmdirSync(join(systemsDir, dir)) } catch { /* каталог не пуст — оставляем человеку */ }
+    }
   }
 
   // --- РЕНДЕР: stub'ы в unknown ----------------------------------------
