@@ -361,10 +361,10 @@ model {
   petclinic.visits -[write]-> petclinic.db_visits
 }
 
-views {
+views 'PetClinic' {
 
   view petclinic_containers of petclinic {
-    title 'PetClinic: контейнеры'
+    title 'Контейнеры'
     description 'Кто с кем связан. Отсюда видно радиус изменения'
     include *
     global predicate noContracts
@@ -373,7 +373,8 @@ views {
   }
 
   view petclinic_customers_api of petclinic.customers {
-    title 'customers-service: контракт и потребители'
+    title 'API / customers-service'
+    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
     include *
     include petclinic.customers.api
     include petclinic.customers.api.*
@@ -383,7 +384,8 @@ views {
   }
 
   view petclinic_gateway_api of petclinic.gateway {
-    title 'api-gateway: контракт и потребители'
+    title 'API / api-gateway'
+    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
     include *
     include petclinic.gateway.api
     include petclinic.gateway.api.*
@@ -393,7 +395,8 @@ views {
   }
 
   view petclinic_genai_api of petclinic.genai {
-    title 'genai-service: контракт и потребители'
+    title 'API / genai-service'
+    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
     include *
     include petclinic.genai.api
     include petclinic.genai.api.*
@@ -403,7 +406,8 @@ views {
   }
 
   view petclinic_vets_api of petclinic.vets {
-    title 'vets-service: контракт и потребители'
+    title 'API / vets-service'
+    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
     include *
     include petclinic.vets.api
     include petclinic.vets.api.*
@@ -413,7 +417,8 @@ views {
   }
 
   view petclinic_visits_api of petclinic.visits {
-    title 'visits-service: контракт и потребители'
+    title 'API / visits-service'
+    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
     include *
     include petclinic.visits.api
     include petclinic.visits.api.*

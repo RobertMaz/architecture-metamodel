@@ -492,11 +492,13 @@ export function generate(root = '.') {
     }
     L.push(`}`)
 
+    // Папка видов в навигации LikeC4 — по имени системы (dsl/views/organize):
+    // общая папка задаётся у блока views, подпапки — слэшем в title.
     L.push(``)
-    L.push(`views {`)
+    L.push(`views '${esc(s.title)}' {`)
     L.push(``)
     L.push(`  view ${s.id}_containers of ${s.id} {`)
-    L.push(`    title '${esc(s.title)}: контейнеры'`)
+    L.push(`    title 'Контейнеры'`)
     L.push(`    description 'Кто с кем связан. Отсюда видно радиус изменения'`)
     L.push(`    include *`)
     L.push(`    global predicate noContracts`)
@@ -507,7 +509,8 @@ export function generate(root = '.') {
       const cid = `${s.id}.${v.name}`
       L.push(``)
       L.push(`  view ${s.id}_${v.name}_api of ${cid} {`)
-      L.push(`    title '${esc(v.title)}: контракт и потребители'`)
+      L.push(`    title 'API / ${esc(v.title)}'`)
+      L.push(`    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'`)
       L.push(`    include *`)
       L.push(`    include ${cid}.api`)
       L.push(`    include ${cid}.api.*`)
