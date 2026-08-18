@@ -543,14 +543,8 @@ export function generate(root = '.') {
       L.push(`    title 'API / ${esc(v.title)}'`)
       L.push(`    description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'`)
       L.push(`    include *`)
-      L.push(`    include ${cid}.api`)
-      L.push(`    include ${cid}.api.*`)
-      L.push(`    include * -> ${cid}.api.*`)
-      for (const g of v.groups ?? []) {
-        const apiRef = `${cid}.api_${slug(g)}`
-        L.push(`    include ${apiRef}.*`)
-        L.push(`    include * -> ${apiRef}.*`)
-      }
+      L.push(`    include ${cid}.**`)
+      L.push(`    include * -> ${cid}.**`)
       L.push(`    global style base`)
       L.push(`    autoLayout LeftRight`)
       L.push(`  }`)

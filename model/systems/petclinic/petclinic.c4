@@ -487,13 +487,8 @@ views 'PetClinic' {
     title 'API / customers-service'
     description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
     include *
-    include petclinic.customers.api
-    include petclinic.customers.api.*
-    include * -> petclinic.customers.api.*
-    include petclinic.customers.api_owner.*
-    include * -> petclinic.customers.api_owner.*
-    include petclinic.customers.api_pet.*
-    include * -> petclinic.customers.api_pet.*
+    include petclinic.customers.**
+    include * -> petclinic.customers.**
     global style base
     autoLayout LeftRight
   }
@@ -520,9 +515,8 @@ views 'PetClinic' {
     title 'API / discovery-server'
     description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
     include *
-    include petclinic.discovery.api
-    include petclinic.discovery.api.*
-    include * -> petclinic.discovery.api.*
+    include petclinic.discovery.**
+    include * -> petclinic.discovery.**
     global style base
     autoLayout LeftRight
   }
@@ -531,13 +525,8 @@ views 'PetClinic' {
     title 'API / api-gateway'
     description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
     include *
-    include petclinic.gateway.api
-    include petclinic.gateway.api.*
-    include * -> petclinic.gateway.api.*
-    include petclinic.gateway.api_apigateway.*
-    include * -> petclinic.gateway.api_apigateway.*
-    include petclinic.gateway.api_fallback.*
-    include * -> petclinic.gateway.api_fallback.*
+    include petclinic.gateway.**
+    include * -> petclinic.gateway.**
     global style base
     autoLayout LeftRight
   }
@@ -564,9 +553,8 @@ views 'PetClinic' {
     title 'API / genai-service'
     description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
     include *
-    include petclinic.genai.api
-    include petclinic.genai.api.*
-    include * -> petclinic.genai.api.*
+    include petclinic.genai.**
+    include * -> petclinic.genai.**
     global style base
     autoLayout LeftRight
   }
@@ -575,11 +563,8 @@ views 'PetClinic' {
     title 'API / vets-service'
     description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
     include *
-    include petclinic.vets.api
-    include petclinic.vets.api.*
-    include * -> petclinic.vets.api.*
-    include petclinic.vets.api_vet.*
-    include * -> petclinic.vets.api_vet.*
+    include petclinic.vets.**
+    include * -> petclinic.vets.**
     global style base
     autoLayout LeftRight
   }
@@ -597,11 +582,8 @@ views 'PetClinic' {
     title 'API / visits-service'
     description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
     include *
-    include petclinic.visits.api
-    include petclinic.visits.api.*
-    include * -> petclinic.visits.api.*
-    include petclinic.visits.api_visit.*
-    include * -> petclinic.visits.api_visit.*
+    include petclinic.visits.**
+    include * -> petclinic.visits.**
     global style base
     autoLayout LeftRight
   }
