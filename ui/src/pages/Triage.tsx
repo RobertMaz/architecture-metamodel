@@ -28,7 +28,10 @@ function useResolve() {
       api.resolve(stubId, body),
     onSuccess: (_, v) => {
       toast.success(`«${v.stubId}» разрешён, модель перегенерирована`)
-      qc.invalidateQueries()
+      // Точечно: рефетч гипотез решённого stub'а дал бы 404.
+      for (const key of ["unresolved", "containers", "diff", "report"]) {
+        qc.invalidateQueries({ queryKey: [key] })
+      }
     },
     onError: (e) => toast.error(String(e)),
   })

@@ -1,0 +1,7 @@
+# Полка llm: любой OpenAI-совместимый endpoint. Ключ НЕ хранится здесь —
+# только env LLM_API_KEY (сервер запускается с LLM_API_KEY=$(cat ~/.openrouter-key)).
+# Для локальной LM Studio достаточно сменить baseUrl на http://<тачка>:1234/v1.
+llm:
+  baseUrl: https://openrouter.ai/api/v1
+  model: qwen/qwen3.8-27b
+  enrich: true

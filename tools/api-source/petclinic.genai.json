@@ -46,18 +46,20 @@
   "container" : "petclinic.genai",
   "containerInfo" : {
     "appName" : "genai-service",
+    "description" : "Сервис petclinic.genai предоставляет GenAI-возможности для работы с чатом.",
     "kind" : "service",
     "technology" : "Java, Spring Boot",
     "title" : "genai-service"
   },
   "operations" : [
     {
-      "confidence" : 0.95,
+      "confidence" : 0.98,
       "method" : "POST",
       "path" : "/chatclient",
       "request" : "String",
       "response" : "String",
-      "source" : "src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57"
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; llm:enrich",
+      "summary" : "Отправляет запрос к GenAI-клиенту чата и возвращает ответ."
     }
   ],
   "publishes" : [ ],

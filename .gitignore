@@ -5,3 +5,5 @@ workspace/
 analyzer/target/
 ui/node_modules/
 ui/dist/
+.playwright-mcp/
+.mcp.json

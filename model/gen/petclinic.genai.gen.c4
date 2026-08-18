@@ -8,6 +8,7 @@ model {
 
     genai = service 'genai-service' {
       #inferred
+      description 'Сервис petclinic.genai предоставляет GenAI-возможности для работы с чатом.'
       technology 'Java, Spring Boot'
       link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
       metadata {
@@ -25,13 +26,14 @@ model {
 
         post_chatclient = operation 'POST /chatclient' {
           #inferred
+          description 'Отправляет запрос к GenAI-клиенту чата и возвращает ответ.'
           metadata {
             method 'POST'
             path '/chatclient'
             request 'String'
             responses 'String'
-            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57'
-            confidence '0.95'
+            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; llm:enrich'
+            confidence '0.98'
           }
         }
       }
