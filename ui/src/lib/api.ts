@@ -92,7 +92,14 @@ export const api = {
   addContainer: (body: { id: string; repo: string; path: string; jar?: string; runtimeUrl?: string; traces?: string }) =>
     http<{ created: string }>("/api/containers", { method: "POST", body: JSON.stringify(body) }),
   unresolved: () => http<{ unresolved: UnresolvedEntry[] }>("/api/unresolved"),
-  resolve: (stubId: string, body: { container?: string; external?: { id: string; title?: string; contract?: string } }) =>
+  resolve: (
+    stubId: string,
+    body: {
+      container?: string
+      external?: { id: string; title?: string; contract?: string }
+      assign?: { container: string }
+    },
+  ) =>
     http<{ resolved: string }>(`/api/unresolved/${stubId}/resolve`, { method: "POST", body: JSON.stringify(body) }),
   updateSources: (id: string, body: { repo?: string; path?: string; jar?: string; runtimeUrl?: string; traces?: string }) =>
     http<{ updated: string }>(`/api/containers/${id}/sources`, { method: "PUT", body: JSON.stringify(body) }),

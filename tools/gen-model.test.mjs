@@ -230,6 +230,48 @@ test('единственный кандидат со score 1.0 -> автоскл
   assert.equal(existsSync(join(root, 'model/gen/unknown/visits_internal.gen.c4')), false)
 })
 
+test('assign: stub переезжает контейнером в чужую систему и дообогащается', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'registry/systems.yml'),
+    'systems:\n  - id: petclinic\n    kind: system\n    title: PetClinic\n  - id: auth\n    kind: orgSystem\n    title: Авторизация\n',
+  )
+  // Два разных вызывающих в разное время зовут один host — эндпоинты объединяются.
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify(withCall({ host: 'sso.corp' }, { method: 'POST', path: '/oauth/token' })),
+  )
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.visits.json'),
+    JSON.stringify({
+      ...visitsDoc,
+      calls: [{ method: 'GET', path: '/userinfo', target: { host: 'sso.corp' }, source: 's#L2', confidence: 0.8 }],
+    }),
+  )
+  writeFileSync(
+    join(root, 'registry/resolutions.yml'),
+    'resolutions:\n  unknown.sso_corp:\n    assign:\n      container: auth.sso\n',
+  )
+  generate(root)
+
+  const observed = readFileSync(join(root, 'model/gen/observed/auth.sso.gen.c4'), 'utf8')
+  assert.match(observed, /extend auth \{/)
+  assert.match(observed, /sso = service 'sso' \{/)
+  assert.match(observed, /#stub #inferred/)
+  assert.match(observed, /hosts 'sso\.corp'/)
+  assert.match(observed, /post_oauth_token = operation 'POST \/oauth\/token'/)
+  assert.match(observed, /get_userinfo = operation 'GET \/userinfo'/, 'эндпоинты объединяются от всех вызывающих')
+
+  const c1 = readFileSync(join(root, 'model/gen/petclinic.customers.gen.c4'), 'utf8')
+  assert.match(c1, /petclinic\.customers -\[call\]-> auth\.sso\.api\.post_oauth_token/)
+  const c2 = readFileSync(join(root, 'model/gen/petclinic.visits.gen.c4'), 'utf8')
+  assert.match(c2, /petclinic\.visits -\[call\]-> auth\.sso\.api\.get_userinfo/)
+
+  assert.equal(existsSync(join(root, 'model/gen/unknown/sso_corp.gen.c4')), false, 'stub исчез')
+  const unresolved = JSON.parse(readFileSync(join(root, 'registry/unresolved.json'), 'utf8'))
+  assert.equal(unresolved.unresolved.length, 0)
+})
+
 test('resolutions: container-склейка убирает stub, external рождает externalSystem', () => {
   const root = makeRoot()
   writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))

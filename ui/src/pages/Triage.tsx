@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router"
-import { Combine, Globe, Sparkles } from "lucide-react"
+import { Combine, FolderInput, Globe, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import { api, type UnresolvedEntry } from "@/lib/api"
@@ -94,6 +94,67 @@ function ExternalDialog({ stubId }: { stubId: string }) {
   )
 }
 
+/** Перенос stub'а контейнером в явную систему: sso уезжает в auth и дообогащается дальше. */
+function AssignDialog({ stubId }: { stubId: string }) {
+  const resolve = useResolve()
+  const systems = useQuery({ queryKey: ["systems"], queryFn: api.systems })
+  const [open, setOpen] = useState(false)
+  const [system, setSystem] = useState("")
+  const [name, setName] = useState("")
+  const container = system && name ? `${system}.${name}` : ""
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <FolderInput /> В систему…
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Перенести в систему</DialogTitle>
+          <DialogDescription>
+            Stub станет контейнером {container || "система.имя"} с тегом #stub: мы его не анализируем, api собирается
+            из наблюдённых вызовов и дообогащается сам. Чужой системы нет в списке — заведи её через «+ Система»
+            (kind orgSystem).
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="grid gap-1.5">
+            <Label>Система</Label>
+            <Select value={system} onValueChange={setSystem}>
+              <SelectTrigger>
+                <SelectValue placeholder="Выбери систему" />
+              </SelectTrigger>
+              <SelectContent>
+                {(systems.data ?? []).map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.id} — {s.title} ({s.kind})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="as-name">Имя контейнера (например, sso)</Label>
+            <Input id="as-name" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            disabled={!container || resolve.isPending}
+            onClick={() =>
+              resolve.mutate({ stubId, body: { assign: { container } } }, { onSuccess: () => setOpen(false) })
+            }
+          >
+            Перенести
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function StubCard({ entry }: { entry: UnresolvedEntry }) {
   const resolve = useResolve()
   const containers = useQuery({ queryKey: ["containers"], queryFn: api.containers })
@@ -178,6 +239,7 @@ function StubCard({ entry }: { entry: UnresolvedEntry }) {
                 Склеить
               </Button>
             </div>
+            <AssignDialog stubId={stubId} />
             <ExternalDialog stubId={stubId} />
             <Button size="sm" variant="ghost" onClick={() => setAskHypotheses(true)} disabled={hypotheses.isFetching}>
               <Sparkles /> Гипотезы LLM

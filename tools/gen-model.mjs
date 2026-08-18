@@ -156,6 +156,10 @@ export function generate(root = '.') {
   const looseEntries = [] // записи unresolved без stub-узла
   const edgesByCaller = new Map() // container -> [edge lines]
   const externals = new Map() // extId -> {title, contract}
+  // Наблюдаемые контейнеры: stub, перенесённый человеком в явную систему (assign).
+  // Мы их не анализируем — их api собирается из наблюдённых вызовов и дообогащается
+  // при каждой регенерации: тот же host/feign -> та же резолюция -> union эндпоинтов.
+  const observedContainers = new Map() // containerId -> {system, name, hosts, feignNames, urlTemplates, endpoints}
 
   const addEdge = (caller, ref, label) => {
     if (!edgesByCaller.has(caller)) edgesByCaller.set(caller, [])
@@ -227,6 +231,29 @@ export function generate(root = '.') {
     const decision = resolutions[stubId]
     if (decision?.container) {
       for (const { caller, call } of g.calls) addEdge(caller, targetRef(decision.container, call), callLabel(call))
+      continue
+    }
+    if (decision?.assign?.container) {
+      const cid = decision.assign.container
+      if (!observedContainers.has(cid)) {
+        observedContainers.set(cid, {
+          system: systemOf(cid),
+          name: shortName(cid),
+          hosts: new Set(),
+          feignNames: new Set(),
+          urlTemplates: new Set(),
+          endpoints: new Map(),
+        })
+      }
+      const o = observedContainers.get(cid)
+      for (const h of g.hosts) o.hosts.add(h)
+      for (const f of g.feignNames) o.feignNames.add(f)
+      for (const u of g.urlTemplates) o.urlTemplates.add(u)
+      for (const [k, e] of g.endpoints) o.endpoints.set(k, e)
+      for (const { caller, call } of g.calls) {
+        const ref = call.method && call.path ? `${cid}.api.${opId(call.method, call.path)}` : `${cid}.api`
+        addEdge(caller, ref, callLabel(call))
+      }
       continue
     }
     if (decision?.external) {
@@ -515,6 +542,53 @@ export function generate(root = '.') {
   if (existsSync(unknownDir)) {
     for (const f of readdirSync(unknownDir).filter((f) => f.endsWith('.gen.c4'))) {
       if (!expectedUnknownFiles.has(f)) unlinkSync(join(unknownDir, f))
+    }
+  }
+
+  // --- РЕНДЕР: наблюдаемые контейнеры (assign) --------------------------
+  const observedDir = join(genDir, 'observed')
+  const expectedObservedFiles = new Set()
+  if (observedContainers.size) mkdirSync(observedDir, { recursive: true })
+  for (const [cid, o] of [...observedContainers.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const file = `${cid}.gen.c4`
+    expectedObservedFiles.add(file)
+    const L = header('registry/resolutions.yml (assign: наблюдаемый контейнер чужой системы)')
+    L.push(`model {`)
+    L.push(`  extend ${o.system} {`)
+    L.push(``)
+    L.push(`    ${o.name} = service '${esc(o.name)}' {`)
+    L.push(`      #stub #inferred`)
+    L.push(`      description 'Мы этот сервис не анализируем: api собран из наблюдённых вызовов'`)
+    L.push(`      technology 'неизвестно'`)
+    L.push(`      metadata {`)
+    if (o.hosts.size) L.push(`        hosts '${esc([...o.hosts].sort().join(', '))}'`)
+    if (o.feignNames.size) L.push(`        feign-names '${esc([...o.feignNames].sort().join(', '))}'`)
+    if (o.urlTemplates.size) L.push(`        url-templates '${esc([...o.urlTemplates].sort().join(', '))}'`)
+    L.push(`      }`)
+    L.push(``)
+    L.push(`      api = api '${esc(o.name)} API' {`)
+    L.push(`        #stub #inferred`)
+    L.push(`        technology 'HTTP'`)
+    for (const e of [...o.endpoints.values()].sort((a, b) => `${a.method} ${a.path}`.localeCompare(`${b.method} ${b.path}`))) {
+      L.push(``)
+      L.push(`        ${opId(e.method, e.path)} = operation '${esc(e.method)} ${esc(e.path)}' {`)
+      L.push(`          #stub #inferred`)
+      L.push(`          metadata {`)
+      L.push(`            method '${esc(e.method)}'`)
+      L.push(`            path '${esc(e.path)}'`)
+      L.push(`          }`)
+      L.push(`        }`)
+    }
+    L.push(`      }`)
+    L.push(`    }`)
+    L.push(`  }`)
+    L.push(`}`)
+    L.push(``)
+    writeIfChanged(join(observedDir, file), L.join('\n'))
+  }
+  if (existsSync(observedDir)) {
+    for (const f of readdirSync(observedDir).filter((f) => f.endsWith('.gen.c4'))) {
+      if (!expectedObservedFiles.has(f)) unlinkSync(join(observedDir, f))
     }
   }
 

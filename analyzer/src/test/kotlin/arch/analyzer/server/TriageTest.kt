@@ -87,6 +87,38 @@ class TriageTest {
     }
 
     @Test
+    fun `resolve assign - валидация системы и запись блока`() = testApplication {
+        val root = archRoot()
+        root.resolve("registry/systems.yml").writeText(
+            "systems:\n  - id: auth\n    kind: orgSystem\n    title: Авторизация\n  - id: test\n    kind: system\n    title: T\n",
+        )
+        application(buildApp(root))
+
+        // система не заведена
+        var rs = client.post("/api/unresolved/unknown.legacy_billing/resolve") {
+            header("Content-Type", "application/json")
+            setBody("""{"assign":{"container":"nope.sso"}}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, rs.status)
+
+        // контейнер из repos.yml — отказ, там обычная склейка
+        rs = client.post("/api/unresolved/unknown.legacy_billing/resolve") {
+            header("Content-Type", "application/json")
+            setBody("""{"assign":{"container":"test.app"}}""")
+        }
+        assertEquals(HttpStatusCode.BadRequest, rs.status)
+
+        rs = client.post("/api/unresolved/unknown.legacy_billing/resolve") {
+            header("Content-Type", "application/json")
+            setBody("""{"assign":{"container":"auth.sso"}}""")
+        }
+        assertEquals(HttpStatusCode.OK, rs.status)
+        val yml = root.resolve("registry/resolutions.yml").readText()
+        assertTrue(yml.contains("assign:"), yml)
+        assertTrue(yml.contains("container: auth.sso"), yml)
+    }
+
+    @Test
     fun `resolve неизвестного stubId - 404`() = testApplication {
         application(buildApp(archRoot()))
         val rs = client.post("/api/unresolved/unknown.nope/resolve") {

@@ -17,6 +17,12 @@ import kotlin.io.path.writeText
 data class ResolveRequest(
     val container: String? = null,
     val external: ExternalTarget? = null,
+    /** Перенос stub'а контейнером в явную систему (обычно orgSystem): auth.sso. */
+    val assign: AssignTarget? = null,
+)
+
+data class AssignTarget(
+    val container: String,
 )
 
 data class ExternalTarget(
@@ -47,6 +53,12 @@ class Triage(private val archRoot: Path) {
         return root.mapNotNull { it.get("stubId")?.takeIf { n -> !n.isNull }?.asText() }.toSet()
     }
 
+    private fun systemIds(): Set<String> {
+        val f = archRoot.resolve("registry/systems.yml")
+        if (!f.exists()) return emptySet()
+        return yaml.readTree(f.toFile())?.get("systems")?.mapNotNull { it.get("id")?.asText() }?.toSet() ?: emptySet()
+    }
+
     fun resolved(): Map<String, ResolveRequest> {
         if (!file().exists()) return emptyMap()
         val root = yaml.readTree(file().toFile())?.get("resolutions") ?: return emptyMap()
@@ -61,6 +73,7 @@ class Triage(private val archRoot: Path) {
                         contract = it.get("contract")?.asText(),
                     )
                 },
+                assign = n.get("assign")?.get("container")?.asText()?.let { AssignTarget(it) },
             )
         }
         return out
@@ -88,7 +101,20 @@ class Triage(private val archRoot: Path) {
                     return Result.Invalid("id внешней системы: [a-z][a-z0-9_]*")
                 }
             }
-            else -> return Result.Invalid("нужно либо container, либо external")
+            rq.assign != null -> {
+                val cid = rq.assign.container
+                if (!cid.matches(Regex("[a-z][a-z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*"))) {
+                    return Result.Invalid("assign.container: <система>.<имя>")
+                }
+                val system = cid.substringBefore('.')
+                if (system !in systemIds()) {
+                    return Result.Invalid("система «$system» не заведена — сначала создай её (kind orgSystem для чужих)")
+                }
+                if (Registry(archRoot).repos().containsKey(cid)) {
+                    return Result.Invalid("«$cid» анализируется нами — используй обычную склейку (container)")
+                }
+            }
+            else -> return Result.Invalid("нужно container, external или assign")
         }
 
         val all = resolved().toSortedMap()
@@ -97,6 +123,7 @@ class Triage(private val archRoot: Path) {
         for ((id, r) in all) {
             out.append("  $id:\n")
             if (r.container != null) out.append("    container: ${r.container}\n")
+            r.assign?.let { out.append("    assign:\n      container: ${it.container}\n") }
             r.external?.let { e ->
                 out.append("    external:\n")
                 out.append("      id: ${e.id}\n")
