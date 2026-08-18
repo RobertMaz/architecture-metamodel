@@ -1,0 +1,423 @@
+// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ. Правки человека — в model/overrides.c4.
+// Источник: registry/systems.yml + tools/api-source/*.json
+// Вся кухня системы в одном файле: контейнеры, сторы, каналы, связи, виды.
+
+model {
+
+  petclinic = system 'PetClinic' {
+    description 'Демо-ландшафт Spring PetClinic (пилот анализатора)'
+
+    admin = service 'admin-server' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'admin-server'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+    }
+
+    config = service 'config' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+    }
+
+    customers = service 'customers-service' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'customers-service'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+
+      api = api 'customers-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/'
+        }
+
+        get_owners = operation 'GET /owners' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/owners'
+            responses 'Owner'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75'
+            confidence '0.95'
+          }
+        }
+
+        post_owners = operation 'POST /owners' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/owners'
+            request 'OwnerRequest'
+            responses 'Owner'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57'
+            confidence '0.95'
+          }
+        }
+
+        get_owners_pets_p = operation 'GET /owners/*/pets/{petId}' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/owners/*/pets/{petId}'
+            params 'petId:path:int'
+            responses 'PetDetails'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88'
+            confidence '0.95'
+          }
+        }
+
+        put_owners_pets_p = operation 'PUT /owners/*/pets/{petId}' {
+          #inferred
+          metadata {
+            method 'PUT'
+            path '/owners/*/pets/{petId}'
+            request 'PetRequest'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68'
+            confidence '0.95'
+          }
+        }
+
+        get_owners_p = operation 'GET /owners/{ownerId}' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/owners/{ownerId}'
+            params 'ownerId:path:int'
+            responses 'Owner'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67'
+            confidence '0.95'
+          }
+        }
+
+        put_owners_p = operation 'PUT /owners/{ownerId}' {
+          #inferred
+          metadata {
+            method 'PUT'
+            path '/owners/{ownerId}'
+            params 'ownerId:path:int'
+            request 'OwnerRequest'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83'
+            confidence '0.95'
+          }
+        }
+
+        post_owners_p_pets = operation 'POST /owners/{ownerId}/pets' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/owners/{ownerId}/pets'
+            params 'ownerId:path:int'
+            request 'PetRequest'
+            responses 'Pet'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54'
+            confidence '0.95'
+          }
+        }
+
+        get_petTypes = operation 'GET /petTypes' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/petTypes'
+            responses 'PetType'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49'
+            confidence '0.95'
+          }
+        }
+      }
+    }
+
+    discovery = service 'discovery-server' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'discovery-server'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+    }
+
+    gateway = service 'api-gateway' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'api-gateway'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+
+      api = api 'api-gateway API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/'
+        }
+
+        get_api_gateway_owners_p = operation 'GET /api/gateway/owners/{ownerId}' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/api/gateway/owners/{ownerId}'
+            params 'ownerId:path:int'
+            responses 'OwnerDetails'
+            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54'
+            confidence '0.95'
+          }
+        }
+
+        post_fallback = operation 'POST /fallback' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/fallback'
+            responses 'String'
+            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11'
+            confidence '0.95'
+          }
+        }
+      }
+    }
+
+    genai = service 'genai-service' {
+      #inferred
+      description 'Сервис petclinic.genai предоставляет GenAI-возможности для работы с чатом.'
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'genai-service'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+
+      api = api 'genai-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/chatclient'
+        }
+
+        post_chatclient = operation 'POST /chatclient' {
+          #inferred
+          description 'Отправляет запрос к GenAI-клиенту чата и возвращает ответ.'
+          metadata {
+            method 'POST'
+            path '/chatclient'
+            request 'String'
+            responses 'String'
+            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; llm:enrich'
+            confidence '0.98'
+          }
+        }
+      }
+    }
+
+    vets = service 'vets-service' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'vets-service'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+
+      api = api 'vets-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/vets'
+        }
+
+        get_vets = operation 'GET /vets' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/vets'
+            responses 'Vet'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList'
+            confidence '1'
+          }
+        }
+      }
+    }
+
+    visits = service 'visits-service' {
+      #inferred
+      technology 'Java, Spring Boot'
+      link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
+      metadata {
+        app-name 'visits-service'
+        repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
+        commit '9a76b4e'
+        extracted-at '2026-08-18'
+      }
+
+      api = api 'visits-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/'
+        }
+
+        get_owners_pets_p_visits = operation 'GET /owners/*/pets/{petId}/visits' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/owners/*/pets/{petId}/visits'
+            params 'petId:path:int'
+            responses 'Visit'
+            source 'src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67'
+            confidence '0.95'
+          }
+        }
+
+        post_owners_pets_p_visits = operation 'POST /owners/*/pets/{petId}/visits' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/owners/*/pets/{petId}/visits'
+            params 'petId:path:int'
+            request 'Visit'
+            responses 'Visit'
+            source 'src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56'
+            confidence '0.95'
+          }
+        }
+
+        get_pets_visits = operation 'GET /pets/visits' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/pets/visits'
+            params 'petId:query:Integer'
+            responses 'Visits'
+            source 'src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72'
+            confidence '0.95'
+          }
+        }
+      }
+    }
+
+    db_customers = store 'customers' {
+      #inferred
+      technology 'JDBC'
+      metadata {
+        entities 'Owner, Pet'
+      }
+    }
+
+    db_vets = store 'vets' {
+      #inferred
+      technology 'JDBC'
+      metadata {
+        entities 'Vet'
+      }
+    }
+
+    db_visits = store 'visits' {
+      #inferred
+      technology 'JDBC'
+      metadata {
+        entities 'Visit'
+      }
+    }
+  }
+
+  petclinic.customers -[read]-> petclinic.db_customers
+  petclinic.customers -[write]-> petclinic.db_customers
+  petclinic.gateway -[call]-> petclinic.customers.api.get_owners_p 'GET /owners/{ownerId}'
+  petclinic.gateway -[call]-> petclinic.visits.api 'GET'
+  petclinic.genai -[call]-> petclinic.customers.api.get_owners 'GET /owners'
+  petclinic.genai -[call]-> petclinic.customers.api.post_owners 'POST /owners'
+  petclinic.genai -[call]-> petclinic.customers.api.post_owners_p_pets 'POST /owners/{_}/pets'
+  petclinic.genai -[call]-> petclinic.vets.api 'GET'
+  petclinic.vets -[read]-> petclinic.db_vets
+  petclinic.vets -[write]-> petclinic.db_vets
+  petclinic.visits -[read]-> petclinic.db_visits
+  petclinic.visits -[write]-> petclinic.db_visits
+}
+
+views {
+
+  view petclinic_containers of petclinic {
+    title 'PetClinic: контейнеры'
+    description 'Кто с кем связан. Отсюда видно радиус изменения'
+    include *
+    global predicate noContracts
+    global style base
+    autoLayout TopBottom
+  }
+
+  view petclinic_customers_api of petclinic.customers {
+    title 'customers-service: контракт и потребители'
+    include *
+    include petclinic.customers.api
+    include petclinic.customers.api.*
+    include * -> petclinic.customers.api.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_gateway_api of petclinic.gateway {
+    title 'api-gateway: контракт и потребители'
+    include *
+    include petclinic.gateway.api
+    include petclinic.gateway.api.*
+    include * -> petclinic.gateway.api.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_genai_api of petclinic.genai {
+    title 'genai-service: контракт и потребители'
+    include *
+    include petclinic.genai.api
+    include petclinic.genai.api.*
+    include * -> petclinic.genai.api.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_vets_api of petclinic.vets {
+    title 'vets-service: контракт и потребители'
+    include *
+    include petclinic.vets.api
+    include petclinic.vets.api.*
+    include * -> petclinic.vets.api.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_visits_api of petclinic.visits {
+    title 'visits-service: контракт и потребители'
+    include *
+    include petclinic.visits.api
+    include petclinic.visits.api.*
+    include * -> petclinic.visits.api.*
+    global style base
+    autoLayout LeftRight
+  }
+}

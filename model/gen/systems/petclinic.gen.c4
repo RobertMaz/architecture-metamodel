@@ -1,8 +1,0 @@
-// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
-// Источник: registry/systems.yml
-
-model {
-  petclinic = system 'PetClinic' {
-    description 'Демо-ландшафт Spring PetClinic (пилот анализатора)'
-  }
-}

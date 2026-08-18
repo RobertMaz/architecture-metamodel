@@ -116,7 +116,7 @@ class Runs(private val archRoot: Path) {
 /** Дифф модели/реестров: то, что изменил последний прогон, глазами git. */
 class ModelDiff(private val archRoot: Path) {
 
-    private val watched = listOf("tools/api-source", "model/gen", "registry")
+    private val watched = listOf("tools/api-source", "model/gen", "model/systems", "registry")
 
     data class FileChange(val path: String, val status: String)
     data class Diff(val files: List<FileChange>, val patch: String)

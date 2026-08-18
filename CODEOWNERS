@@ -9,8 +9,7 @@
 /model/10-shop.c4        @acme/team-checkout
 /model/gen/              @acme/team-checkout
 
-/model/gen/systems/petclinic.gen.c4  @acme/team-petclinic
-/model/gen/petclinic.*               @acme/team-petclinic
+/model/systems/petclinic/            @acme/team-petclinic
 /registry/                           @acme/architecture
 /model/30-unknown.c4                 @acme/architecture
 /model/gen/unknown/                  @acme/architecture
