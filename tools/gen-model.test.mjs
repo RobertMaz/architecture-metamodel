@@ -229,6 +229,8 @@ test('операции с доменами раскладываются по api
   // drill-down вид на группу: клик по api_visit проваливается в операции
   assert.match(text, /view petclinic_visits_visit of petclinic\.visits\.api_visit \{/)
   assert.match(text, /title 'API \/ visits-service \/ visit'/)
+  // контейнерный api-вид — три уровня: операции групп включены прямо в него
+  assert.match(text, /include petclinic\.visits\.api_visit\.\*/)
 })
 
 test('легаси-док без containerInfo игнорируется', () => {

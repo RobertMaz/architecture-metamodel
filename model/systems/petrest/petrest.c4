@@ -669,11 +669,33 @@ views 'PetClinic REST' {
 
   view petrest_backend_api of petrest.backend {
     title 'API / backend'
-    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
+    description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
     include *
     include petrest.backend.api
     include petrest.backend.api.*
     include * -> petrest.backend.api.*
+    include petrest.backend.api_oops.*
+    include * -> petrest.backend.api_oops.*
+    include petrest.backend.api_owner_v2.*
+    include * -> petrest.backend.api_owner_v2.*
+    include petrest.backend.api_owners.*
+    include * -> petrest.backend.api_owners.*
+    include petrest.backend.api_pet_v2.*
+    include * -> petrest.backend.api_pet_v2.*
+    include petrest.backend.api_pets.*
+    include * -> petrest.backend.api_pets.*
+    include petrest.backend.api_pettypes.*
+    include * -> petrest.backend.api_pettypes.*
+    include petrest.backend.api_root.*
+    include * -> petrest.backend.api_root.*
+    include petrest.backend.api_specialties.*
+    include * -> petrest.backend.api_specialties.*
+    include petrest.backend.api_users.*
+    include * -> petrest.backend.api_users.*
+    include petrest.backend.api_vets.*
+    include * -> petrest.backend.api_vets.*
+    include petrest.backend.api_visits.*
+    include * -> petrest.backend.api_visits.*
     global style base
     autoLayout LeftRight
   }
