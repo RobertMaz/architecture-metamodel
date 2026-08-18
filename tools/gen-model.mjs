@@ -21,7 +21,8 @@
  */
 
 import { readdirSync, readFileSync, writeFileSync, mkdirSync, existsSync, unlinkSync, rmdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { execSync } from 'node:child_process'
+import { join, basename } from 'node:path'
 import { parse as parseYaml } from 'yaml'
 import { opId, slug, esc } from './ids.mjs'
 
@@ -40,6 +41,29 @@ function writeIfChanged(path, content) {
   if (existsSync(path) && readFileSync(path, 'utf8') === content) return false
   writeFileSync(path, content)
   return true
+}
+
+/**
+ * Файлы систем можно править руками; git — арбитр. Но git спасает только
+ * закоммиченное: незакоммиченную ручную правку перезапись уничтожила бы молча.
+ * Поэтому перед перезаписью такая версия уезжает в workspace/_backup/ (gitignore).
+ */
+function backupHandEdits(root, relPath, content) {
+  const abs = join(root, relPath)
+  if (!existsSync(abs)) return
+  const current = readFileSync(abs, 'utf8')
+  if (current === content) return
+  let head
+  try {
+    head = execSync(`git -C "${root}" show HEAD:"${relPath}"`, { stdio: ['ignore', 'pipe', 'ignore'] }).toString()
+  } catch {
+    return // не git-репо или файла нет в HEAD — бэкапить не от чего
+  }
+  if (current === head) return
+  const dir = join(root, 'workspace/_backup')
+  mkdirSync(dir, { recursive: true })
+  writeFileSync(join(dir, basename(abs)), current)
+  console.error(`ВНИМАНИЕ: незакоммиченные правки ${relPath} перезаписаны — копия в workspace/_backup/${basename(abs)}`)
 }
 
 function readYaml(path, key) {
@@ -446,8 +470,9 @@ export function generate(root = '.') {
   if (systems.length) mkdirSync(systemsDir, { recursive: true })
   for (const s of [...systems].sort((a, b) => a.id.localeCompare(b.id))) {
     const L = [
-      `// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ. Правки человека — в model/overrides.c4.`,
-      `// Источник: registry/systems.yml + tools/api-source/*.json`,
+      `// Файл ведёт генератор (registry/systems.yml + tools/api-source/*.json).`,
+      `// Править руками МОЖНО, но регенерация перезапишет: закоммиченные правки`,
+      `// вытаскивай обратно через git diff, незакоммиченные — из workspace/_backup/.`,
       `// Вся кухня системы в одном файле: контейнеры, сторы, каналы, связи, виды.`,
       ``,
     ]
@@ -494,7 +519,9 @@ export function generate(root = '.') {
     L.push(`}`)
     L.push(``)
     mkdirSync(join(systemsDir, s.id), { recursive: true })
-    writeIfChanged(join(systemsDir, s.id, `${s.id}.c4`), L.join('\n'))
+    const content = L.join('\n')
+    backupHandEdits(root, `model/systems/${s.id}/${s.id}.c4`, content)
+    writeIfChanged(join(systemsDir, s.id, `${s.id}.c4`), content)
   }
   // Прунинг: системы, исчезнувшие из systems.yml, не оставляют файлов.
   if (existsSync(systemsDir)) {

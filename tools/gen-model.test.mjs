@@ -6,6 +6,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, statSync, existsSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { generate } from './gen-model.mjs'
@@ -148,6 +149,28 @@ test('повторный прогон не переписывает файлы',
   const before = statSync(file).mtimeMs
   generate(root)
   assert.equal(statSync(file).mtimeMs, before)
+})
+
+test('незакоммиченные ручные правки бэкапятся перед перезаписью', () => {
+  const root = makeRoot()
+  const run = (cmd) => execSync(cmd, { cwd: root, stdio: 'ignore' })
+  run('git init -q && git config user.email t@t && git config user.name t')
+  generate(root)
+  run('git add -A && git commit -qm base')
+
+  // руками правим файл системы, НЕ коммитим, и приходит регенерация с изменением
+  const file = systemFile(root)
+  writeFileSync(file, readFileSync(file, 'utf8').replace("service 'customers-service'", "service 'Клиенты (правка руками)'"))
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify({ ...doc, containerInfo: { ...doc.containerInfo, title: 'customers-v2' } }),
+  )
+  generate(root)
+
+  const backup = join(root, 'workspace/_backup/petclinic.c4')
+  assert.equal(existsSync(backup), true, 'ручная версия спасена')
+  assert.match(readFileSync(backup, 'utf8'), /Клиенты \(правка руками\)/)
+  assert.match(readFileSync(file, 'utf8'), /customers-v2/, 'файл перегенерирован')
 })
 
 test('система, исчезнувшая из systems.yml, прунится', () => {
