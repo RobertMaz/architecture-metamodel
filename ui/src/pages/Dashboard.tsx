@@ -11,8 +11,9 @@ export function Dashboard() {
   const containers = useQuery({
     queryKey: ["containers"],
     queryFn: api.containers,
-    // Пока идёт хоть один анализ — поллим статусы.
-    refetchInterval: (q) => (q.state.data?.some((c) => c.state === "running") ? 1000 : false),
+    // Пока идёт или ждёт хоть один анализ — поллим статусы.
+    refetchInterval: (q) =>
+      q.state.data?.some((c) => c.state === "running" || c.state === "queued") ? 1000 : false,
   })
   const systems = useQuery({ queryKey: ["systems"], queryFn: api.systems })
 

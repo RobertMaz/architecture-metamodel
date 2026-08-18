@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 function StateBadge({ state, analyzed }: { state: ContainerInfo["state"]; analyzed: boolean }) {
+  if (state === "queued") return <Badge variant="outline">в очереди</Badge>
   if (state === "running") return <Badge variant="secondary">анализ…</Badge>
   if (state === "failed") return <Badge variant="destructive">ошибка</Badge>
   if (analyzed) return <Badge variant="success">готово</Badge>
@@ -32,7 +33,7 @@ export function AnalyzeButton({ container }: { container: ContainerInfo }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["containers"] }),
     onError: (e) => toast.error(String(e)),
   })
-  const running = container.state === "running" || analyze.isPending
+  const running = container.state === "running" || container.state === "queued" || analyze.isPending
   return (
     <Button
       size="sm"

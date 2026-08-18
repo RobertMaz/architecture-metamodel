@@ -3,56 +3,94 @@ package arch.analyzer.server
 import arch.analyzer.core.Analyze
 import arch.analyzer.core.Json
 import arch.analyzer.core.Registry
+import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
 /**
- * Асинхронные прогоны анализа: поток на контейнер, статус — в
- * workspace/<id>/status.json (переживает рестарт сервера; UI просто поллит).
+ * Очередь прогонов: один воркер разбирает контейнеры по одному
+ * (параллельные прогоны гоняли бы aliases.yml и npm run gen наперегонки).
+ * Кнопка «Анализ» лишь ставит строчку в очередь: queued -> running -> done|failed,
+ * статус в workspace/<id>/status.json — переживает рестарт сервера и обновление
+ * страницы; зависшие после рестарта статусы помечаются failed при старте.
  * После успешного анализа выполняется npm run gen — модель дорастает сама.
- * status.json эфемерен (gitignore), таймстемпы здесь допустимы.
  */
 class Runs(private val archRoot: Path) {
 
     data class Status(
         val state: String,
         val lanes: List<String> = emptyList(),
+        val failedLanes: List<String> = emptyList(),
         val factCount: Int = 0,
         val error: String? = null,
         val finishedAt: String? = null,
     )
 
-    private val active = ConcurrentHashMap<String, Thread>()
+    private val executor = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "analyze-worker").apply { isDaemon = true }
+    }
+
+    /** Контейнеры в очереди или в работе. */
+    private val active = ConcurrentHashMap.newKeySet<String>()
+
+    init {
+        sweepStale()
+    }
 
     fun isKnown(containerId: String): Boolean =
         Registry(archRoot).repos().containsKey(containerId)
 
-    fun isRunning(containerId: String): Boolean =
-        active[containerId]?.isAlive == true
+    fun isRunning(containerId: String): Boolean = containerId in active
 
-    /** true — прогон запущен; false — уже идёт. */
+    /** true — поставлен в очередь; false — уже в очереди или в работе. */
     fun start(containerId: String): Boolean {
-        if (isRunning(containerId)) return false
-        val t = Thread {
+        if (!active.add(containerId)) return false
+        writeStatus(containerId, Status("queued"))
+        executor.submit {
+            writeStatus(containerId, Status("running"))
             try {
                 val r = Analyze.run(archRoot, containerId, date = LocalDate.now().toString())
                 generateModel()
-                writeStatus(containerId, Status("done", r.lanesRun, r.factCount, finishedAt = Instant.now().toString()))
+                writeStatus(
+                    containerId,
+                    Status("done", r.lanesRun, r.failedLanes, r.factCount, finishedAt = Instant.now().toString()),
+                )
             } catch (e: Exception) {
-                writeStatus(containerId, Status("failed", error = e.message ?: e.javaClass.simpleName, finishedAt = Instant.now().toString()))
+                writeStatus(
+                    containerId,
+                    Status("failed", error = e.message ?: e.javaClass.simpleName, finishedAt = Instant.now().toString()),
+                )
             } finally {
                 active.remove(containerId)
             }
         }
-        active[containerId] = t
-        writeStatus(containerId, Status("running"))
-        t.start()
         return true
+    }
+
+    /** Рестарт сервера: «queued»/«running» без живого воркера — это обман, честно валим. */
+    private fun sweepStale() {
+        val ws = archRoot.resolve("workspace")
+        if (!ws.exists()) return
+        Files.list(ws).use { dirs ->
+            dirs.filter { Files.isDirectory(it) }.sorted().forEach { dir ->
+                val file = dir.resolve("status.json")
+                if (!file.exists()) return@forEach
+                val state = runCatching { Json.read(file.readText(), Status::class.java).state }.getOrNull()
+                if (state == "queued" || state == "running") {
+                    writeStatus(
+                        dir.fileName.toString(),
+                        Status("failed", error = "прогон прерван перезапуском сервера — запусти анализ заново"),
+                    )
+                }
+            }
+        }
     }
 
     private fun writeStatus(containerId: String, s: Status) {

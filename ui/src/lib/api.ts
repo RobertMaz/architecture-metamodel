@@ -13,7 +13,7 @@ export type ContainerInfo = {
   repo: string
   path: string
   analyzed: boolean
-  state: "idle" | "running" | "done" | "failed"
+  state: "idle" | "queued" | "running" | "done" | "failed"
   lanes: string[]
   operations: number
   calls: number

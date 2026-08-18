@@ -16,7 +16,8 @@ export function Container() {
   const containers = useQuery({
     queryKey: ["containers"],
     queryFn: api.containers,
-    refetchInterval: (q) => (q.state.data?.some((c) => c.state === "running") ? 1000 : false),
+    refetchInterval: (q) =>
+      q.state.data?.some((c) => c.state === "running" || c.state === "queued") ? 1000 : false,
   })
   const container = containers.data?.find((c) => c.id === id)
 
