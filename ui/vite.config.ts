@@ -15,7 +15,8 @@ export default defineConfig({
     // 5173 занят LikeC4 dev-сервером — UI живёт на 5174.
     port: 5174,
     proxy: {
-      '/api': 'http://localhost:8080',
+      // Адрес Ktor-сервера анализатора; переопределяется: ANALYZER_URL=http://localhost:8081 npm run dev
+      '/api': process.env.ANALYZER_URL ?? 'http://localhost:8080',
     },
   },
 })

@@ -26,7 +26,7 @@ export function Layout() {
           </Link>
           <div className="ml-auto">
             <Button variant="outline" size="sm" asChild>
-              <a href="http://localhost:5173" target="_blank" rel="noreferrer">
+              <a href={import.meta.env.VITE_LIKEC4_URL ?? "http://localhost:5173"} target="_blank" rel="noreferrer">
                 Открыть LikeC4
               </a>
             </Button>
