@@ -669,11 +669,110 @@ views 'PetClinic REST' {
 
   view petrest_backend_api of petrest.backend {
     title 'API / backend'
-    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
     include *
     include petrest.backend.api
     include petrest.backend.api.*
     include * -> petrest.backend.api.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_oops of petrest.backend.api_oops {
+    title 'API / backend / oops'
+    description 'Операции домена «oops» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_oops.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_owner_v2 of petrest.backend.api_owner_v2 {
+    title 'API / backend / owner-v2'
+    description 'Операции домена «owner-v2» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_owner_v2.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_owners of petrest.backend.api_owners {
+    title 'API / backend / owners'
+    description 'Операции домена «owners» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_owners.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_pet_v2 of petrest.backend.api_pet_v2 {
+    title 'API / backend / pet-v2'
+    description 'Операции домена «pet-v2» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_pet_v2.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_pets of petrest.backend.api_pets {
+    title 'API / backend / pets'
+    description 'Операции домена «pets» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_pets.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_pettypes of petrest.backend.api_pettypes {
+    title 'API / backend / pettypes'
+    description 'Операции домена «pettypes» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_pettypes.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_root of petrest.backend.api_root {
+    title 'API / backend / root'
+    description 'Операции домена «root» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_root.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_specialties of petrest.backend.api_specialties {
+    title 'API / backend / specialties'
+    description 'Операции домена «specialties» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_specialties.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_users of petrest.backend.api_users {
+    title 'API / backend / users'
+    description 'Операции домена «users» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_users.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_vets of petrest.backend.api_vets {
+    title 'API / backend / vets'
+    description 'Операции домена «vets» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_vets.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_visits of petrest.backend.api_visits {
+    title 'API / backend / visits'
+    description 'Операции домена «visits» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_visits.*
     global style base
     autoLayout LeftRight
   }

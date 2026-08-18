@@ -226,6 +226,9 @@ test('операции с доменами раскладываются по api
   assert.match(text, /api = api 'visits API' \{/, 'базовый api для операций без домена')
   // операция в группе, ребро ведёт именно туда
   assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api_visit\.get_pets_visits 'GET \/pets\/visits'/)
+  // drill-down вид на группу: клик по api_visit проваливается в операции
+  assert.match(text, /view petclinic_visits_visit of petclinic\.visits\.api_visit \{/)
+  assert.match(text, /title 'API \/ visits-service \/ visit'/)
 })
 
 test('легаси-док без containerInfo игнорируется', () => {

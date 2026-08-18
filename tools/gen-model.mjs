@@ -428,7 +428,8 @@ export function generate(root = '.') {
     pushBlock(sys, L)
     if ((d.operations ?? []).length) {
       if (!apiViews.has(sys)) apiViews.set(sys, [])
-      apiViews.get(sys).push({ name, title: info.title })
+      const groups = [...new Set((d.operations ?? []).filter((op) => op.group).map((op) => op.group))].sort()
+      apiViews.get(sys).push({ name, title: info.title, groups })
     }
 
     const edges = []
@@ -540,7 +541,7 @@ export function generate(root = '.') {
       L.push(``)
       L.push(`  view ${s.id}_${v.name}_api of ${cid} {`)
       L.push(`    title 'API / ${esc(v.title)}'`)
-      L.push(`    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'`)
+      L.push(`    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'`)
       L.push(`    include *`)
       L.push(`    include ${cid}.api`)
       L.push(`    include ${cid}.api.*`)
@@ -548,6 +549,19 @@ export function generate(root = '.') {
       L.push(`    global style base`)
       L.push(`    autoLayout LeftRight`)
       L.push(`  }`)
+      // Drill-down: вид на каждую доменную api-группу — операции и их вызывающие.
+      for (const g of v.groups ?? []) {
+        const apiRef = `${cid}.api_${slug(g)}`
+        L.push(``)
+        L.push(`  view ${s.id}_${v.name}_${slug(g)} of ${apiRef} {`)
+        L.push(`    title 'API / ${esc(v.title)} / ${esc(g)}'`)
+        L.push(`    description 'Операции домена «${esc(g)}» со своими вызывающими'`)
+        L.push(`    include *`)
+        L.push(`    include * -> ${apiRef}.*`)
+        L.push(`    global style base`)
+        L.push(`    autoLayout LeftRight`)
+        L.push(`  }`)
+      }
     }
     L.push(`}`)
     L.push(``)

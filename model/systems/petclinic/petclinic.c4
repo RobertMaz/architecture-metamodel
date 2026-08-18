@@ -485,7 +485,7 @@ views 'PetClinic' {
 
   view petclinic_customers_api of petclinic.customers {
     title 'API / customers-service'
-    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
     include *
     include petclinic.customers.api
     include petclinic.customers.api.*
@@ -494,9 +494,27 @@ views 'PetClinic' {
     autoLayout LeftRight
   }
 
+  view petclinic_customers_owner of petclinic.customers.api_owner {
+    title 'API / customers-service / owner'
+    description 'Операции домена «owner» со своими вызывающими'
+    include *
+    include * -> petclinic.customers.api_owner.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_customers_pet of petclinic.customers.api_pet {
+    title 'API / customers-service / pet'
+    description 'Операции домена «pet» со своими вызывающими'
+    include *
+    include * -> petclinic.customers.api_pet.*
+    global style base
+    autoLayout LeftRight
+  }
+
   view petclinic_discovery_api of petclinic.discovery {
     title 'API / discovery-server'
-    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
     include *
     include petclinic.discovery.api
     include petclinic.discovery.api.*
@@ -507,7 +525,7 @@ views 'PetClinic' {
 
   view petclinic_gateway_api of petclinic.gateway {
     title 'API / api-gateway'
-    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
     include *
     include petclinic.gateway.api
     include petclinic.gateway.api.*
@@ -516,9 +534,27 @@ views 'PetClinic' {
     autoLayout LeftRight
   }
 
+  view petclinic_gateway_apigateway of petclinic.gateway.api_apigateway {
+    title 'API / api-gateway / apigateway'
+    description 'Операции домена «apigateway» со своими вызывающими'
+    include *
+    include * -> petclinic.gateway.api_apigateway.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_gateway_fallback of petclinic.gateway.api_fallback {
+    title 'API / api-gateway / fallback'
+    description 'Операции домена «fallback» со своими вызывающими'
+    include *
+    include * -> petclinic.gateway.api_fallback.*
+    global style base
+    autoLayout LeftRight
+  }
+
   view petclinic_genai_api of petclinic.genai {
     title 'API / genai-service'
-    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
     include *
     include petclinic.genai.api
     include petclinic.genai.api.*
@@ -529,7 +565,7 @@ views 'PetClinic' {
 
   view petclinic_vets_api of petclinic.vets {
     title 'API / vets-service'
-    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
     include *
     include petclinic.vets.api
     include petclinic.vets.api.*
@@ -538,13 +574,31 @@ views 'PetClinic' {
     autoLayout LeftRight
   }
 
+  view petclinic_vets_vet of petclinic.vets.api_vet {
+    title 'API / vets-service / vet'
+    description 'Операции домена «vet» со своими вызывающими'
+    include *
+    include * -> petclinic.vets.api_vet.*
+    global style base
+    autoLayout LeftRight
+  }
+
   view petclinic_visits_api of petclinic.visits {
     title 'API / visits-service'
-    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    description 'Контрактные группы контейнера; клик по группе проваливается в её операции'
     include *
     include petclinic.visits.api
     include petclinic.visits.api.*
     include * -> petclinic.visits.api.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_visits_visit of petclinic.visits.api_visit {
+    title 'API / visits-service / visit'
+    description 'Операции домена «visit» со своими вызывающими'
+    include *
+    include * -> petclinic.visits.api_visit.*
     global style base
     autoLayout LeftRight
   }
