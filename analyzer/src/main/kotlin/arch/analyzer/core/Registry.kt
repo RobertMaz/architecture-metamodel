@@ -15,6 +15,7 @@ data class RepoEntry(
     val jar: String? = null,
     val runtimeUrl: String? = null,
     val traces: String? = null,
+    val openapi: String? = null,
 )
 
 class Registry(private val archRoot: Path) {
@@ -32,7 +33,8 @@ class Registry(private val archRoot: Path) {
             val jar = node.get("jar")?.asText()?.takeIf { it.isNotEmpty() }
             val runtimeUrl = node.get("runtimeUrl")?.asText()?.takeIf { it.isNotEmpty() }
             val traces = node.get("traces")?.asText()?.takeIf { it.isNotEmpty() }
-            if (path.isNotEmpty()) out[id] = RepoEntry(repo, path, jar, runtimeUrl, traces)
+            val openapi = node.get("openapi")?.asText()?.takeIf { it.isNotEmpty() }
+            if (path.isNotEmpty()) out[id] = RepoEntry(repo, path, jar, runtimeUrl, traces, openapi)
         }
         return out
     }

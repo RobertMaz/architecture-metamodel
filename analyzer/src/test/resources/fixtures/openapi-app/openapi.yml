@@ -1,0 +1,49 @@
+openapi: 3.0.3
+info:
+  title: Orders API
+  version: '1.0'
+paths:
+  /api/v1/orders:
+    post:
+      summary: Создать заказ
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+  /api/v1/orders/{id}:
+    get:
+      summary: Получить заказ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: expand
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+    delete:
+      deprecated: true
+      responses:
+        '204': {}
+components:
+  schemas:
+    CreateOrderRequest:
+      type: object
+    OrderResponse:
+      type: object

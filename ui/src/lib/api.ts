@@ -25,6 +25,7 @@ export type ContainerInfo = {
   jar?: string | null
   runtimeUrl?: string | null
   traces?: string | null
+  openapi?: string | null
 }
 
 export type Operation = {
@@ -90,7 +91,7 @@ export const api = {
   analyze: (id: string) => http<{ started: boolean }>(`/api/containers/${id}/analyze`, { method: "POST" }),
   addSystem: (body: { id: string; title: string; kind: string; description?: string; owner: string }) =>
     http<{ created: string }>("/api/systems", { method: "POST", body: JSON.stringify(body) }),
-  addContainer: (body: { id: string; repo: string; path: string; jar?: string; runtimeUrl?: string; traces?: string }) =>
+  addContainer: (body: { id: string; repo: string; path: string; jar?: string; runtimeUrl?: string; traces?: string; openapi?: string }) =>
     http<{ created: string }>("/api/containers", { method: "POST", body: JSON.stringify(body) }),
   unresolved: () => http<{ unresolved: UnresolvedEntry[] }>("/api/unresolved"),
   resolve: (
@@ -102,7 +103,7 @@ export const api = {
     },
   ) =>
     http<{ resolved: string }>(`/api/unresolved/${stubId}/resolve`, { method: "POST", body: JSON.stringify(body) }),
-  updateSources: (id: string, body: { repo?: string; path?: string; jar?: string; runtimeUrl?: string; traces?: string }) =>
+  updateSources: (id: string, body: { repo?: string; path?: string; jar?: string; runtimeUrl?: string; traces?: string; openapi?: string }) =>
     http<{ updated: string }>(`/api/containers/${id}/sources`, { method: "PUT", body: JSON.stringify(body) }),
   hypotheses: (stubId: string) =>
     http<{ configured: boolean; hypotheses: { name: string; container?: string | null; confidence: number }[] }>(

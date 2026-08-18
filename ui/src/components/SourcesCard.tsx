@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label"
  */
 export function SourcesCard({ container }: { container: ContainerInfo }) {
   const qc = useQueryClient()
-  const [form, setForm] = useState({ repo: "", path: "", jar: "", runtimeUrl: "", traces: "" })
+  const [form, setForm] = useState({ repo: "", path: "", jar: "", runtimeUrl: "", traces: "", openapi: "" })
 
   useEffect(() => {
     setForm({
@@ -24,8 +24,9 @@ export function SourcesCard({ container }: { container: ContainerInfo }) {
       jar: container.jar ?? "",
       runtimeUrl: container.runtimeUrl ?? "",
       traces: container.traces ?? "",
+      openapi: container.openapi ?? "",
     })
-  }, [container.id, container.repo, container.path, container.jar, container.runtimeUrl, container.traces])
+  }, [container.id, container.repo, container.path, container.jar, container.runtimeUrl, container.traces, container.openapi])
 
   const save = useMutation({
     mutationFn: () => api.updateSources(container.id, form),
@@ -43,7 +44,8 @@ export function SourcesCard({ container }: { container: ContainerInfo }) {
     { key: "path", label: "Локальный путь к сорцам (обязателен)" },
     { key: "jar", label: "JAR из Nexus/сборки — полка bytecode" },
     { key: "runtimeUrl", label: "URL запущенной апки — полка runtime (Actuator)" },
-    { key: "traces", label: "Файл OTel-спанов — полка runtime" },
+    { key: "traces", label: "Файл OTel-спанов — полка traces" },
+    { key: "openapi", label: "OpenAPI-спека — полка openapi (иначе автопоиск openapi.yml)" },
   ]
 
   return (

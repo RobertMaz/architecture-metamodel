@@ -2,6 +2,7 @@ package arch.analyzer.core
 
 import arch.analyzer.lanes.BytecodeLane
 import arch.analyzer.lanes.ConfigLane
+import arch.analyzer.lanes.OpenApiLane
 import arch.analyzer.lanes.JqassistantLane
 import arch.analyzer.lanes.SourceLane
 import java.nio.file.Files
@@ -42,6 +43,7 @@ object Analyze {
         return listOf(
             SourceLane(),
             ConfigLane(),
+            OpenApiLane(),
             BytecodeLane(),
             JqassistantLane(adapter = root.resolve("analyzer/jqassistant/extract.sh")),
             arch.analyzer.lanes.RuntimeLane(),
@@ -62,6 +64,7 @@ object Analyze {
             jar = entry.jar?.let { Paths.get(it) },
             runtimeUrl = entry.runtimeUrl,
             traces = entry.traces?.let { Paths.get(it) },
+            openapi = entry.openapi?.let { Paths.get(it) },
         )
         val workspace = archRoot.resolve("workspace/$containerId").createDirectories()
 

@@ -13,6 +13,7 @@ data class RepoInput(
     val jar: Path? = null,
     val runtimeUrl: String? = null,
     val traces: Path? = null,
+    val openapi: Path? = null,
 )
 
 interface Lane {

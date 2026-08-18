@@ -28,6 +28,7 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
   const [jar, setJar] = useState("")
   const [runtimeUrl, setRuntimeUrl] = useState("")
   const [traces, setTraces] = useState("")
+  const [openapi, setOpenapi] = useState("")
 
   const id = system && name ? `${system}.${name}` : ""
 
@@ -40,6 +41,7 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
         jar: jar || undefined,
         runtimeUrl: runtimeUrl || undefined,
         traces: traces || undefined,
+        openapi: openapi || undefined,
       }),
     onSuccess: () => {
       toast.success(`Контейнер «${id}» добавлен`)
@@ -104,8 +106,12 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
             <Input id="c-rt" placeholder="http://localhost:8080" value={runtimeUrl} onChange={(e) => setRuntimeUrl(e.target.value)} />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor="c-tr">Файл OTel-спанов (необязательно — полка runtime)</Label>
+            <Label htmlFor="c-tr">Файл OTel-спанов (необязательно — полка traces)</Label>
             <Input id="c-tr" value={traces} onChange={(e) => setTraces(e.target.value)} />
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-oa">OpenAPI-спека (необязательно — иначе автопоиск openapi.yml в репо)</Label>
+            <Input id="c-oa" value={openapi} onChange={(e) => setOpenapi(e.target.value)} />
           </div>
         </div>
         <DialogFooter>

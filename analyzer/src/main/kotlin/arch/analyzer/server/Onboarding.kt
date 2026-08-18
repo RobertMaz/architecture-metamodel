@@ -30,6 +30,7 @@ data class NewContainer(
     val jar: String? = null,
     val runtimeUrl: String? = null,
     val traces: String? = null,
+    val openapi: String? = null,
 )
 
 class Onboarding(private val archRoot: Path) {
@@ -102,6 +103,7 @@ class Onboarding(private val archRoot: Path) {
         val jar: String? = null,
         val runtimeUrl: String? = null,
         val traces: String? = null,
+        val openapi: String? = null,
     )
 
     fun updateSources(id: String, p: SourcesPatch): Result {
@@ -110,7 +112,7 @@ class Onboarding(private val archRoot: Path) {
         val entries = sortedMapOf<String, MutableMap<String, String>>()
         existing?.fields()?.forEach { (cid, n) ->
             val row = mutableMapOf<String, String>()
-            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces")) {
+            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi")) {
                 n[k]?.asText()?.takeIf { it.isNotEmpty() }?.let { row[k] = it }
             }
             entries[cid] = row
@@ -122,7 +124,7 @@ class Onboarding(private val archRoot: Path) {
         }
         for ((k, v) in mapOf(
             "repo" to p.repo, "path" to p.path, "jar" to p.jar,
-            "runtimeUrl" to p.runtimeUrl, "traces" to p.traces,
+            "runtimeUrl" to p.runtimeUrl, "traces" to p.traces, "openapi" to p.openapi,
         )) {
             when {
                 v == null -> {}
@@ -135,7 +137,7 @@ class Onboarding(private val archRoot: Path) {
         val out = StringBuilder(reposHeader).append("repos:\n")
         for ((cid, r) in entries) {
             out.append("  $cid:\n")
-            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces")) {
+            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi")) {
                 r[k]?.let { out.append("    $k: ${quote(it)}\n") }
             }
         }
@@ -153,12 +155,12 @@ class Onboarding(private val archRoot: Path) {
 
         val file = archRoot.resolve("registry/repos.yml")
         val existing = if (file.exists()) yaml.readTree(file.toFile())?.get("repos") else null
-        data class Row(val repo: String, val path: String, val jar: String?, val runtimeUrl: String?, val traces: String?)
+        data class Row(val repo: String, val path: String, val jar: String?, val runtimeUrl: String?, val traces: String?, val openapi: String?)
         val entries = sortedMapOf<String, Row>()
         existing?.fields()?.forEach { (id, n) ->
             entries[id] = Row(
                 n["repo"]?.asText() ?: "", n["path"]?.asText() ?: "",
-                n["jar"]?.asText(), n["runtimeUrl"]?.asText(), n["traces"]?.asText(),
+                n["jar"]?.asText(), n["runtimeUrl"]?.asText(), n["traces"]?.asText(), n["openapi"]?.asText(),
             )
         }
         if (c.id in entries) return Result.Conflict("контейнер «${c.id}» уже есть")
@@ -167,6 +169,7 @@ class Onboarding(private val archRoot: Path) {
             c.jar?.takeIf { it.isNotBlank() },
             c.runtimeUrl?.takeIf { it.isNotBlank() },
             c.traces?.takeIf { it.isNotBlank() },
+            c.openapi?.takeIf { it.isNotBlank() },
         )
 
         val out = StringBuilder(reposHeader).append("repos:\n")
@@ -177,6 +180,7 @@ class Onboarding(private val archRoot: Path) {
             row.jar?.let { out.append("    jar: ${quote(it)}\n") }
             row.runtimeUrl?.let { out.append("    runtimeUrl: ${quote(it)}\n") }
             row.traces?.let { out.append("    traces: ${quote(it)}\n") }
+            row.openapi?.let { out.append("    openapi: ${quote(it)}\n") }
         }
         file.writeText(out.toString())
         return Result.Created
