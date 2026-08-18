@@ -142,6 +142,36 @@ class RuntimeLaneTest {
     }
 
     @Test
+    fun `uuid-имя БД нестабильно - адрес считается неизвестным`() {
+        // Spring Boot генерит in-memory БД со случайным UUID-именем: это не адрес,
+        // иначе каждый рестарт апки рождал бы новый «стор» и дифф.
+        val traces = Files.createTempDirectory("otel").resolve("s.jsonl")
+        traces.writeText(
+            """{"resourceSpans":[{"scopeSpans":[{"spans":[{"traceId":"t1","kind":3,"attributes":[""" +
+                """{"key":"db.system","value":{"stringValue":"hsqldb"}},""" +
+                """{"key":"db.name","value":{"stringValue":"89cf7e86-3d29-46d2-bd6b-2326276b9d83"}}]}]}]}]}""",
+        )
+        val f = TracesLane().extract(RepoInput("x", Files.createTempDirectory("r"), traces = traces)).single()
+        assertEquals("", f.attrs["address"], "uuid — не адрес")
+        assertEquals("hsqldb", f.attrs["technology"])
+
+        // и в actuator/env: jdbc-url с uuid-именем тоже нестабилен
+        val server = HttpServer.create(InetSocketAddress(0), 0)
+        val env = """{"propertySources":[{"name":"a","properties":{"spring.datasource.url":{"value":"jdbc:hsqldb:mem:89cf7e86-3d29-46d2-bd6b-2326276b9d83"}}}]}"""
+        server.createContext("/actuator/health") { ex -> val b = """{"status":"UP"}""".toByteArray(); ex.sendResponseHeaders(200, b.size.toLong()); ex.responseBody.use { it.write(b) } }
+        server.createContext("/actuator/mappings") { ex -> val b = "{}".toByteArray(); ex.sendResponseHeaders(200, b.size.toLong()); ex.responseBody.use { it.write(b) } }
+        server.createContext("/actuator/env") { ex -> val b = env.toByteArray(); ex.sendResponseHeaders(200, b.size.toLong()); ex.responseBody.use { it.write(b) } }
+        server.start()
+        try {
+            val facts = RuntimeLane().extract(RepoInput("x", Files.createTempDirectory("r"), runtimeUrl = "http://localhost:${server.address.port}"))
+            val store = facts.single { it.type == FactType.STORE_ACCESS }
+            assertEquals("", store.attrs["address"], "jdbc-url с uuid — адрес неизвестен")
+        } finally {
+            server.stop(0)
+        }
+    }
+
+    @Test
     fun `не применима без runtimeUrl и traces`() {
         assertTrue(!RuntimeLane().applicable(RepoInput("x", Files.createTempDirectory("r"))))
         assertTrue(!TracesLane().applicable(RepoInput("x", Files.createTempDirectory("r"))))

@@ -368,11 +368,10 @@ model {
       }
     }
 
-    db_89cf7e86_3d29_46d2_bd6b_2326276b9d83 = store '89cf7e86-3d29-46d2-bd6b-2326276b9d83' {
+    db_customers = store 'customers' {
       #inferred
       technology 'hsqldb'
       metadata {
-        address '89cf7e86-3d29-46d2-bd6b-2326276b9d83'
         entities 'Owner, Pet'
       }
     }
@@ -400,8 +399,8 @@ model {
   petclinic.customers -[call]-> petclinic.discovery.api 'POST /eureka/apps/CUSTOMERS-SERVICE'
   petclinic.customers -[call]-> petclinic.discovery.api 'PUT /eureka/apps/CUSTOMERS-SERVICE/customers-service:324df86a-1d79-4dc2-91b1-3270152d33d2'
   petclinic.customers -[call]-> zipkin 'POST /api/v2/spans'
-  petclinic.customers -[read]-> petclinic.db_89cf7e86_3d29_46d2_bd6b_2326276b9d83
-  petclinic.customers -[write]-> petclinic.db_89cf7e86_3d29_46d2_bd6b_2326276b9d83
+  petclinic.customers -[read]-> petclinic.db_customers
+  petclinic.customers -[write]-> petclinic.db_customers
   petclinic.gateway -[call]-> petclinic.config 'GET /api-gateway/default'
   petclinic.gateway -[call]-> petclinic.customers.api 'route /api/customer/**'
   petclinic.gateway -[call]-> petclinic.customers.api.get_owners 'GET /owners'

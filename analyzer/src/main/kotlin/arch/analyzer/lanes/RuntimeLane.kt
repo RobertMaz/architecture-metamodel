@@ -17,6 +17,16 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 /**
+ * Случайные идентификаторы в адресах БД (Spring Boot генерит in-memory БД
+ * с UUID-именем) нестабильны между рестартами — это не адрес: каждый прогон
+ * рождал бы новый «стор» и дифф. Такой адрес честно считается неизвестным.
+ */
+private val UUID_RE = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", RegexOption.IGNORE_CASE)
+
+internal fun stableDbAddress(address: String?): String =
+    address?.takeIf { it.isNotEmpty() && !UUID_RE.containsMatchIn(it) } ?: ""
+
+/**
  * Полка runtime (Actuator) — наивысший приоритет достоверности: живое приложение
  * не врёт. /actuator/mappings — реальные роуты, /actuator/env — datasource и имя.
  * Недоступный рантайм — не ошибка: полка не применима, а её ПРОШЛЫЙ evidence
@@ -87,7 +97,7 @@ class RuntimeLane : Lane {
             prop("spring.datasource.url")?.takeIf { !it.matches(Regex("\\*+")) }?.let {
                 facts += fact(
                     FactType.STORE_ACCESS, "actuator:/env", 0.97,
-                    "kind" to "jdbc", "address" to it,
+                    "kind" to "jdbc", "address" to stableDbAddress(it),
                 )
             }
             prop("spring.application.name")?.let {
@@ -157,7 +167,7 @@ class TracesLane : Lane {
                 kind == 3 && attrs["db.system"] != null -> fact(
                     FactType.STORE_ACCESS, src, 0.97,
                     "kind" to if (attrs["db.system"] == "redis") "redis" else "jdbc",
-                    "address" to (attrs["db.name"] ?: ""),
+                    "address" to stableDbAddress(attrs["db.name"]),
                     "technology" to (attrs["db.system"] ?: ""),
                 )
                 kind == 3 -> {

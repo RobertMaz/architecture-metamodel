@@ -152,7 +152,7 @@
   "stores" : [
     {
       "access" : "readwrite",
-      "address" : "89cf7e86-3d29-46d2-bd6b-2326276b9d83",
+      "address" : "",
       "confidence" : 1.0,
       "entities" : "Owner, Pet",
       "kind" : "jdbc",
