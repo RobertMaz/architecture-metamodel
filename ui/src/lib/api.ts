@@ -15,6 +15,7 @@ export type ContainerInfo = {
   analyzed: boolean
   state: "idle" | "queued" | "running" | "done" | "failed"
   lanes: string[]
+  evidenceLanes: string[]
   operations: number
   calls: number
   stores: number

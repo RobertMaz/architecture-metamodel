@@ -43,6 +43,8 @@ data class ContainerDto(
     val analyzed: Boolean,
     val state: String,
     val lanes: List<String>,
+    /** Полки, чей evidence лежит на диске, — включая прошлые прогоны (персистентность). */
+    val evidenceLanes: List<String>,
     val jar: String? = null,
     val runtimeUrl: String? = null,
     val traces: String? = null,
@@ -103,6 +105,7 @@ class Inventory(private val archRoot: Path) {
                 analyzed = doc != null,
                 state = status?.get("state")?.asText() ?: "idle",
                 lanes = status?.get("lanes")?.map { it.asText() } ?: emptyList(),
+                evidenceLanes = evidenceLanes(id),
                 jar = node["jar"]?.asText(),
                 runtimeUrl = node["runtimeUrl"]?.asText(),
                 traces = node["traces"]?.asText(),
@@ -119,6 +122,18 @@ class Inventory(private val archRoot: Path) {
 
     fun readJson(path: Path): JsonNode? =
         if (path.exists()) json.readTree(path.readText()) else null
+
+    private fun evidenceLanes(id: String): List<String> {
+        val ws = archRoot.resolve("workspace/$id")
+        if (!ws.exists()) return emptyList()
+        return java.nio.file.Files.list(ws).use { s ->
+            s.map { it.fileName.toString() }
+                .filter { it.matches(Regex("evidence\\.[a-z-]+\\.json")) }
+                .map { it.removePrefix("evidence.").removeSuffix(".json") }
+                .sorted()
+                .toList()
+        }
+    }
 }
 
 fun buildApp(

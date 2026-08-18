@@ -40,7 +40,8 @@ export function Container() {
           <h1 className="font-mono text-xl font-semibold">{id}</h1>
           {container && (
             <p className="text-sm text-muted-foreground">
-              {container.repo} · полки: {container.lanes.join(", ") || "—"}
+              {container.repo} · evidence: {container.evidenceLanes.join(", ") || "—"}
+              {container.lanes.length > 0 && ` · последний прогон: ${container.lanes.join(", ")}`}
             </p>
           )}
         </div>

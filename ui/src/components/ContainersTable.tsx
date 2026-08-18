@@ -72,9 +72,24 @@ export function ContainersTable({ containers, loading }: { containers: Container
         header: "Статус",
         cell: (c) => <StateBadge state={c.row.original.state} analyzed={c.row.original.analyzed} />,
       }),
-      col.accessor("lanes", {
-        header: "Полки",
-        cell: (c) => c.getValue().join(", ") || "—",
+      col.accessor("evidenceLanes", {
+        header: "Полки (evidence)",
+        cell: (c) => {
+          const evidence = c.getValue() as string[]
+          const lastRun = c.row.original.lanes
+          if (!evidence.length) return "—"
+          // Полка с evidence, не отработавшая в последнем прогоне (источник недоступен), — приглушена
+          return (
+            <span>
+              {evidence.map((l: string, i: number) => (
+                <span key={l} className={lastRun.length > 0 && !lastRun.includes(l) ? "text-muted-foreground" : undefined}>
+                  {i > 0 && ", "}
+                  {l}
+                </span>
+              ))}
+            </span>
+          )
+        },
       }),
       col.accessor("operations", { header: "Операции" }),
       col.accessor("calls", { header: "Вызовы" }),
