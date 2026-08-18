@@ -76,4 +76,4 @@ node tools/verify.mjs build/model.json --list
 
 ## Документация
 
-`CHEATSHEET.md` — как описать сервис (стартовая точка). `CONTRACTS.md` — контрактный слой и формат JSON для анализатора. `VERIFICATION.md` — механика подтверждений (hash поверхности, сроки docs 90 / owner 180 / probe 365 дней). `TIERS.md` — три круга и владение.
+`CHEATSHEET.md` — как описать сервис (стартовая точка). `CONTRACTS.md` — контрактный слой и формат JSON для анализатора. `VERIFICATION.md` — механика подтверждений (hash поверхности, сроки docs 90 / owner 180 / probe 365 дней) и куда перекладывать подтверждённый stub из `model/gen/unknown/` (рукописный файл в `model/` + смена маппинга в `registry/resolutions.yml`). `TIERS.md` — три круга и владение.
