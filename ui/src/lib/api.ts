@@ -31,6 +31,7 @@ export type ContainerInfo = {
 export type Operation = {
   method: string
   path: string
+  group?: string
   summary?: string
   params?: string
   request?: string

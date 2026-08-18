@@ -39,6 +39,8 @@ data class ApiBlock(
 data class Operation(
     val method: String,
     val path: String,
+    /** Домен/группа: генератор кладёт операцию в api_<group> внутри контейнера. */
+    val group: String? = null,
     val summary: String? = null,
     val params: String? = null,
     val request: String? = null,

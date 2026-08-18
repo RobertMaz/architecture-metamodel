@@ -73,6 +73,7 @@
   "operations" : [
     {
       "confidence" : 1.0,
+      "group" : "owner",
       "method" : "GET",
       "path" : "/owners",
       "response" : "Owner",
@@ -81,6 +82,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "owner",
       "method" : "POST",
       "path" : "/owners",
       "request" : "OwnerRequest",
@@ -90,6 +92,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "pet",
       "method" : "GET",
       "params" : "petId:path:int",
       "path" : "/owners/*/pets/{petId}",
@@ -99,6 +102,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "pet",
       "method" : "PUT",
       "path" : "/owners/*/pets/{petId}",
       "request" : "PetRequest",
@@ -107,6 +111,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "owner",
       "method" : "GET",
       "params" : "ownerId:path:int",
       "path" : "/owners/{ownerId}",
@@ -116,6 +121,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "owner",
       "method" : "PUT",
       "params" : "ownerId:path:int",
       "path" : "/owners/{ownerId}",
@@ -125,6 +131,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "pet",
       "method" : "POST",
       "params" : "ownerId:path:int",
       "path" : "/owners/{ownerId}/pets",
@@ -135,6 +142,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "pet",
       "method" : "GET",
       "path" : "/petTypes",
       "response" : "PetType",

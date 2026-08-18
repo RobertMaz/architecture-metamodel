@@ -204,6 +204,30 @@ test('пустой адрес БД — свой стор на контейнер
   assert.match(text, /db_vets = store 'vets'/)
 })
 
+test('операции с доменами раскладываются по api-группам, рёбра ведут в них', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.visits.json'),
+    JSON.stringify({
+      ...visitsDoc,
+      operations: [
+        { method: 'GET', path: '/pets/visits', group: 'visit', source: 's#L1', confidence: 0.95 },
+        { method: 'GET', path: '/internal/ping', source: 's#L2', confidence: 0.95 },
+      ],
+    }),
+  )
+  writeFileSync(join(root, 'tools/api-source/petclinic.customers.json'), JSON.stringify(withCall({ host: 'visits-service' })))
+  writeFileSync(join(root, 'registry/aliases.yml'), 'aliases:\n  visits-service: petclinic.visits\n')
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+
+  assert.match(text, /api_visit = api 'visit' \{/, 'доменная группа')
+  assert.match(text, /domain 'visit'/)
+  assert.match(text, /api = api 'visits API' \{/, 'базовый api для операций без домена')
+  // операция в группе, ребро ведёт именно туда
+  assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api_visit\.get_pets_visits 'GET \/pets\/visits'/)
+})
+
 test('легаси-док без containerInfo игнорируется', () => {
   const root = makeRoot()
   writeFileSync(

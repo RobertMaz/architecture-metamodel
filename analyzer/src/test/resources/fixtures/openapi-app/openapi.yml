@@ -7,6 +7,7 @@ servers:
 paths:
   /api/v1/orders:
     post:
+      tags: [order]
       summary: Создать заказ
       requestBody:
         content:

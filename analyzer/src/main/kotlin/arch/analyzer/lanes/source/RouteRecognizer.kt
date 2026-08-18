@@ -79,15 +79,22 @@ class RouteRecognizer : SourceRecognizer {
             for (cls in cu.findAll(ClassOrInterfaceDeclaration::class.java)) {
                 if (annotation(cls, "RestController") == null) continue
                 val prefix = annotation(cls, "RequestMapping")?.let { annotationValue(it) }
+                val group = groupOf(cls.nameAsString)
                 for (m in cls.methods) {
-                    facts += recognizeMethod(project, path, prefix, m) ?: continue
+                    facts += recognizeMethod(project, path, prefix, group, m) ?: continue
                 }
             }
         }
         return facts
     }
 
-    private fun recognizeMethod(project: JavaProject, file: java.nio.file.Path, prefix: String?, m: MethodDeclaration): Fact? {
+    /** Домен операции из имени контроллера: OwnerRestControllerV1 -> owner. */
+    private fun groupOf(className: String): String? {
+        val stripped = className.replace(Regex("(Rest)?(Controller|Resource|Api)(V\\d+)?$"), "")
+        return if (stripped.isEmpty() || stripped == className) null else stripped.lowercase()
+    }
+
+    private fun recognizeMethod(project: JavaProject, file: java.nio.file.Path, prefix: String?, group: String?, m: MethodDeclaration): Fact? {
         val (httpMethod, mappingAnn) = httpMethodOf(m) ?: return null
         val path = joinPath(prefix, mappingAnn?.let { annotationValue(it) })
 
@@ -95,6 +102,7 @@ class RouteRecognizer : SourceRecognizer {
             "method" to httpMethod,
             "path" to path,
         )
+        group?.let { attrs += "group" to it }
         params(m)?.let { attrs += "params" to it }
         requestBody(m)?.let { attrs += "request" to it }
         unwrapType(m.type).takeIf { it != "void" && it != "Void" }?.let { attrs += "response" to it }

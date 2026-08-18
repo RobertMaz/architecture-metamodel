@@ -40,6 +40,7 @@ class OpenApiLaneTest {
             eps.all { it.attrs["specServerPath"] == "/petclinic/api" },
             "path-часть servers.url едет атрибутом — реконсилятор согласует префиксы",
         )
+        assertEquals("order", eps.single { it.attrs["method"] == "POST" }.attrs["group"], "группа — из tags спеки")
     }
 
     @Test

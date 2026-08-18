@@ -76,6 +76,7 @@ class Reconciler(
             Operation(
                 method = m.attrs["method"] ?: "GET",
                 path = m.attrs["path"] ?: "/",
+                group = m.attrs["group"],
                 summary = m.attrs["summary"],
                 params = m.attrs["params"],
                 request = m.attrs["request"],

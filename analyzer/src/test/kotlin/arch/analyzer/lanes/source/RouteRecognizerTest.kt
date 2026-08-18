@@ -34,6 +34,12 @@ class RouteRecognizerTest {
     }
 
     @Test
+    fun `группа операции - из имени контроллера`() {
+        // OwnerController -> owner: api-группы внутри контейнера (домены монолита)
+        assertTrue(facts.all { it.attrs["group"] == "owner" }, facts.map { it.attrs["group"] }.toString())
+    }
+
+    @Test
     fun `deprecated и source со строкой`() {
         val legacy = facts.single { it.attrs["path"] == "/owners/legacy" }
         assertEquals("true", legacy.attrs["deprecated"])

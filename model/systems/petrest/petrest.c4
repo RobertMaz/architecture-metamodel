@@ -26,15 +26,52 @@ model {
           base-path '/'
         }
 
-        get = operation 'GET /' {
+        get_swagger_ui_html = operation 'GET /swagger-ui.html' {
           #inferred
-          description 'Корневой эндпоинт сервиса petrest.backend'
           metadata {
             method 'GET'
-            path '/'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/rest/controller/v1/RootRestControllerV1.java#L41; llm:enrich'
-            confidence '1'
+            path '/swagger-ui.html'
+            source 'actuator:/mappings'
+            confidence '0.97'
           }
+        }
+
+        get_v3_api_docs = operation 'GET /v3/api-docs' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/v3/api-docs'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+
+        get_v3_api_docs_yaml = operation 'GET /v3/api-docs.yaml' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/v3/api-docs.yaml'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+
+        get_v3_api_docs_swagger_config = operation 'GET /v3/api-docs/swagger-config' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/v3/api-docs/swagger-config'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+      }
+
+      api_oops = api 'oops' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'oops'
         }
 
         get_api_oops = operation 'GET /api/oops' {
@@ -46,6 +83,35 @@ model {
             source 'src/main/resources/openapi.yml'
             confidence '0.95'
           }
+        }
+      }
+
+      api_owner_v2 = api 'owner-v2' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'owner-v2'
+        }
+
+        get_api_v2_owners = operation 'GET /api/v2/owners' {
+          #inferred
+          description 'Lists pet owners with pagination'
+          metadata {
+            method 'GET'
+            path '/api/v2/owners'
+            params 'lastName:query:string?, page:query:integer?, size:query:integer?'
+            responses 'OwnerPage'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+      }
+
+      api_owners = api 'owners' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'owners'
         }
 
         get_api_owners = operation 'GET /api/owners' {
@@ -166,6 +232,35 @@ model {
             confidence '1'
           }
         }
+      }
+
+      api_pet_v2 = api 'pet-v2' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'pet-v2'
+        }
+
+        get_api_v2_pets = operation 'GET /api/v2/pets' {
+          #inferred
+          description 'Lists pets with pagination.'
+          metadata {
+            method 'GET'
+            path '/api/v2/pets'
+            params 'page:query:integer?, size:query:integer?'
+            responses 'PetPage'
+            source 'actuator:/mappings; src/main/resources/openapi.yml'
+            confidence '1'
+          }
+        }
+      }
+
+      api_pets = api 'pets' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'pets'
+        }
 
         get_api_pets = operation 'GET /api/pets' {
           #inferred
@@ -216,6 +311,14 @@ model {
             source 'actuator:/mappings; src/main/resources/openapi.yml'
             confidence '1'
           }
+        }
+      }
+
+      api_pettypes = api 'pettypes' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'pettypes'
         }
 
         get_api_pettypes = operation 'GET /api/pettypes' {
@@ -281,6 +384,33 @@ model {
             confidence '1'
           }
         }
+      }
+
+      api_root = api 'root' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'root'
+        }
+
+        get = operation 'GET /' {
+          #inferred
+          description 'Корневой эндпоинт сервиса petrest.backend'
+          metadata {
+            method 'GET'
+            path '/'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/rest/controller/v1/RootRestControllerV1.java#L41; llm:enrich'
+            confidence '1'
+          }
+        }
+      }
+
+      api_specialties = api 'specialties' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'specialties'
+        }
 
         get_api_specialties = operation 'GET /api/specialties' {
           #inferred
@@ -345,6 +475,14 @@ model {
             confidence '1'
           }
         }
+      }
+
+      api_users = api 'users' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'users'
+        }
 
         post_api_users = operation 'POST /api/users' {
           #inferred
@@ -358,31 +496,13 @@ model {
             confidence '1'
           }
         }
+      }
 
-        get_api_v2_owners = operation 'GET /api/v2/owners' {
-          #inferred
-          description 'Lists pet owners with pagination'
-          metadata {
-            method 'GET'
-            path '/api/v2/owners'
-            params 'lastName:query:string?, page:query:integer?, size:query:integer?'
-            responses 'OwnerPage'
-            source 'actuator:/mappings; src/main/resources/openapi.yml'
-            confidence '1'
-          }
-        }
-
-        get_api_v2_pets = operation 'GET /api/v2/pets' {
-          #inferred
-          description 'Lists pets with pagination.'
-          metadata {
-            method 'GET'
-            path '/api/v2/pets'
-            params 'page:query:integer?, size:query:integer?'
-            responses 'PetPage'
-            source 'actuator:/mappings; src/main/resources/openapi.yml'
-            confidence '1'
-          }
+      api_vets = api 'vets' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'vets'
         }
 
         get_api_vets = operation 'GET /api/vets' {
@@ -448,6 +568,14 @@ model {
             confidence '1'
           }
         }
+      }
+
+      api_visits = api 'visits' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'visits'
+        }
 
         get_api_visits = operation 'GET /api/visits' {
           #inferred
@@ -510,46 +638,6 @@ model {
             responses 'Visit'
             source 'actuator:/mappings; src/main/resources/openapi.yml'
             confidence '1'
-          }
-        }
-
-        get_swagger_ui_html = operation 'GET /swagger-ui.html' {
-          #inferred
-          metadata {
-            method 'GET'
-            path '/swagger-ui.html'
-            source 'actuator:/mappings'
-            confidence '0.97'
-          }
-        }
-
-        get_v3_api_docs = operation 'GET /v3/api-docs' {
-          #inferred
-          metadata {
-            method 'GET'
-            path '/v3/api-docs'
-            source 'actuator:/mappings'
-            confidence '0.97'
-          }
-        }
-
-        get_v3_api_docs_yaml = operation 'GET /v3/api-docs.yaml' {
-          #inferred
-          metadata {
-            method 'GET'
-            path '/v3/api-docs.yaml'
-            source 'actuator:/mappings'
-            confidence '0.97'
-          }
-        }
-
-        get_v3_api_docs_swagger_config = operation 'GET /v3/api-docs/swagger-config' {
-          #inferred
-          metadata {
-            method 'GET'
-            path '/v3/api-docs/swagger-config'
-            source 'actuator:/mappings'
-            confidence '0.97'
           }
         }
       }

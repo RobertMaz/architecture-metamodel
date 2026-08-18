@@ -78,6 +78,7 @@ export function ReportView({ report }: { report: ContainerReport }) {
                 <TableRow>
                   <TableHead>Метод</TableHead>
                   <TableHead>Путь</TableHead>
+                  <TableHead>Домен</TableHead>
                   <TableHead>Параметры</TableHead>
                   <TableHead>Ответ</TableHead>
                   <TableHead>Источник</TableHead>
@@ -91,6 +92,7 @@ export function ReportView({ report }: { report: ContainerReport }) {
                       <Badge variant={op.deprecated ? "destructive" : "default"}>{op.method}</Badge>
                     </TableCell>
                     <TableCell className="font-mono text-xs">{op.path}</TableCell>
+                    <TableCell>{op.group ? <Badge variant="outline">{op.group}</Badge> : ""}</TableCell>
                     <TableCell className="font-mono text-xs">{op.params ?? ""}</TableCell>
                     <TableCell className="font-mono text-xs">{op.response ?? ""}</TableCell>
                     <TableCell className="max-w-64 truncate font-mono text-xs" title={op.source}>

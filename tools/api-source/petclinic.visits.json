@@ -18,6 +18,7 @@
   "operations" : [
     {
       "confidence" : 1.0,
+      "group" : "visit",
       "method" : "GET",
       "params" : "petId:path:int",
       "path" : "/owners/*/pets/{petId}/visits",
@@ -27,6 +28,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "visit",
       "method" : "POST",
       "params" : "petId:path:int",
       "path" : "/owners/*/pets/{petId}/visits",
@@ -37,6 +39,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "visit",
       "method" : "GET",
       "params" : "petId:query:Integer",
       "path" : "/pets/visits",

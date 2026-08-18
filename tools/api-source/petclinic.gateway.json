@@ -136,6 +136,7 @@
   "operations" : [
     {
       "confidence" : 1.0,
+      "group" : "apigateway",
       "method" : "GET",
       "params" : "ownerId:path:int",
       "path" : "/api/gateway/owners/{ownerId}",
@@ -145,6 +146,7 @@
     },
     {
       "confidence" : 1.0,
+      "group" : "fallback",
       "method" : "POST",
       "path" : "/fallback",
       "response" : "String",

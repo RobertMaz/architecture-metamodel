@@ -49,6 +49,14 @@ model {
         metadata {
           base-path '/'
         }
+      }
+
+      api_owner = api 'owner' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'owner'
+        }
 
         get_owners = operation 'GET /owners' {
           #inferred
@@ -75,31 +83,6 @@ model {
           }
         }
 
-        get_owners_pets_p = operation 'GET /owners/*/pets/{petId}' {
-          #inferred
-          description 'Получить питомца владельца по идентификатору'
-          metadata {
-            method 'GET'
-            path '/owners/*/pets/{petId}'
-            params 'petId:path:int'
-            responses 'PetDetails'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#findPet; llm:enrich'
-            confidence '1'
-          }
-        }
-
-        put_owners_pets_p = operation 'PUT /owners/*/pets/{petId}' {
-          #inferred
-          description 'Обновить питомца владельца'
-          metadata {
-            method 'PUT'
-            path '/owners/*/pets/{petId}'
-            request 'PetRequest'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processUpdateForm; llm:enrich'
-            confidence '1'
-          }
-        }
-
         get_owners_p = operation 'GET /owners/{ownerId}' {
           #inferred
           description 'Получить владельца по идентификатору'
@@ -122,6 +105,39 @@ model {
             params 'ownerId:path:int'
             request 'OwnerRequest'
             source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#updateOwner; llm:enrich'
+            confidence '1'
+          }
+        }
+      }
+
+      api_pet = api 'pet' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'pet'
+        }
+
+        get_owners_pets_p = operation 'GET /owners/*/pets/{petId}' {
+          #inferred
+          description 'Получить питомца владельца по идентификатору'
+          metadata {
+            method 'GET'
+            path '/owners/*/pets/{petId}'
+            params 'petId:path:int'
+            responses 'PetDetails'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#findPet; llm:enrich'
+            confidence '1'
+          }
+        }
+
+        put_owners_pets_p = operation 'PUT /owners/*/pets/{petId}' {
+          #inferred
+          description 'Обновить питомца владельца'
+          metadata {
+            method 'PUT'
+            path '/owners/*/pets/{petId}'
+            request 'PetRequest'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processUpdateForm; llm:enrich'
             confidence '1'
           }
         }
@@ -212,6 +228,14 @@ model {
         metadata {
           base-path '/'
         }
+      }
+
+      api_apigateway = api 'apigateway' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'apigateway'
+        }
 
         get_api_gateway_owners_p = operation 'GET /api/gateway/owners/{ownerId}' {
           #inferred
@@ -224,6 +248,14 @@ model {
             source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; llm:enrich'
             confidence '1'
           }
+        }
+      }
+
+      api_fallback = api 'fallback' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'fallback'
         }
 
         post_fallback = operation 'POST /fallback' {
@@ -292,6 +324,14 @@ model {
         metadata {
           base-path '/vets'
         }
+      }
+
+      api_vet = api 'vet' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'vet'
+        }
 
         get_vets = operation 'GET /vets' {
           #inferred
@@ -324,6 +364,14 @@ model {
         technology 'HTTP/JSON'
         metadata {
           base-path '/'
+        }
+      }
+
+      api_visit = api 'visit' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'visit'
         }
 
         get_owners_pets_p_visits = operation 'GET /owners/*/pets/{petId}/visits' {
@@ -403,20 +451,20 @@ model {
   petclinic.customers -[write]-> petclinic.db_customers
   petclinic.gateway -[call]-> petclinic.config 'GET /api-gateway/default'
   petclinic.gateway -[call]-> petclinic.customers.api 'route /api/customer/**'
-  petclinic.gateway -[call]-> petclinic.customers.api.get_owners 'GET /owners'
-  petclinic.gateway -[call]-> petclinic.customers.api.get_owners_p 'GET /owners/{_}'
+  petclinic.gateway -[call]-> petclinic.customers.api_owner.get_owners 'GET /owners'
+  petclinic.gateway -[call]-> petclinic.customers.api_owner.get_owners_p 'GET /owners/{_}'
   petclinic.gateway -[call]-> petclinic.discovery.api 'GET /eureka/apps/'
   petclinic.gateway -[call]-> petclinic.discovery.api 'POST /eureka/apps/API-GATEWAY'
   petclinic.gateway -[call]-> petclinic.genai.api 'route /api/genai/**'
   petclinic.gateway -[call]-> petclinic.vets.api 'route /api/vet/**'
-  petclinic.gateway -[call]-> petclinic.vets.api.get_vets 'GET /vets'
+  petclinic.gateway -[call]-> petclinic.vets.api_vet.get_vets 'GET /vets'
   petclinic.gateway -[call]-> petclinic.visits.api 'GET'
   petclinic.gateway -[call]-> petclinic.visits.api 'route /api/visit/**'
-  petclinic.gateway -[call]-> petclinic.visits.api.get_pets_visits 'GET /pets/visits'
+  petclinic.gateway -[call]-> petclinic.visits.api_visit.get_pets_visits 'GET /pets/visits'
   petclinic.gateway -[call]-> zipkin 'POST /api/v2/spans'
-  petclinic.genai -[call]-> petclinic.customers.api.get_owners 'GET /owners'
-  petclinic.genai -[call]-> petclinic.customers.api.post_owners 'POST /owners'
-  petclinic.genai -[call]-> petclinic.customers.api.post_owners_p_pets 'POST /owners/{_}/pets'
+  petclinic.genai -[call]-> petclinic.customers.api_owner.get_owners 'GET /owners'
+  petclinic.genai -[call]-> petclinic.customers.api_owner.post_owners 'POST /owners'
+  petclinic.genai -[call]-> petclinic.customers.api_pet.post_owners_p_pets 'POST /owners/{_}/pets'
   petclinic.genai -[call]-> petclinic.vets.api 'GET'
   petclinic.vets -[read]-> petclinic.db_vets
   petclinic.vets -[write]-> petclinic.db_vets

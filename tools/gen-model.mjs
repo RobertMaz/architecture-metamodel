@@ -94,12 +94,17 @@ export function generate(root = '.') {
     .map((f) => ({ file: f, d: JSON.parse(readFileSync(join(srcDir, f), 'utf8')) }))
     .filter(({ d }) => d.containerInfo)
 
-  // Индекс контрактов: containerId -> {apiId, ops: 'METHOD normPath' -> opId}
+  // Операция с доменом живёт в api_<group> внутри контейнера, без домена — в базовом api.
+  const apiIdOf = (d, op) => (op.group ? `api_${slug(op.group)}` : d.api.id)
+
+  // Индекс контрактов: containerId -> {apiId (базовый), ops: 'METHOD normPath' -> 'apiId.opId'}
   const apiIndex = new Map()
   for (const { d } of docs) {
     if (!d.api) continue
     const ops = new Map()
-    for (const op of d.operations ?? []) ops.set(`${op.method} ${normPath(op.path)}`, opId(op.method, op.path))
+    for (const op of d.operations ?? []) {
+      ops.set(`${op.method} ${normPath(op.path)}`, `${apiIdOf(d, op)}.${opId(op.method, op.path)}`)
+    }
     apiIndex.set(d.container, { apiId: d.api.id, ops })
   }
 
@@ -154,12 +159,12 @@ export function generate(root = '.') {
     return null
   }
 
-  /** Ссылка для ребра в известный контейнер: операция -> api -> контейнер. */
+  /** Ссылка для ребра в известный контейнер: операция -> базовый api -> контейнер. */
   const targetRef = (cid, call) => {
     const idx = apiIndex.get(cid)
     if (idx && call.method && call.path) {
-      const op = idx.ops.get(`${call.method} ${normPath(call.path)}`)
-      if (op) return `${cid}.${idx.apiId}.${op}`
+      const ref = idx.ops.get(`${call.method} ${normPath(call.path)}`)
+      if (ref) return `${cid}.${ref}`
     }
     if (idx) return `${cid}.${idx.apiId}`
     return cid
@@ -363,18 +368,11 @@ export function generate(root = '.') {
 
     if (d.api) {
       const tags = ['#inferred', d.api.public ? '#public' : null].filter(Boolean)
-      const seen = new Map()
-      L.push(``)
-      L.push(`      ${d.api.id} = api '${esc(d.api.title)}' {`)
-      L.push(`        ${tags.join(' ')}`)
-      L.push(`        technology '${esc(d.api.technology)}'`)
-      L.push(`        metadata {`)
-      L.push(`          base-path '${esc(d.api.basePath)}'`)
-      L.push(`        }`)
-      for (const op of d.operations ?? []) {
+
+      const renderOp = (op, apiId, seen) => {
         const id = opId(op.method, op.path)
         if (seen.has(id)) {
-          console.error(`КОЛЛИЗИЯ id: ${op.method} ${op.path} и ${seen.get(id)} дают ${d.container}.${d.api.id}.${id}`)
+          console.error(`КОЛЛИЗИЯ id: ${op.method} ${op.path} и ${seen.get(id)} дают ${d.container}.${apiId}.${id}`)
           process.exit(1)
         }
         seen.set(id, `${op.method} ${op.path}`)
@@ -395,7 +393,35 @@ export function generate(root = '.') {
         L.push(`          }`)
         L.push(`        }`)
       }
+
+      // Базовый api: операции без домена (и цель fallback-рёбер).
+      const rootOps = (d.operations ?? []).filter((op) => !op.group)
+      const seenRoot = new Map()
+      L.push(``)
+      L.push(`      ${d.api.id} = api '${esc(d.api.title)}' {`)
+      L.push(`        ${tags.join(' ')}`)
+      L.push(`        technology '${esc(d.api.technology)}'`)
+      L.push(`        metadata {`)
+      L.push(`          base-path '${esc(d.api.basePath)}'`)
+      L.push(`        }`)
+      for (const op of rootOps) renderOp(op, d.api.id, seenRoot)
       L.push(`      }`)
+
+      // Доменные api-группы: api_<group> — «кишки» контейнера, видимые на карте.
+      const groups = [...new Set((d.operations ?? []).filter((op) => op.group).map((op) => op.group))].sort()
+      for (const g of groups) {
+        const apiId = `api_${slug(g)}`
+        const seen = new Map()
+        L.push(``)
+        L.push(`      ${apiId} = api '${esc(g)}' {`)
+        L.push(`        ${tags.join(' ')}`)
+        L.push(`        technology '${esc(d.api.technology)}'`)
+        L.push(`        metadata {`)
+        L.push(`          domain '${esc(g)}'`)
+        L.push(`        }`)
+        for (const op of (d.operations ?? []).filter((op) => op.group === g)) renderOp(op, apiId, seen)
+        L.push(`      }`)
+      }
     }
 
     L.push(`    }`)

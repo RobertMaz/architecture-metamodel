@@ -63,6 +63,8 @@ class OpenApiLane : Lane {
                     "path" to path,
                 )
                 serverPath?.let { attrs += "specServerPath" to it }
+                op.path("tags").firstOrNull()?.asText("")?.takeIf { it.isNotEmpty() }
+                    ?.let { attrs += "group" to it.lowercase() }
                 op.path("summary").asText("").takeIf { it.isNotEmpty() }?.let { attrs += "summary" to it }
                 params(op)?.let { attrs += "params" to it }
                 refName(op.path("requestBody"))?.let { attrs += "request" to it }
