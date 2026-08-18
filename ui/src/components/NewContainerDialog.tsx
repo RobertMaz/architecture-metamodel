@@ -64,7 +64,7 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
           <DialogTitle>Новый контейнер</DialogTitle>
           <DialogDescription>
             Выбор системы — ранний и осознанный: id иерархичен ({id || "система.имя"}), перенос потом — операция
-            rename. Источники: пока путь к сорцам; JAR/OpenAPI/URL — следующие подпроекты.
+            rename. Обязательны только сорцы; JAR, запущенная апка и трейсы добирают точность.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3">
