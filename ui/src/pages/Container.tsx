@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AnalyzeButton } from "@/components/ContainersTable"
 import { ReportView } from "@/components/ReportView"
 import { DiffView } from "@/components/DiffView"
+import { SourcesCard } from "@/components/SourcesCard"
 
 export function Container() {
   const { id = "" } = useParams()
@@ -63,6 +64,8 @@ export function Container() {
           </CardContent>
         </Card>
       )}
+
+      {container && <SourcesCard container={container} />}
 
       {report.data && <ReportView report={report.data} />}
 

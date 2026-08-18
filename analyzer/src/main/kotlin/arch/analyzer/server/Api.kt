@@ -17,6 +17,7 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import io.ktor.server.routing.put
 import io.ktor.server.routing.routing
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -42,6 +43,9 @@ data class ContainerDto(
     val analyzed: Boolean,
     val state: String,
     val lanes: List<String>,
+    val jar: String? = null,
+    val runtimeUrl: String? = null,
+    val traces: String? = null,
     val operations: Int,
     val calls: Int,
     val stores: Int,
@@ -99,6 +103,9 @@ class Inventory(private val archRoot: Path) {
                 analyzed = doc != null,
                 state = status?.get("state")?.asText() ?: "idle",
                 lanes = status?.get("lanes")?.map { it.asText() } ?: emptyList(),
+                jar = node["jar"]?.asText(),
+                runtimeUrl = node["runtimeUrl"]?.asText(),
+                traces = node["traces"]?.asText(),
                 operations = doc?.get("operations")?.size() ?: 0,
                 calls = doc?.get("calls")?.size() ?: 0,
                 stores = doc?.get("stores")?.size() ?: 0,
@@ -177,6 +184,20 @@ fun buildApp(
                 is Onboarding.Result.Created -> call.respond(HttpStatusCode.Created, mapOf("created" to body.id))
                 is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
                 is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+            }
+        }
+
+        put("/api/containers/{id}/sources") {
+            val id = call.parameters["id"]!!
+            if (!runs.isKnown(id)) {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "контейнер «$id» не найден"))
+            } else {
+                val body = call.receive<Onboarding.SourcesPatch>()
+                when (val r = onboarding.updateSources(id, body)) {
+                    is Onboarding.Result.Created -> call.respond(mapOf("updated" to id))
+                    is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
+                    is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+                }
             }
         }
 

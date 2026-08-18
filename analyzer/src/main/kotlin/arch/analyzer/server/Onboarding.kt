@@ -95,6 +95,54 @@ class Onboarding(private val archRoot: Path) {
         return Result.Created
     }
 
+    /** Патч источников: null — не трогать, пустая строка — удалить, значение — заменить. */
+    data class SourcesPatch(
+        val repo: String? = null,
+        val path: String? = null,
+        val jar: String? = null,
+        val runtimeUrl: String? = null,
+        val traces: String? = null,
+    )
+
+    fun updateSources(id: String, p: SourcesPatch): Result {
+        val file = archRoot.resolve("registry/repos.yml")
+        val existing = if (file.exists()) yaml.readTree(file.toFile())?.get("repos") else null
+        val entries = sortedMapOf<String, MutableMap<String, String>>()
+        existing?.fields()?.forEach { (cid, n) ->
+            val row = mutableMapOf<String, String>()
+            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces")) {
+                n[k]?.asText()?.takeIf { it.isNotEmpty() }?.let { row[k] = it }
+            }
+            entries[cid] = row
+        }
+        val row = entries[id] ?: return Result.Invalid("контейнер «$id» не найден в registry/repos.yml")
+
+        p.path?.takeIf { it.isNotBlank() }?.let {
+            if (!Files.isDirectory(Paths.get(it))) return Result.Invalid("нет директории: $it")
+        }
+        for ((k, v) in mapOf(
+            "repo" to p.repo, "path" to p.path, "jar" to p.jar,
+            "runtimeUrl" to p.runtimeUrl, "traces" to p.traces,
+        )) {
+            when {
+                v == null -> {}
+                v.isBlank() -> row.remove(k)
+                else -> row[k] = v
+            }
+        }
+        if (row["path"].isNullOrEmpty()) return Result.Invalid("path обязателен — без сорцов анализировать нечего")
+
+        val out = StringBuilder(reposHeader).append("repos:\n")
+        for ((cid, r) in entries) {
+            out.append("  $cid:\n")
+            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces")) {
+                r[k]?.let { out.append("    $k: ${quote(it)}\n") }
+            }
+        }
+        file.writeText(out.toString())
+        return Result.Created
+    }
+
     fun addContainer(c: NewContainer): Result {
         val system = c.id.substringBefore('.', "")
         if (!c.id.matches(Regex("[a-z][a-z0-9_]*\\.[a-zA-Z][a-zA-Z0-9_]*"))) {

@@ -21,6 +21,9 @@ export type ContainerInfo = {
   subscribes: number
   publishes: number
   unresolvedCalls: number
+  jar?: string | null
+  runtimeUrl?: string | null
+  traces?: string | null
 }
 
 export type Operation = {
@@ -91,6 +94,8 @@ export const api = {
   unresolved: () => http<{ unresolved: UnresolvedEntry[] }>("/api/unresolved"),
   resolve: (stubId: string, body: { container?: string; external?: { id: string; title?: string; contract?: string } }) =>
     http<{ resolved: string }>(`/api/unresolved/${stubId}/resolve`, { method: "POST", body: JSON.stringify(body) }),
+  updateSources: (id: string, body: { repo?: string; path?: string; jar?: string; runtimeUrl?: string; traces?: string }) =>
+    http<{ updated: string }>(`/api/containers/${id}/sources`, { method: "PUT", body: JSON.stringify(body) }),
   hypotheses: (stubId: string) =>
     http<{ configured: boolean; hypotheses: { name: string; container?: string | null; confidence: number }[] }>(
       `/api/unresolved/${stubId}/hypotheses`,
