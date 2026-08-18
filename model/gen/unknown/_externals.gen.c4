@@ -1,0 +1,11 @@
+// СГЕНЕРИРОВАНО, РУКАМИ НЕ ПРАВИТЬ.
+// Источник: registry/resolutions.yml (решение: вне компании)
+
+model {
+  zipkin = externalSystem 'Zipkin' {
+    #stub
+    metadata {
+      contract 'трейсинг-бэкенд (локальный)'
+    }
+  }
+}

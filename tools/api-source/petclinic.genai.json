@@ -53,12 +53,12 @@
   },
   "operations" : [
     {
-      "confidence" : 0.98,
+      "confidence" : 1.0,
       "method" : "POST",
       "path" : "/chatclient",
       "request" : "String",
       "response" : "String",
-      "source" : "src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; llm:enrich",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; spring-petclinic-genai-service-4.0.1.jar!org.springframework.samples.petclinic.genai.PetclinicChatClient#exchange; llm:enrich",
       "summary" : "Отправляет запрос к GenAI-клиенту чата и возвращает ответ."
     }
   ],

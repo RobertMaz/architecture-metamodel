@@ -45,6 +45,7 @@ object Analyze {
             BytecodeLane(),
             JqassistantLane(adapter = root.resolve("analyzer/jqassistant/extract.sh")),
             arch.analyzer.lanes.RuntimeLane(),
+            arch.analyzer.lanes.TracesLane(),
             // LLM — последней: точки внимания вычисляются по свежим evidence других полок.
             arch.analyzer.llm.LlmLane(root, llm?.first, enrich = llm?.second?.enrich ?: false),
         )

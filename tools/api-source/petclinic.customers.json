@@ -6,76 +6,140 @@
     "technology" : "HTTP/JSON",
     "title" : "customers-service API"
   },
-  "calls" : [ ],
+  "calls" : [
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/customers-service/default",
+      "source" : "otel:0ccfa8542854ff37b8b2a380a2db6a97",
+      "target" : {
+        "host" : "config-server"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/eureka/apps/",
+      "source" : "otel:4e8ee3b3e2f0ee70bd2cbebdf5c0505f",
+      "target" : {
+        "host" : "discovery-server"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/eureka/apps/delta",
+      "source" : "otel:54794c8e95af34e67493f4a6f939b094",
+      "target" : {
+        "host" : "discovery-server"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "POST",
+      "path" : "/eureka/apps/CUSTOMERS-SERVICE",
+      "source" : "otel:386052368ecef7fe4658286698752ddb",
+      "target" : {
+        "host" : "discovery-server"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "POST",
+      "path" : "/api/v2/spans",
+      "source" : "otel:0a2cb8be62918dacee301d77e2db1742",
+      "target" : {
+        "host" : "zipkin"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "PUT",
+      "path" : "/eureka/apps/CUSTOMERS-SERVICE/customers-service:324df86a-1d79-4dc2-91b1-3270152d33d2",
+      "source" : "otel:203fdc4bbbf199dc053a88362b2d83bc",
+      "target" : {
+        "host" : "discovery-server"
+      }
+    }
+  ],
   "container" : "petclinic.customers",
   "containerInfo" : {
     "appName" : "customers-service",
+    "description" : "API для управления владельцами и их питомцами в сервисе petclinic.customers.",
     "kind" : "service",
     "technology" : "Java, Spring Boot",
     "title" : "customers-service"
   },
   "operations" : [
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "GET",
       "path" : "/owners",
       "response" : "Owner",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findAll; llm:enrich",
+      "summary" : "Список владельцев"
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "POST",
       "path" : "/owners",
       "request" : "OwnerRequest",
       "response" : "Owner",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#createOwner; llm:enrich",
+      "summary" : "Создать владельца"
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "GET",
       "params" : "petId:path:int",
       "path" : "/owners/*/pets/{petId}",
       "response" : "PetDetails",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#findPet; llm:enrich",
+      "summary" : "Получить питомца владельца по идентификатору"
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "PUT",
       "path" : "/owners/*/pets/{petId}",
       "request" : "PetRequest",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processUpdateForm; llm:enrich",
+      "summary" : "Обновить питомца владельца"
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "GET",
       "params" : "ownerId:path:int",
       "path" : "/owners/{ownerId}",
       "response" : "Owner",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findOwner; llm:enrich",
+      "summary" : "Получить владельца по идентификатору"
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "PUT",
       "params" : "ownerId:path:int",
       "path" : "/owners/{ownerId}",
       "request" : "OwnerRequest",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#updateOwner; llm:enrich",
+      "summary" : "Обновить владельца"
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "POST",
       "params" : "ownerId:path:int",
       "path" : "/owners/{ownerId}/pets",
       "request" : "PetRequest",
       "response" : "Pet",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processCreationForm; llm:enrich",
+      "summary" : "Добавить питомца владельцу"
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "GET",
       "path" : "/petTypes",
       "response" : "PetType",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#getPetTypes; llm:enrich",
+      "summary" : "Список типов питомцев"
     }
   ],
   "publishes" : [ ],
@@ -88,11 +152,12 @@
   "stores" : [
     {
       "access" : "readwrite",
-      "address" : "",
-      "confidence" : 0.9,
+      "address" : "89cf7e86-3d29-46d2-bd6b-2326276b9d83",
+      "confidence" : 1.0,
       "entities" : "Owner, Pet",
       "kind" : "jdbc",
-      "source" : "src/main/java/org/springframework/samples/petclinic/customers/model/OwnerRepository.java#L30; src/main/java/org/springframework/samples/petclinic/customers/model/PetRepository.java#L35"
+      "source" : "otel:09f213fa2a805f1d0d101612e67f9ed3; src/main/java/org/springframework/samples/petclinic/customers/model/OwnerRepository.java#L30; src/main/java/org/springframework/samples/petclinic/customers/model/PetRepository.java#L35; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.model.OwnerRepository; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.model.PetRepository",
+      "technology" : "hsqldb"
     }
   ],
   "subscribes" : [ ]

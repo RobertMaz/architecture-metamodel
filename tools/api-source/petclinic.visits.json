@@ -10,35 +10,39 @@
   "container" : "petclinic.visits",
   "containerInfo" : {
     "appName" : "visits-service",
+    "description" : "API для работы с визитами питомцев в сервисе petclinic.visits.",
     "kind" : "service",
     "technology" : "Java, Spring Boot",
     "title" : "visits-service"
   },
   "operations" : [
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "GET",
       "params" : "petId:path:int",
       "path" : "/owners/*/pets/{petId}/visits",
       "response" : "Visit",
-      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich",
+      "summary" : "Получить список визитов конкретного питомца владельца."
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "POST",
       "params" : "petId:path:int",
       "path" : "/owners/*/pets/{petId}/visits",
       "request" : "Visit",
       "response" : "Visit",
-      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#create; llm:enrich",
+      "summary" : "Добавить новый визит для конкретного питомца владельца."
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "GET",
       "params" : "petId:query:Integer",
       "path" : "/pets/visits",
       "response" : "Visits",
-      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich",
+      "summary" : "Получить список всех визитов питомцев."
     }
   ],
   "publishes" : [ ],
@@ -52,10 +56,10 @@
     {
       "access" : "readwrite",
       "address" : "",
-      "confidence" : 0.9,
+      "confidence" : 0.98,
       "entities" : "Visit",
       "kind" : "jdbc",
-      "source" : "src/main/java/org/springframework/samples/petclinic/visits/model/VisitRepository.java#L33"
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/model/VisitRepository.java#L33; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.model.VisitRepository"
     }
   ],
   "subscribes" : [ ]

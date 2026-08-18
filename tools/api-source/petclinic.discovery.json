@@ -1,4 +1,11 @@
 {
+  "api" : {
+    "basePath" : "/",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "discovery-server API"
+  },
   "calls" : [ ],
   "container" : "petclinic.discovery",
   "containerInfo" : {
@@ -7,7 +14,20 @@
     "technology" : "Java, Spring Boot",
     "title" : "discovery-server"
   },
-  "operations" : [ ],
+  "operations" : [
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/",
+      "source" : "actuator:/mappings"
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/lastn",
+      "source" : "actuator:/mappings"
+    }
+  ],
   "publishes" : [ ],
   "source" : {
     "commit" : "9a76b4e",

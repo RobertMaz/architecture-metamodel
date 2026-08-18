@@ -8,13 +8,94 @@
   },
   "calls" : [
     {
-      "confidence" : 0.8,
+      "confidence" : 0.9,
+      "source" : "src/main/resources/application.yml",
+      "target" : {
+        "host" : "customers-service",
+        "route" : "/api/customer/**",
+        "urlTemplate" : "lb://customers-service"
+      }
+    },
+    {
+      "confidence" : 0.9,
+      "source" : "src/main/resources/application.yml",
+      "target" : {
+        "host" : "genai-service",
+        "route" : "/api/genai/**",
+        "urlTemplate" : "lb://genai-service"
+      }
+    },
+    {
+      "confidence" : 0.9,
+      "source" : "src/main/resources/application.yml",
+      "target" : {
+        "host" : "vets-service",
+        "route" : "/api/vet/**",
+        "urlTemplate" : "lb://vets-service"
+      }
+    },
+    {
+      "confidence" : 0.9,
+      "source" : "src/main/resources/application.yml",
+      "target" : {
+        "host" : "visits-service",
+        "route" : "/api/visit/**",
+        "urlTemplate" : "lb://visits-service"
+      }
+    },
+    {
+      "confidence" : 0.97,
       "method" : "GET",
-      "path" : "/owners/{ownerId}",
-      "source" : "src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java#L36",
+      "path" : "/api-gateway/default",
+      "source" : "otel:e4b62d9e98f65415a96e69bf04f3bf89",
+      "target" : {
+        "host" : "config-server"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/owners",
+      "source" : "otel:b144fd94e11a5ed28a60770857fa1b56",
+      "target" : {
+        "host" : "customers-service"
+      }
+    },
+    {
+      "confidence" : 0.99,
+      "method" : "GET",
+      "path" : "/owners/{_}",
+      "source" : "otel:4eb43c639b4797052ecbf9e21d2c3cd1; src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java#L36",
       "target" : {
         "host" : "customers-service",
         "urlTemplate" : "http://customers-service/owners/{ownerId}"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/eureka/apps/",
+      "source" : "otel:67ea8184cd92771117a6212dbb382351",
+      "target" : {
+        "host" : "discovery-server"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/vets",
+      "source" : "otel:ddbb0010964f32b249ae460c450a1bda",
+      "target" : {
+        "host" : "vets-service"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "GET",
+      "path" : "/pets/visits",
+      "source" : "otel:4eb43c639b4797052ecbf9e21d2c3cd1",
+      "target" : {
+        "host" : "visits-service"
       }
     },
     {
@@ -24,30 +105,51 @@
       "target" : {
         "urlTemplate" : "{_}pets/visits"
       }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "POST",
+      "path" : "/eureka/apps/API-GATEWAY",
+      "source" : "otel:8ad0aa93e7a64e3e36227e75dc032f8b",
+      "target" : {
+        "host" : "discovery-server"
+      }
+    },
+    {
+      "confidence" : 0.97,
+      "method" : "POST",
+      "path" : "/api/v2/spans",
+      "source" : "otel:1e78a68433398a70ce20cf68d21ea1d8",
+      "target" : {
+        "host" : "zipkin"
+      }
     }
   ],
   "container" : "petclinic.gateway",
   "containerInfo" : {
     "appName" : "api-gateway",
+    "description" : "Шлюз PetClinic для маршрутизации запросов к владельцам и резервной обработки.",
     "kind" : "service",
     "technology" : "Java, Spring Boot",
     "title" : "api-gateway"
   },
   "operations" : [
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "GET",
       "params" : "ownerId:path:int",
       "path" : "/api/gateway/owners/{ownerId}",
       "response" : "OwnerDetails",
-      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54"
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; llm:enrich",
+      "summary" : "Получает данные владельца по идентификатору."
     },
     {
-      "confidence" : 0.95,
+      "confidence" : 1.0,
       "method" : "POST",
       "path" : "/fallback",
       "response" : "String",
-      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11"
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; llm:enrich",
+      "summary" : "Выполняет резервную обработку запроса при недоступности основного сервиса."
     }
   ],
   "publishes" : [ ],

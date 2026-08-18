@@ -10,6 +10,7 @@
   "container" : "petclinic.vets",
   "containerInfo" : {
     "appName" : "vets-service",
+    "description" : "Сервис petclinic.vets предоставляет информацию о ветеринарах.",
     "kind" : "service",
     "technology" : "Java, Spring Boot",
     "title" : "vets-service"
@@ -20,7 +21,8 @@
       "method" : "GET",
       "path" : "/vets",
       "response" : "Vet",
-      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList"
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList; llm:enrich",
+      "summary" : "Получить список ветеринаров"
     }
   ],
   "publishes" : [ ],

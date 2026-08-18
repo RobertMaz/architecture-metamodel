@@ -4,26 +4,41 @@ repos:
   petclinic.admin:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-admin-server
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-admin-server/target/spring-petclinic-admin-server-4.0.1.jar
+    runtimeUrl: http://localhost:9104
   petclinic.config:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-config-server
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-config-server/target/spring-petclinic-config-server-4.0.1.jar
+    runtimeUrl: http://localhost:8888
   petclinic.customers:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-customers-service
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-customers-service/target/spring-petclinic-customers-service-4.0.1.jar
+    runtimeUrl: http://localhost:9101
+    traces: /home/rmazitov/IdeaProjects/architecture/workspace/traces/customers-service.otlp.jsonl
   petclinic.discovery:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-discovery-server
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-discovery-server/target/spring-petclinic-discovery-server-4.0.1.jar
+    runtimeUrl: http://localhost:8761
   petclinic.gateway:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-api-gateway
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-api-gateway/target/spring-petclinic-api-gateway-4.0.1.jar
+    runtimeUrl: http://localhost:9100
+    traces: /home/rmazitov/IdeaProjects/architecture/workspace/traces/api-gateway.otlp.jsonl
   petclinic.genai:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-genai-service
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-genai-service/target/spring-petclinic-genai-service-4.0.1.jar
   petclinic.vets:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-vets-service
     jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-vets-service/target/spring-petclinic-vets-service-4.0.1.jar
-    runtimeUrl: http://localhost:9966
+    runtimeUrl: http://localhost:9103
   petclinic.visits:
     repo: https://github.com/spring-petclinic/spring-petclinic-microservices
     path: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-visits-service
+    jar: /home/rmazitov/IdeaProjects/spring-petclinic-microservices/spring-petclinic-visits-service/target/spring-petclinic-visits-service-4.0.1.jar
+    runtimeUrl: http://localhost:9102

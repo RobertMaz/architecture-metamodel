@@ -33,6 +33,7 @@ model {
 
     customers = service 'customers-service' {
       #inferred
+      description 'API для управления владельцами и их питомцами в сервисе petclinic.customers.'
       technology 'Java, Spring Boot'
       link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
       metadata {
@@ -51,95 +52,103 @@ model {
 
         get_owners = operation 'GET /owners' {
           #inferred
+          description 'Список владельцев'
           metadata {
             method 'GET'
             path '/owners'
             responses 'Owner'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findAll; llm:enrich'
+            confidence '1'
           }
         }
 
         post_owners = operation 'POST /owners' {
           #inferred
+          description 'Создать владельца'
           metadata {
             method 'POST'
             path '/owners'
             request 'OwnerRequest'
             responses 'Owner'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#createOwner; llm:enrich'
+            confidence '1'
           }
         }
 
         get_owners_pets_p = operation 'GET /owners/*/pets/{petId}' {
           #inferred
+          description 'Получить питомца владельца по идентификатору'
           metadata {
             method 'GET'
             path '/owners/*/pets/{petId}'
             params 'petId:path:int'
             responses 'PetDetails'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#findPet; llm:enrich'
+            confidence '1'
           }
         }
 
         put_owners_pets_p = operation 'PUT /owners/*/pets/{petId}' {
           #inferred
+          description 'Обновить питомца владельца'
           metadata {
             method 'PUT'
             path '/owners/*/pets/{petId}'
             request 'PetRequest'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processUpdateForm; llm:enrich'
+            confidence '1'
           }
         }
 
         get_owners_p = operation 'GET /owners/{ownerId}' {
           #inferred
+          description 'Получить владельца по идентификатору'
           metadata {
             method 'GET'
             path '/owners/{ownerId}'
             params 'ownerId:path:int'
             responses 'Owner'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findOwner; llm:enrich'
+            confidence '1'
           }
         }
 
         put_owners_p = operation 'PUT /owners/{ownerId}' {
           #inferred
+          description 'Обновить владельца'
           metadata {
             method 'PUT'
             path '/owners/{ownerId}'
             params 'ownerId:path:int'
             request 'OwnerRequest'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#updateOwner; llm:enrich'
+            confidence '1'
           }
         }
 
         post_owners_p_pets = operation 'POST /owners/{ownerId}/pets' {
           #inferred
+          description 'Добавить питомца владельцу'
           metadata {
             method 'POST'
             path '/owners/{ownerId}/pets'
             params 'ownerId:path:int'
             request 'PetRequest'
             responses 'Pet'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processCreationForm; llm:enrich'
+            confidence '1'
           }
         }
 
         get_petTypes = operation 'GET /petTypes' {
           #inferred
+          description 'Список типов питомцев'
           metadata {
             method 'GET'
             path '/petTypes'
             responses 'PetType'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#getPetTypes; llm:enrich'
+            confidence '1'
           }
         }
       }
@@ -155,10 +164,39 @@ model {
         commit '9a76b4e'
         extracted-at '2026-08-18'
       }
+
+      api = api 'discovery-server API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/'
+        }
+
+        get = operation 'GET /' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+
+        get_lastn = operation 'GET /lastn' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/lastn'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+      }
     }
 
     gateway = service 'api-gateway' {
       #inferred
+      description 'Шлюз PetClinic для маршрутизации запросов к владельцам и резервной обработки.'
       technology 'Java, Spring Boot'
       link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
       metadata {
@@ -177,24 +215,26 @@ model {
 
         get_api_gateway_owners_p = operation 'GET /api/gateway/owners/{ownerId}' {
           #inferred
+          description 'Получает данные владельца по идентификатору.'
           metadata {
             method 'GET'
             path '/api/gateway/owners/{ownerId}'
             params 'ownerId:path:int'
             responses 'OwnerDetails'
-            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54'
-            confidence '0.95'
+            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; llm:enrich'
+            confidence '1'
           }
         }
 
         post_fallback = operation 'POST /fallback' {
           #inferred
+          description 'Выполняет резервную обработку запроса при недоступности основного сервиса.'
           metadata {
             method 'POST'
             path '/fallback'
             responses 'String'
-            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11'
-            confidence '0.95'
+            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; llm:enrich'
+            confidence '1'
           }
         }
       }
@@ -227,8 +267,8 @@ model {
             path '/chatclient'
             request 'String'
             responses 'String'
-            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; llm:enrich'
-            confidence '0.98'
+            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; spring-petclinic-genai-service-4.0.1.jar!org.springframework.samples.petclinic.genai.PetclinicChatClient#exchange; llm:enrich'
+            confidence '1'
           }
         }
       }
@@ -236,6 +276,7 @@ model {
 
     vets = service 'vets-service' {
       #inferred
+      description 'Сервис petclinic.vets предоставляет информацию о ветеринарах.'
       technology 'Java, Spring Boot'
       link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
       metadata {
@@ -254,11 +295,12 @@ model {
 
         get_vets = operation 'GET /vets' {
           #inferred
+          description 'Получить список ветеринаров'
           metadata {
             method 'GET'
             path '/vets'
             responses 'Vet'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList; llm:enrich'
             confidence '1'
           }
         }
@@ -267,6 +309,7 @@ model {
 
     visits = service 'visits-service' {
       #inferred
+      description 'API для работы с визитами питомцев в сервисе petclinic.visits.'
       technology 'Java, Spring Boot'
       link https://github.com/spring-petclinic/spring-petclinic-microservices 'repo'
       metadata {
@@ -285,47 +328,51 @@ model {
 
         get_owners_pets_p_visits = operation 'GET /owners/*/pets/{petId}/visits' {
           #inferred
+          description 'Получить список визитов конкретного питомца владельца.'
           metadata {
             method 'GET'
             path '/owners/*/pets/{petId}/visits'
             params 'petId:path:int'
             responses 'Visit'
-            source 'src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich'
+            confidence '1'
           }
         }
 
         post_owners_pets_p_visits = operation 'POST /owners/*/pets/{petId}/visits' {
           #inferred
+          description 'Добавить новый визит для конкретного питомца владельца.'
           metadata {
             method 'POST'
             path '/owners/*/pets/{petId}/visits'
             params 'petId:path:int'
             request 'Visit'
             responses 'Visit'
-            source 'src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#create; llm:enrich'
+            confidence '1'
           }
         }
 
         get_pets_visits = operation 'GET /pets/visits' {
           #inferred
+          description 'Получить список всех визитов питомцев.'
           metadata {
             method 'GET'
             path '/pets/visits'
             params 'petId:query:Integer'
             responses 'Visits'
-            source 'src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72'
-            confidence '0.95'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich'
+            confidence '1'
           }
         }
       }
     }
 
-    db_customers = store 'customers' {
+    db_89cf7e86_3d29_46d2_bd6b_2326276b9d83 = store '89cf7e86-3d29-46d2-bd6b-2326276b9d83' {
       #inferred
-      technology 'JDBC'
+      technology 'hsqldb'
       metadata {
+        address '89cf7e86-3d29-46d2-bd6b-2326276b9d83'
         entities 'Owner, Pet'
       }
     }
@@ -347,10 +394,27 @@ model {
     }
   }
 
-  petclinic.customers -[read]-> petclinic.db_customers
-  petclinic.customers -[write]-> petclinic.db_customers
-  petclinic.gateway -[call]-> petclinic.customers.api.get_owners_p 'GET /owners/{ownerId}'
+  petclinic.customers -[call]-> petclinic.config 'GET /customers-service/default'
+  petclinic.customers -[call]-> petclinic.discovery.api 'GET /eureka/apps/'
+  petclinic.customers -[call]-> petclinic.discovery.api 'GET /eureka/apps/delta'
+  petclinic.customers -[call]-> petclinic.discovery.api 'POST /eureka/apps/CUSTOMERS-SERVICE'
+  petclinic.customers -[call]-> petclinic.discovery.api 'PUT /eureka/apps/CUSTOMERS-SERVICE/customers-service:324df86a-1d79-4dc2-91b1-3270152d33d2'
+  petclinic.customers -[call]-> zipkin 'POST /api/v2/spans'
+  petclinic.customers -[read]-> petclinic.db_89cf7e86_3d29_46d2_bd6b_2326276b9d83
+  petclinic.customers -[write]-> petclinic.db_89cf7e86_3d29_46d2_bd6b_2326276b9d83
+  petclinic.gateway -[call]-> petclinic.config 'GET /api-gateway/default'
+  petclinic.gateway -[call]-> petclinic.customers.api 'route /api/customer/**'
+  petclinic.gateway -[call]-> petclinic.customers.api.get_owners 'GET /owners'
+  petclinic.gateway -[call]-> petclinic.customers.api.get_owners_p 'GET /owners/{_}'
+  petclinic.gateway -[call]-> petclinic.discovery.api 'GET /eureka/apps/'
+  petclinic.gateway -[call]-> petclinic.discovery.api 'POST /eureka/apps/API-GATEWAY'
+  petclinic.gateway -[call]-> petclinic.genai.api 'route /api/genai/**'
+  petclinic.gateway -[call]-> petclinic.vets.api 'route /api/vet/**'
+  petclinic.gateway -[call]-> petclinic.vets.api.get_vets 'GET /vets'
   petclinic.gateway -[call]-> petclinic.visits.api 'GET'
+  petclinic.gateway -[call]-> petclinic.visits.api 'route /api/visit/**'
+  petclinic.gateway -[call]-> petclinic.visits.api.get_pets_visits 'GET /pets/visits'
+  petclinic.gateway -[call]-> zipkin 'POST /api/v2/spans'
   petclinic.genai -[call]-> petclinic.customers.api.get_owners 'GET /owners'
   petclinic.genai -[call]-> petclinic.customers.api.post_owners 'POST /owners'
   petclinic.genai -[call]-> petclinic.customers.api.post_owners_p_pets 'POST /owners/{_}/pets'
@@ -379,6 +443,17 @@ views 'PetClinic' {
     include petclinic.customers.api
     include petclinic.customers.api.*
     include * -> petclinic.customers.api.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_discovery_api of petclinic.discovery {
+    title 'API / discovery-server'
+    description 'Контракт и потребители: каждый эндпоинт со своими вызывающими'
+    include *
+    include petclinic.discovery.api
+    include petclinic.discovery.api.*
+    include * -> petclinic.discovery.api.*
     global style base
     autoLayout LeftRight
   }

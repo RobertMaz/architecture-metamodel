@@ -17,12 +17,11 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 
 /**
- * Полка runtime — наивысший приоритет достоверности: живое приложение не врёт.
- * Две под-части, каждая работает при наличии своего входа:
- *  - Actuator: /actuator/mappings (реальные роуты), /actuator/env (datasource, имя);
- *  - OTel: файл спанов (OTLP-JSON или JSON-lines) — реальные исходящие вызовы
- *    с уже отрезолвленными адресами, Kafka и БД.
- * Недоступный рантайм — не ошибка: полка просто не применима.
+ * Полка runtime (Actuator) — наивысший приоритет достоверности: живое приложение
+ * не врёт. /actuator/mappings — реальные роуты, /actuator/env — datasource и имя.
+ * Недоступный рантайм — не ошибка: полка не применима, а её ПРОШЛЫЙ evidence
+ * персистентен. Спаны — отдельная полка TracesLane: у каждой свой evidence,
+ * иначе частичный запуск затирал бы чужие факты.
  */
 class RuntimeLane : Lane {
 
@@ -32,14 +31,10 @@ class RuntimeLane : Lane {
     private val http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build()
 
     override fun applicable(input: RepoInput): Boolean =
-        (input.traces?.exists() == true) || (input.runtimeUrl != null && alive(input.runtimeUrl))
+        input.runtimeUrl != null && alive(input.runtimeUrl)
 
-    override fun extract(input: RepoInput): List<Fact> {
-        val facts = mutableListOf<Fact>()
-        input.runtimeUrl?.takeIf { alive(it) }?.let { facts += actuatorFacts(it) }
-        input.traces?.takeIf { it.exists() }?.let { facts += otelFacts(it) }
-        return facts
-    }
+    override fun extract(input: RepoInput): List<Fact> =
+        input.runtimeUrl?.takeIf { alive(it) }?.let { actuatorFacts(it) } ?: emptyList()
 
     // --- Actuator ---------------------------------------------------------
 
@@ -101,19 +96,40 @@ class RuntimeLane : Lane {
         return facts
     }
 
-    // --- OTel -------------------------------------------------------------
+}
+
+/**
+ * Полка traces — OTel-спаны из файла (OTLP-JSON, ResourceSpans-строки logging-otlp
+ * или JSON-lines): реальные исходящие вызовы с отрезолвленными адресами, Kafka, БД.
+ * Файл и есть вход: полка применима, пока он существует.
+ */
+class TracesLane : Lane {
+
+    override val name = "traces"
+
+    private val json = ObjectMapper()
+
+    override fun applicable(input: RepoInput): Boolean = input.traces?.exists() == true
+
+    override fun extract(input: RepoInput): List<Fact> =
+        input.traces?.takeIf { it.exists() }?.let { otelFacts(it) } ?: emptyList()
 
     /** Spans: OTLP-JSON (resourceSpans[].scopeSpans[].spans[]) или JSON-lines со спанами. */
     private fun otelFacts(file: Path): List<Fact> {
         val spans = mutableListOf<JsonNode>()
         val text = file.readText().trim()
         fun unwrap(node: JsonNode) {
-            if (node.has("resourceSpans")) {
-                for (rs in node.path("resourceSpans"))
-                    for (ss in rs.path("scopeSpans"))
+            when {
+                // полный OTLP-запрос
+                node.has("resourceSpans") ->
+                    for (rs in node.path("resourceSpans"))
+                        for (ss in rs.path("scopeSpans"))
+                            for (s in ss.path("spans")) spans.add(s)
+                // одиночный ResourceSpans — формат logging-otlp экспортера javaagent
+                node.has("scopeSpans") ->
+                    for (ss in node.path("scopeSpans"))
                         for (s in ss.path("spans")) spans.add(s)
-            } else {
-                spans.add(node)
+                else -> spans.add(node)
             }
         }
         if (text.startsWith("{") && !text.contains('\n')) {
@@ -152,7 +168,10 @@ class RuntimeLane : Lane {
                         val pairs = mutableListOf("method" to method)
                         // peer.service точнее хоста: lb уже отрезолвил URL в localhost:порт
                         (attrs["peer.service"] ?: uri?.host)?.let { pairs += "host" to it }
-                        uri?.path?.takeIf { it.isNotEmpty() }?.let { pairs += "path" to it }
+                        uri?.path?.takeIf { it.isNotEmpty() }?.let { p ->
+                            // Конкретные id из трейсов — это параметры: /owners/17 -> /owners/{_}
+                            pairs += "path" to p.replace(Regex("/\\d+(?=/|$)"), "/{_}")
+                        }
                         fact(FactType.OUTGOING_CALL, src, 0.97, *pairs.toTypedArray())
                     }
                 }

@@ -86,14 +86,14 @@ class RuntimeLaneTest {
             """.trimIndent(),
         )
         val input = RepoInput("x", Files.createTempDirectory("r"), traces = traces)
-        val lane = RuntimeLane()
+        val lane = TracesLane()
         assertTrue(lane.applicable(input))
         val facts = lane.extract(input)
 
         val call = facts.single { it.type == FactType.OUTGOING_CALL }
         assertEquals("GET", call.attrs["method"])
         assertEquals("customers-service", call.attrs["host"])
-        assertEquals("/owners/1", call.attrs["path"])
+        assertEquals("/owners/{_}", call.attrs["path"], "id нормализован в параметр")
         assertEquals("otel:t1", call.source)
 
         assertEquals("order.created", facts.single { it.type == FactType.PUBLISH }.attrs["channel"])
@@ -114,15 +114,34 @@ class RuntimeLaneTest {
                 """{"key":"http.request.method","value":{"stringValue":"GET"}},""" +
                 """{"key":"url.full","value":{"stringValue":"http://localhost:9101/owners"}},""" +
                 """{"key":"peer.service","value":{"stringValue":"customers-service"}}]}]}]}]}"""
-        traces.writeText("$line\n$line\n")
-        val facts = RuntimeLane().extract(RepoInput("x", Files.createTempDirectory("r"), traces = traces))
+        // формат logging-otlp: ResourceSpans без обёртки resourceSpans
+        val bare =
+            """{"resource":{"attributes":[]},"scopeSpans":[{"spans":[{"traceId":"t9","kind":3,"attributes":[""" +
+                """{"key":"http.request.method","value":{"stringValue":"GET"}},""" +
+                """{"key":"url.full","value":{"stringValue":"http://localhost:9101/owners"}},""" +
+                """{"key":"peer.service","value":{"stringValue":"customers-service"}}]}]}]}"""
+        traces.writeText("$line\n$bare\n")
+        val facts = TracesLane().extract(RepoInput("x", Files.createTempDirectory("r"), traces = traces))
         val call = facts.single { it.type == FactType.OUTGOING_CALL }
         assertEquals("customers-service", call.attrs["host"], "peer.service побеждает localhost")
         assertEquals("/owners", call.attrs["path"])
     }
 
     @Test
+    fun `otel - числовые сегменты пути нормализуются в параметр`() {
+        val traces = Files.createTempDirectory("otel").resolve("s.jsonl")
+        traces.writeText(
+            """{"resourceSpans":[{"scopeSpans":[{"spans":[{"traceId":"t1","kind":3,"attributes":[""" +
+                """{"key":"http.request.method","value":{"stringValue":"GET"}},""" +
+                """{"key":"url.full","value":{"stringValue":"http://customers-service/owners/17/pets/3"}}]}]}]}]}""",
+        )
+        val facts = TracesLane().extract(RepoInput("x", Files.createTempDirectory("r"), traces = traces))
+        assertEquals("/owners/{_}/pets/{_}", facts.single().attrs["path"], "конкретные id — это параметры")
+    }
+
+    @Test
     fun `не применима без runtimeUrl и traces`() {
         assertTrue(!RuntimeLane().applicable(RepoInput("x", Files.createTempDirectory("r"))))
+        assertTrue(!TracesLane().applicable(RepoInput("x", Files.createTempDirectory("r"))))
     }
 }

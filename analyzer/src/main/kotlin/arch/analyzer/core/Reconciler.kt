@@ -9,7 +9,7 @@ import kotlin.math.roundToInt
  * конфликт деталей — приоритетная полка + запись в отчёт.
  */
 class Reconciler(
-    private val lanePriority: List<String> = listOf("runtime", "openapi", "source", "bytecode", "config", "llm"),
+    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "source", "bytecode", "config", "llm"),
 ) {
 
     private val extractor = "arch-analyzer source+config v1"

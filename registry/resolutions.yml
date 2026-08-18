@@ -1,6 +1,13 @@
 # Ручные решения по нераспознанным целям (stub -> контейнер | external).
 # По духу append-only: решённое не перерешивается через API, только руками.
 resolutions:
+  unknown.config_server:
+    container: petclinic.config
+  unknown.zipkin:
+    external:
+      id: zipkin
+      title: Zipkin
+      contract: трейсинг-бэкенд (локальный)
   unknown.pets_visits:
     container: petclinic.visits
   unknown.vets:
