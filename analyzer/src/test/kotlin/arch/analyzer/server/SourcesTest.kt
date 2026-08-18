@@ -39,6 +39,8 @@ class SourcesTest {
 
         var rs = client.put("/api/containers/test.app/sources") {
             header("Content-Type", "application/json")
+            // Браузер шлёт Origin на всех не-GET запросах — CORS обязан пропускать PUT.
+            header("Origin", "http://localhost:5174")
             setBody("""{"jar":"$fixture","runtimeUrl":"http://localhost:9966"}""")
         }
         assertEquals(HttpStatusCode.OK, rs.status)

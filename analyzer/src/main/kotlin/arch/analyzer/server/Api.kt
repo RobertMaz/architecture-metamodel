@@ -138,6 +138,7 @@ fun buildApp(
         allowHost("localhost:5174")
         allowHeader(HttpHeaders.ContentType)
         allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
     }
 
     routing {
