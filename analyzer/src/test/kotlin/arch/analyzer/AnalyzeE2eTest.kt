@@ -42,6 +42,27 @@ class AnalyzeE2eTest {
     }
 
     @Test
+    fun `упавшая полка не роняет прогон`() {
+        val root = archRoot()
+        val broken = object : arch.analyzer.core.Lane {
+            override val name = "broken"
+            override fun applicable(input: arch.analyzer.core.RepoInput) = true
+            override fun extract(input: arch.analyzer.core.RepoInput): List<arch.analyzer.core.Fact> =
+                error("полка сломалась")
+        }
+        val result = Analyze.run(
+            root, "test.app", date = "2026-08-17",
+            lanes = Analyze.defaultLanes(root) + broken,
+        )
+        assertEquals(listOf("broken"), result.failedLanes)
+        assertTrue("broken" !in result.lanesRun)
+        assertTrue(Files.exists(root.resolve("tools/api-source/test.app.json")), "анализ дошёл до конца")
+        assertTrue(
+            root.resolve("workspace/test.app/reconcile-report.json").readText().contains("полка broken упала"),
+        )
+    }
+
+    @Test
     fun `детерминизм - повторный прогон не меняет байты`() {
         val root = archRoot()
         Analyze.run(root, "test.app", date = "2026-08-17")

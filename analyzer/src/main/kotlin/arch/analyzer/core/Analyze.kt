@@ -21,6 +21,7 @@ object Analyze {
     data class Result(
         val containerId: String,
         val lanesRun: List<String>,
+        val failedLanes: List<String> = emptyList(),
         val factCount: Int,
         val report: ReconcileReport,
     )
@@ -65,9 +66,17 @@ object Analyze {
 
         val evidences = mutableListOf<Evidence>()
         val lanesRun = mutableListOf<String>()
+        // Упавшая полка не роняет прогон: реконсиляция идёт по оставшимся уликам.
+        val failedLanes = mutableListOf<Pair<String, String>>()
         for (lane in lanes) {
             if (!lane.applicable(input)) continue
-            val facts = lane.extract(input)
+            val extracted = runCatching { lane.extract(input) }
+            if (extracted.isFailure) {
+                val e = extracted.exceptionOrNull()!!
+                failedLanes += lane.name to (e.message ?: e.javaClass.simpleName)
+                continue
+            }
+            val facts = extracted.getOrThrow()
             val evidence = Evidence(
                 lane = lane.name,
                 input = InputRef(kind = "git", path = entry.path, commit = gitCommit(repoDir)),
@@ -107,8 +116,9 @@ object Analyze {
                 .getOrElse { listOf("LLM-ревью упало: ${it.message}") }
         } ?: emptyList()
 
+        val laneFailures = failedLanes.map { (name, msg) -> "полка $name упала: $msg" }
         val report = baseReport.copy(
-            conflicts = (baseReport.conflicts + aliasConflicts).sorted(),
+            conflicts = (baseReport.conflicts + aliasConflicts + laneFailures).sorted(),
             llmReview = llmReview,
         )
 
@@ -116,7 +126,13 @@ object Analyze {
         val out = archRoot.resolve("tools/api-source").createDirectories()
         writeIfChanged(out.resolve("$containerId.json"), Json.write(doc))
 
-        return Result(containerId, lanesRun.sorted(), evidences.sumOf { it.facts.size }, report)
+        return Result(
+            containerId,
+            lanesRun.sorted(),
+            failedLanes.map { it.first }.sorted(),
+            evidences.sumOf { it.facts.size },
+            report,
+        )
     }
 
     private fun listPersisted(workspace: Path): List<Path> =
