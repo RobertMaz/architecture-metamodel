@@ -74,7 +74,7 @@ views 'Demo Kotlin' {
 
   view demo_containers of demo {
     title 'Контейнеры'
-    description 'Кто с кем связан. Отсюда видно радиус изменения'
+    description 'Кто с кем связан внутри системы. Отсюда видно радиус изменения'
     global predicate noContracts
     include *
     global style base

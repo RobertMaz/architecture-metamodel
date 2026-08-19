@@ -560,23 +560,40 @@ export function generate(root = '.') {
     // общая папка задаётся у блока views, подпапки — слэшем в title.
     L.push(``)
     L.push(`views '${esc(s.title)}' {`)
+    // Два контейнерных вида: чистый (первый — default при клике по системе)
+    // и «с соседями» — паукан внешних связей не мешает читать саму систему.
     L.push(``)
     L.push(`  view ${s.id}_containers of ${s.id} {`)
     L.push(`    title 'Контейнеры'`)
-    L.push(`    description 'Кто с кем связан. Отсюда видно радиус изменения'`)
+    L.push(`    description 'Кто с кем связан внутри системы. Отсюда видно радиус изменения'`)
     // noContracts строго ДО include: exclude применяется к уже включённому
     // и иначе молча съедает рёбра, выведенные через api/operation.
     L.push(`    global predicate noContracts`)
     L.push(`    include *`)
-    // Интегрированные соседи: узел — свёрнуто, ребро — предикатом (сами по себе
-    // рёбра к вложенным целям соседа LikeC4 на свёрнутый узел не наводит).
-    for (const n of neighborsOf(s.id)) {
-      L.push(`    include ${n}`)
-      L.push(`    include ${s.id} <-> ${n}`)
-    }
+    // include * сам втягивает соседей с прямыми (контейнер-уровневыми) рёбрами —
+    // для чистого вида их выключаем явно; внешнее целиком живёт в _context.
+    const neighbors = neighborsOf(s.id)
+    for (const n of neighbors) L.push(`    exclude ${n}`)
     L.push(`    global style base`)
     L.push(`    autoLayout TopBottom`)
     L.push(`  }`)
+    if (neighbors.length) {
+      L.push(``)
+      L.push(`  view ${s.id}_context of ${s.id} {`)
+      L.push(`    title 'Контейнеры и соседи'`)
+      L.push(`    description 'То же плюс интегрированные системы: все внешние связи'`)
+      L.push(`    global predicate noContracts`)
+      L.push(`    include *`)
+      // Интегрированные соседи: узел — свёрнуто, ребро — предикатом (сами по себе
+      // рёбра к вложенным целям соседа LikeC4 на свёрнутый узел не наводит).
+      for (const n of neighbors) {
+        L.push(`    include ${n}`)
+        L.push(`    include ${s.id} <-> ${n}`)
+      }
+      L.push(`    global style base`)
+      L.push(`    autoLayout TopBottom`)
+      L.push(`  }`)
+    }
     for (const v of [...(apiViews.get(s.id) ?? [])].sort((a, b) => a.name.localeCompare(b.name))) {
       const cid = `${s.id}.${v.name}`
       L.push(``)

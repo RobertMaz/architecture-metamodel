@@ -165,7 +165,16 @@ test('container view включает интегрированных сосед�
   )
   generate(root)
 
-  const view = readFileSync(systemFile(root), 'utf8').match(/view petclinic_containers of petclinic \{[\s\S]*?\n  \}/)[0]
+  const text = readFileSync(systemFile(root), 'utf8')
+  // чистый контейнерный вид — без соседей, паукан не мешает читать систему;
+  // include * сам втягивает соседей с прямыми рёбрами — их надо явно exclude
+  const containers = text.match(/view petclinic_containers of petclinic \{[\s\S]*?\n  \}/)[0]
+  assert.doesNotMatch(containers, /include auth|include unknown/, 'соседей в чистом виде нет')
+  assert.match(containers, /^    exclude auth$/m, 'прямых соседей выключаем явно')
+  assert.match(containers, /^    exclude unknown\.legacy_billing$/m)
+
+  // соседи и связи с ними — в отдельном виде «Контейнеры и соседи»
+  const view = text.match(/view petclinic_context of petclinic \{[\s\S]*?\n  \}/)[0]
   assert.match(view, /^    include auth$/m, 'соседняя система — свёрнутым узлом')
   assert.match(view, /^    include unknown\.legacy_billing$/m, 'stub — отдельным узлом')
   assert.doesNotMatch(view, /include petclinic$/m, 'сама система не дублируется')
@@ -174,26 +183,31 @@ test('container view включает интегрированных сосед�
   assert.match(view, /^    include petclinic <-> unknown\.legacy_billing$/m, 'ребро к stub')
   // noContracts обязан идти ДО include: exclude бьёт по уже включённому и молча
   // съедает рёбра, выведенные через api/operation (и свои, и кросс-системные)
-  assert.ok(
-    view.indexOf('global predicate noContracts') < view.indexOf('include *'),
-    'noContracts до include *',
-  )
+  for (const v of [containers, view]) {
+    assert.ok(
+      v.indexOf('global predicate noContracts') < v.indexOf('include *'),
+      'noContracts до include *',
+    )
+  }
+  assert.ok(text.indexOf('view petclinic_containers') < text.indexOf('view petclinic_context'), 'чистый вид первый — он default при клике')
 
   // у соседа входящее ребро тоже даёт соседа — узел и связь
-  const authView = readFileSync(systemFile(root, 'auth'), 'utf8').match(/view auth_containers of auth \{[\s\S]*?\n  \}/)[0]
+  const authView = readFileSync(systemFile(root, 'auth'), 'utf8').match(/view auth_context of auth \{[\s\S]*?\n  \}/)[0]
   assert.match(authView, /^    include petclinic$/m, 'вызывающая система видна на виде цели')
   assert.match(authView, /^    include auth <-> petclinic$/m)
 })
 
-test('container view без интеграций не тянет лишних include', () => {
+test('без интеграций: контейнерный вид чистый, context-вида нет вовсе', () => {
   const root = makeRoot()
   writeFileSync(
     join(root, 'tools/api-source/petclinic.customers.json'),
     JSON.stringify({ ...doc, calls: [] }),
   )
   generate(root)
-  const view = readFileSync(systemFile(root), 'utf8').match(/view petclinic_containers of petclinic \{[\s\S]*?\n  \}/)[0]
+  const text = readFileSync(systemFile(root), 'utf8')
+  const view = text.match(/view petclinic_containers of petclinic \{[\s\S]*?\n  \}/)[0]
   assert.equal(view.match(/include /g).length, 1, 'только include *')
+  assert.doesNotMatch(text, /view petclinic_context/, 'дубль без соседей не нужен')
 })
 
 test('повторный прогон не переписывает файлы', () => {

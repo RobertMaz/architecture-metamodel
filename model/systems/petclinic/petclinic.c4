@@ -571,7 +571,18 @@ views 'PetClinic' {
 
   view petclinic_containers of petclinic {
     title 'Контейнеры'
-    description 'Кто с кем связан. Отсюда видно радиус изменения'
+    description 'Кто с кем связан внутри системы. Отсюда видно радиус изменения'
+    global predicate noContracts
+    include *
+    exclude github_config_repo
+    exclude zipkin
+    global style base
+    autoLayout TopBottom
+  }
+
+  view petclinic_context of petclinic {
+    title 'Контейнеры и соседи'
+    description 'То же плюс интегрированные системы: все внешние связи'
     global predicate noContracts
     include *
     include github_config_repo
