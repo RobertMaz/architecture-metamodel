@@ -252,6 +252,41 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `группа операции выводится из пути, когда полки её не дали`() {
+        val e = ev(
+            "lst",
+            fact(FactType.ENDPOINT, "src/A.kt#a", 0.85, "method" to "POST", "path" to "/api/v1/pos/link"),
+            fact(FactType.ENDPOINT, "src/B.kt#b", 0.85, "method" to "GET", "path" to "/private/api/v2/terminal/{id}"),
+            fact(FactType.ENDPOINT, "src/C.kt#c", 0.85, "method" to "GET", "path" to "/api/v1/secured/replication/run"),
+            fact(FactType.ENDPOINT, "src/D.kt#d", 0.85, "method" to "GET", "path" to "/api/v1/{ownerId}/pets"),
+            fact(FactType.ENDPOINT, "src/E.kt#e", 0.85, "method" to "GET", "path" to "/owners/{ownerId}"),
+            fact(FactType.ENDPOINT, "src/F.kt#f", 0.85, "method" to "GET", "path" to "/"),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(e), meta)
+        val byPath = doc.operations.associate { it.path to it.group }
+
+        assertEquals("pos", byPath["/api/v1/pos/link"])
+        assertEquals("terminal", byPath["/private/api/v2/terminal/{id}"], "служебные префиксы пропущены")
+        assertEquals("replication", byPath["/api/v1/secured/replication/run"], "secured пропущен")
+        assertEquals("pets", byPath["/api/v1/{ownerId}/pets"], "сегмент-параметр — не группа")
+        assertEquals("owners", byPath["/owners/{ownerId}"])
+        assertEquals(null, byPath["/"], "нечего вывести — базовый api")
+    }
+
+    @Test
+    fun `группа от полки приоритетнее выведенной из пути`() {
+        val e = ev(
+            "openapi",
+            fact(
+                FactType.ENDPOINT, "openapi.yml", 0.95,
+                "method" to "GET", "path" to "/api/v1/pos/link", "group" to "payments",
+            ),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(e), meta)
+        assertEquals("payments", doc.operations.single().group)
+    }
+
+    @Test
     fun `context-path из noir срезается по якорям других полок`() {
         val source = ev(
             "source",
