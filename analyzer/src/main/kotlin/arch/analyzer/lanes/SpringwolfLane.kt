@@ -78,7 +78,10 @@ class SpringwolfLane(
     }
 
     private fun runScanner(basePackage: String, title: String, exploded: Path, out: Path) {
-        val javaBin = Paths.get(System.getProperty("java.home"), "bin", "java").toString()
+        // Сканер ЗАГРУЖАЕТ классы жертвы — его JDK должен быть не старше JDK жертвы.
+        // Жертвы новее нашей JVM: SPRINGWOLF_JAVA_HOME=/путь/к/jdk21+.
+        val javaHome = System.getenv("SPRINGWOLF_JAVA_HOME") ?: System.getProperty("java.home")
+        val javaBin = Paths.get(javaHome, "bin", "java").toString()
         // Порядок важен: classpath сканера раньше BOOT-INF/lib жертвы,
         // чтобы Spring самого сканера выигрывал у спринга жертвы.
         val cp = listOf(
@@ -93,7 +96,11 @@ class SpringwolfLane(
         val log = p.inputStream.bufferedReader().readText()
         if (!p.waitFor(5, TimeUnit.MINUTES) || p.exitValue() != 0) {
             p.destroyForcibly()
-            error("сканер springwolf упал (exit=${runCatching { p.exitValue() }.getOrNull()}): ${errorDigest(log)}")
+            val hint = if (log.contains("UnsupportedClassVersionError")) {
+                " | ПОДСКАЗКА: жертва собрана более новой Java, чем JVM сканера — " +
+                    "задай SPRINGWOLF_JAVA_HOME=/путь/к/новому/jdk или запусти весь стек на нём"
+            } else ""
+            error("сканер springwolf упал (exit=${runCatching { p.exitValue() }.getOrNull()}): ${errorDigest(log)}$hint")
         }
     }
 }

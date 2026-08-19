@@ -39,6 +39,7 @@ fi
 [[ -d "$ENGINE/node_modules" ]] || (say "npm install (движок)"; cd "$ENGINE" && npm install --silent)
 [[ -d "$ENGINE/ui/node_modules" ]] || (say "npm install (ui)"; cd "$ENGINE/ui" && npm install --silent)
 
+say "JDK стека: $(java -version 2>&1 | head -1) — сервисы, собранные более новой Java, потребуют SPRINGWOLF_JAVA_HOME"
 say "сборка анализатора"
 mvn -q -f "$ENGINE/analyzer/pom.xml" -DskipTests compile
 say "сборка сканера springwolf (полка consumers)"
