@@ -10,3 +10,4 @@ ui/dist/
 .mcp.json
 .idea/
 analyzer/lst-extractor/target/
+analyzer/noir/noir
