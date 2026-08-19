@@ -31,17 +31,20 @@ import kotlin.io.path.readText
  *   clientlibs:
  *     com.acme:billing-client:
  *       container: shop.billing
- *       jar: /path/to/billing-client.jar   # опционально: профиль операций
+ *       jar: /path/to/billing-client.jar    # профиль операций из байткода
+ *       path: /path/to/billing-client-repo  # или из сорцов (lst, fallback: регулярки)
  *
  * Зависимость в pom/gradle -> факт «использует клиента» (conf 0.6, ребро в
  * контейнер). Если задан jar либы — она профилируется теми же ASM-распознавателями
- * (Feign-интерфейсы, call-sites п. 9), кэш в workspace/_clientlibs/; зависимость +
- * профиль -> call-рёбра в конкретные operations (conf 0.7). Байткод сервиса
- * подтверждает, какие методы либы реально зовутся: подтверждённые — 0.85,
- * остальные не эмитятся (байткод — ground truth по статическим вызовам).
+ * (Feign-интерфейсы, call-sites п. 9); если сорцы — lst-полкой (или source-регулярками,
+ * когда экстрактор не собран). Кэш в workspace/_clientlibs/; зависимость + профиль ->
+ * call-рёбра в конкретные operations (conf 0.7). Байткод сервиса подтверждает,
+ * какие методы либы реально зовутся: подтверждённые — 0.85, остальные не эмитятся
+ * (байткод — ground truth по статическим вызовам).
  */
 class ClientLibsLane(
     private val archRoot: Path = Paths.get("."),
+    private val lstExtractorDir: Path = archRoot.resolve("analyzer/lst-extractor"),
 ) : Lane {
 
     override val name = "clientlibs"
@@ -51,7 +54,7 @@ class ClientLibsLane(
     private fun registryFile(): Path = archRoot.resolve("registry/clientlibs.yml")
     private fun cacheDir(): Path = archRoot.resolve("workspace/_clientlibs")
 
-    data class ClientLib(val container: String, val jar: String?)
+    data class ClientLib(val container: String, val jar: String?, val path: String?)
 
     private fun clientLibs(): Map<String, ClientLib> {
         val file = registryFile()
@@ -60,7 +63,11 @@ class ClientLibsLane(
         val out = sortedMapOf<String, ClientLib>()
         root.fields().forEach { (coord, node) ->
             val container = node.get("container")?.asText()?.takeIf { it.isNotEmpty() } ?: return@forEach
-            out[coord] = ClientLib(container, node.get("jar")?.asText()?.takeIf { it.isNotEmpty() })
+            out[coord] = ClientLib(
+                container,
+                node.get("jar")?.asText()?.takeIf { it.isNotEmpty() },
+                node.get("path")?.asText()?.takeIf { it.isNotEmpty() },
+            )
         }
         return out
     }
@@ -91,7 +98,7 @@ class ClientLibsLane(
 
         for ((coord, lib) in libs) {
             if (coord !in deps) continue
-            val profile = lib.jar?.let { profileOps(coord, Paths.get(it)) } ?: emptyList()
+            val profile = profileOps(coord, lib)
             if (profile.isEmpty()) {
                 // профиля нет — хотя бы контейнерное ребро «использует клиента»
                 facts += fact(
@@ -104,13 +111,18 @@ class ClientLibsLane(
             val invoked = input.jar?.takeIf { it.exists() }
                 ?.let { invokedMethods(it, profile.map { op -> op.owner }.toSet()) }
             for (op in profile) {
-                val confirmed = invoked != null && (op.owner to op.method) in invoked
-                if (invoked != null && !invoked.isEmpty() && !confirmed) continue
+                val confirmed = op.method.isNotEmpty() && invoked != null && (op.owner to op.method) in invoked
+                // отбрасываем только операции с известным именем метода, которые точно не зовутся
+                if (invoked != null && invoked.isNotEmpty() && op.method.isNotEmpty() && !confirmed) continue
                 val conf = if (confirmed) 0.85 else 0.7
                 val attrs = mutableListOf("container" to lib.container, "prop" to coord)
                 op.httpMethod?.let { attrs += "method" to it }
                 op.path?.let { attrs += "path" to it }
-                facts += fact(FactType.OUTGOING_CALL, "$coord!${op.owner}#${op.method}", conf, *attrs.toTypedArray())
+                facts += fact(
+                    FactType.OUTGOING_CALL,
+                    "$coord!${op.owner}${if (op.method.isNotEmpty()) "#${op.method}" else ""}",
+                    conf, *attrs.toTypedArray(),
+                )
             }
         }
         return facts.distinct()
@@ -158,35 +170,74 @@ class ClientLibsLane(
     data class LibOp(val owner: String, val method: String, val httpMethod: String?, val path: String?)
 
     /**
-     * Jar либы прогоняется теми же ASM-распознавателями (Feign, call-sites п. 9),
-     * один раз — кэш в workspace/_clientlibs/<coord>.json, инвалидация по mtime jar.
+     * Профиль либы один раз, кэш в workspace/_clientlibs/<coord>.json:
+     * jar -> те же ASM-распознаватели (Feign, call-sites п. 9), инвалидация по mtime jar;
+     * сорцы -> lst-полка (typed, имена методов), а без собранного экстрактора —
+     * source-регулярки (методов нет — рёбра без подтверждения байткодом, 0.7).
      */
-    private fun profileOps(coord: String, libJar: Path): List<LibOp> {
-        if (!libJar.exists()) return emptyList()
-        val cache = cacheDir().resolve(coord.replace(':', '_') + ".json")
-        val facts: List<Fact> =
-            if (cache.exists() && cache.getLastModifiedTime() >= libJar.getLastModifiedTime()) {
-                Json.read(cache.readText(), Evidence::class.java).facts
-            } else {
-                val extracted = BytecodeLane()
-                    .extract(RepoInput("clientlib", libJar.parent ?: Paths.get("."), jar = libJar))
-                cacheDir().createDirectories()
-                val ev = Evidence(name, InputRef("jar", libJar.toString()), extracted).canonical()
-                cache.toFile().writeText(Json.write(ev))
-                extracted
-            }
-        return facts
-            .filter { it.type == FactType.OUTGOING_CALL && it.source.contains('!') }
-            .map { f ->
-                LibOp(
-                    owner = f.source.substringAfter('!').substringBefore('#'),
-                    method = f.source.substringAfter('#', ""),
-                    httpMethod = f.attrs["method"],
-                    path = f.attrs["path"],
-                )
-            }
-            .filter { it.method.isNotEmpty() }
+    private fun profileOps(coord: String, lib: ClientLib): List<LibOp> {
+        lib.jar?.let { Paths.get(it) }?.takeIf { it.exists() }?.let { jar ->
+            return cachedFacts(coord, jar.getLastModifiedTime()) {
+                BytecodeLane().extract(RepoInput("clientlib", jar.parent ?: Paths.get("."), jar = jar))
+            }.let { jarOps(it) }
+        }
+        val src = lib.path?.let { Paths.get(it) }?.takeIf { it.exists() } ?: return emptyList()
+        val newest = Files.walk(src).use { s ->
+            s.filter { it.isRegularFile() && (it.name.endsWith(".java") || it.name.endsWith(".kt")) }
+                .map { it.getLastModifiedTime() }
+                .max(Comparator.naturalOrder()).orElse(java.nio.file.attribute.FileTime.fromMillis(0))
+        }
+        return cachedFacts(coord, newest) {
+            val input = RepoInput("clientlib", src)
+            val lst = LstLane(extractorDir = lstExtractorDir)
+            if (lst.applicable(input)) lst.extract(input) else SourceLane().extract(input)
+        }.let { sourceOps(it) }
     }
+
+    private fun cachedFacts(coord: String, inputMtime: java.nio.file.attribute.FileTime, compute: () -> List<Fact>): List<Fact> {
+        val cache = cacheDir().resolve(coord.replace(':', '_') + ".json")
+        if (cache.exists() && cache.getLastModifiedTime() >= inputMtime) {
+            return Json.read(cache.readText(), Evidence::class.java).facts
+        }
+        val extracted = compute()
+        cacheDir().createDirectories()
+        cache.toFile().writeText(Json.write(Evidence(name, InputRef("clientlib", coord), extracted).canonical()))
+        return extracted
+    }
+
+    /** Байткод-факты: source «lib.jar!com.acme.BillingApi#create» -> owner FQCN + метод. */
+    private fun jarOps(facts: List<Fact>): List<LibOp> = facts
+        .filter { it.type == FactType.OUTGOING_CALL && it.source.contains('!') }
+        .map { f ->
+            LibOp(
+                owner = f.source.substringAfter('!').substringBefore('#'),
+                method = f.source.substringAfter('#', ""),
+                httpMethod = f.attrs["method"],
+                path = f.attrs["path"],
+            )
+        }
+        .filter { it.method.isNotEmpty() }
+
+    /**
+     * Source-факты: lst даёт «src/main/java/acme/BillingApi.java#BillingApi.create» —
+     * FQCN восстанавливается из пути, метод из хвоста. Регулярки дают только
+     * «файл#L42» — owner есть, метода нет.
+     */
+    private fun sourceOps(facts: List<Fact>): List<LibOp> = facts
+        .filter { it.type == FactType.OUTGOING_CALL && (it.attrs["path"] != null || it.attrs["urlTemplate"] != null) }
+        .map { f ->
+            val file = f.source.substringBefore('#')
+            val tail = f.source.substringAfter('#', "")
+            LibOp(
+                owner = file
+                    .substringAfter("src/main/java/", file.substringAfter("src/main/kotlin/", file))
+                    .removeSuffix(".java").removeSuffix(".kt")
+                    .replace('/', '.'),
+                method = if (tail.contains('.')) tail.substringAfterLast('.') else "",
+                httpMethod = f.attrs["method"],
+                path = f.attrs["path"],
+            )
+        }
 
     /** Какие методы каких классов либы реально зовутся из байткода сервиса. */
     private fun invokedMethods(serviceJar: Path, libOwners: Set<String>): Set<Pair<String, String>> {

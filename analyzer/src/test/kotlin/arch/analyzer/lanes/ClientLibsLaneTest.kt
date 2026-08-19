@@ -102,6 +102,48 @@ class ClientLibsLaneTest {
         return Setup(ClientLibsLane(archRoot = root), repo, dir, root)
     }
 
+    /** Профиль из сорцов либы (path вместо jar): lst даёт имена методов — подтверждение работает. */
+    @Test
+    fun `профиль из сорцов либы через lst - drill down с подтверждением`() {
+        val lstDir = Path.of("lst-extractor")
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            lstDir.resolve("target/classes").exists(), "lst-экстрактор не собран — пропуск",
+        )
+        val root = Files.createTempDirectory("clientlibs-src-root")
+        val libSrc = Files.createTempDirectory("billing-client-repo")
+        libSrc.resolve("src/main/java/acme").createDirectories().resolve("BillingApi.java").writeText(
+            """
+            package acme;
+
+            import org.springframework.cloud.openfeign.FeignClient;
+            import org.springframework.web.bind.annotation.GetMapping;
+            import org.springframework.web.bind.annotation.PostMapping;
+
+            @FeignClient(name = "billing")
+            public interface BillingApi {
+                @PostMapping("/api/v1/invoices")
+                Object create();
+
+                @GetMapping("/api/v1/invoices/{id}")
+                Object find();
+            }
+            """.trimIndent(),
+        )
+        root.resolve("registry").createDirectories().resolve("clientlibs.yml").writeText(
+            "clientlibs:\n  com.acme:billing-client:\n    container: shop.billing\n    path: $libSrc\n",
+        )
+        val repo = Files.createTempDirectory("svc-repo")
+        repo.resolve("build.gradle").writeText("dependencies { implementation 'com.acme:billing-client:1.0' }\n")
+
+        val lane = ClientLibsLane(archRoot = root, lstExtractorDir = lstDir)
+        val jars = Files.createTempDirectory("svc-jars")
+        val call = lane.extract(RepoInput("shop.pay", repo, jar = serviceJar(jars))).single()
+        assertEquals("shop.billing", call.attrs["container"])
+        assertEquals("POST", call.attrs["method"])
+        assertEquals("/api/v1/invoices", call.attrs["path"])
+        assertEquals(0.85, call.confidence, "create() зовётся, find() отброшен: $call")
+    }
+
     @Test
     fun `профиль либы плюс байткод сервиса - только реально вызываемые операции`() {
         val (lane, repo, jars, _) = setup()
