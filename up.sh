@@ -50,6 +50,33 @@ if [[ -z "${NOIR_BIN:-}" && ! -x "$ENGINE/analyzer/noir/noir" ]] && ! command -v
   say "ВНИМАНИЕ: бинаря noir нет (analyzer/noir/noir | NOIR_BIN | PATH) — полка noir будет неактивна"
 fi
 
+# --- LLM: локальный LM Studio, если поднят ----------------------------------
+# registry/llm.yml в данных уже есть — не трогаем. Нет — пробуем LM Studio
+# (дефолт http://localhost:1234/v1, override: LLM_BASE_URL/LLM_MODEL) и создаём.
+if [[ ! -f "$DATA/registry/llm.yml" ]]; then
+  LLM_URL="${LLM_BASE_URL:-http://localhost:1234/v1}"
+  if MODELS_JSON="$(curl -sf --max-time 3 "$LLM_URL/models" 2>/dev/null)"; then
+    MODEL="${LLM_MODEL:-$(jq -r '[.data[].id] | (map(select(test("qwen3\\.8"; "i"))) + map(select(test("qwen"; "i"))) + .)[0] // empty' <<<"$MODELS_JSON")}"
+    if [[ -n "$MODEL" ]]; then
+      mkdir -p "$DATA/registry"
+      cat >"$DATA/registry/llm.yml" <<EOF
+# LLM-полка: локальный LM Studio (создано up.sh — поправь под себя).
+# Роли: fallback на точках внимания, enrich-описания, ревью пропусков в отчёт,
+# гипотезы в триаже. Всё с confidence <= 0.7, кэш в workspace/_llm-cache/.
+llm:
+  baseUrl: $LLM_URL
+  model: $MODEL
+  enrich: true
+EOF
+      say "llm: LM Studio на $LLM_URL, модель $MODEL — registry/llm.yml создан"
+    else
+      say "llm: LM Studio на $LLM_URL отвечает, но моделей не видно — полка выключена"
+    fi
+  else
+    say "llm: LM Studio на $LLM_URL недоступен — полка llm выключена (подними LM Studio и перезапусти)"
+  fi
+fi
+
 # --- свободные порты --------------------------------------------------------
 port_free() { ! (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
 PICKED=""
