@@ -160,7 +160,7 @@
       "params" : "ownerId:path:int",
       "path" : "/api/gateway/owners/{ownerId}",
       "response" : "OwnerDetails",
-      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#ApiGatewayController.getOwnerDetails; src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; llm:enrich",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#ApiGatewayController.getOwnerDetails; src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java:54; llm:enrich",
       "summary" : "Получает данные владельца по идентификатору."
     },
     {
@@ -169,7 +169,7 @@
       "method" : "POST",
       "path" : "/fallback",
       "response" : "String",
-      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#FallbackController.fallback; src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; llm:enrich",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#FallbackController.fallback; src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java:11; llm:enrich",
       "summary" : "Выполняет резервную обработку запроса при недоступности основного сервиса."
     }
   ],

@@ -42,7 +42,7 @@
       "params" : "petId:path:int",
       "path" : "/owners/*/pets/{petId}/visits",
       "response" : "Visit",
-      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich",
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java:67; llm:enrich",
       "summary" : "Получить список визитов конкретного питомца владельца."
     },
     {
@@ -53,7 +53,7 @@
       "path" : "/owners/*/pets/{petId}/visits",
       "request" : "Visit",
       "response" : "Visit",
-      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#create; llm:enrich",
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#create; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java:56; llm:enrich",
       "summary" : "Добавить новый визит для конкретного питомца владельца."
     },
     {
@@ -63,7 +63,7 @@
       "params" : "petId:query:Integer",
       "path" : "/pets/visits",
       "response" : "Visits",
-      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich",
+      "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java:72; llm:enrich",
       "summary" : "Получить список всех визитов питомцев."
     },
     {

@@ -9,7 +9,7 @@ import kotlin.math.roundToInt
  * конфликт деталей — приоритетная полка + запись в отчёт.
  */
 class Reconciler(
-    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "springwolf", "lst", "source", "bytecode", "config", "llm"),
+    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "springwolf", "lst", "source", "bytecode", "noir", "config", "llm"),
 ) {
 
     private val extractor = "arch-analyzer source+config v1"
@@ -33,6 +33,7 @@ class Reconciler(
             .flatMap { e -> e.facts.map { Located(e.lane, it) } }
             .sortedWith(compareBy({ rank(it.lane) }, { it.fact.attrs.toString() }, { it.fact.source }))
             .let(::alignSpecPaths)
+            .let(::alignContextPrefixes)
 
         val conflicts = mutableListOf<String>()
         val lowConfidence = mutableListOf<String>()
@@ -236,6 +237,35 @@ class Reconciler(
             else {
                 val attrs = java.util.TreeMap(located.fact.attrs.filterKeys { it != "specServerPath" })
                 attrs["path"] = best.first + (located.fact.attrs["path"] ?: "")
+                located.copy(fact = located.fact.copy(attrs = attrs))
+            }
+        }
+    }
+
+    /**
+     * Зеркало alignSpecPaths для полок с абсолютными путями (noir): пути могут нести
+     * servlet context-path (/petclinic/api/...), которого нет у якорных полок.
+     * Кандидат на срез приходит атрибутом contextPrefix; срезаем, только если
+     * совпадений с якорями становится строго больше, чем без среза.
+     */
+    private fun alignContextPrefixes(all: List<Located>): List<Located> {
+        val prefixed = all.filter { it.fact.type == FactType.ENDPOINT && it.fact.attrs.containsKey("contextPrefix") }
+        if (prefixed.isEmpty()) return all
+        val anchors = all
+            .filter { it.fact.type == FactType.ENDPOINT && !it.fact.attrs.containsKey("contextPrefix") }
+            .mapNotNull { it.fact.attrs["path"]?.let { p -> "${it.fact.attrs["method"]} ${normPath(p)}" } }
+            .toSet()
+        val prefix = prefixed.first().fact.attrs["contextPrefix"] ?: return all
+        fun matches(cut: String) = prefixed.count {
+            val p = it.fact.attrs["path"] ?: return@count false
+            p.startsWith(cut) && "${it.fact.attrs["method"]} ${normPath(p.removePrefix(cut))}" in anchors
+        }
+        val cut = if (matches(prefix) > matches("")) prefix else ""
+        return all.map { located ->
+            if (located.fact.type != FactType.ENDPOINT || !located.fact.attrs.containsKey("contextPrefix")) located
+            else {
+                val attrs = java.util.TreeMap(located.fact.attrs.filterKeys { it != "contextPrefix" })
+                if (cut.isNotEmpty()) attrs["path"] = (located.fact.attrs["path"] ?: "").removePrefix(cut)
                 located.copy(fact = located.fact.copy(attrs = attrs))
             }
         }

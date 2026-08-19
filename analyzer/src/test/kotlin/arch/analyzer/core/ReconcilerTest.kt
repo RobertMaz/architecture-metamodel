@@ -233,6 +233,39 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `context-path из noir срезается по якорям других полок`() {
+        val source = ev(
+            "source",
+            fact(FactType.ENDPOINT, "src/A.java#L5", 0.95, "method" to "GET", "path" to "/api/owners"),
+        )
+        val noir = ev(
+            "noir",
+            fact(
+                FactType.ENDPOINT, "src/A.java:5", 0.8,
+                "method" to "GET", "path" to "/petclinic/api/owners", "contextPrefix" to "/petclinic",
+            ),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(source, noir), meta)
+
+        val op = doc.operations.single()
+        assertEquals("/api/owners", op.path, "context-path срезан, эндпоинты слились: ${doc.operations}")
+        assertTrue(op.confidence > 0.95, "две полки подтвердили: ${op.confidence}")
+    }
+
+    @Test
+    fun `contextPrefix без якорей не срезается`() {
+        val noir = ev(
+            "noir",
+            fact(
+                FactType.ENDPOINT, "src/A.java:5", 0.8,
+                "method" to "GET", "path" to "/api/owners", "contextPrefix" to "/api",
+            ),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(noir), meta)
+        assertEquals("/api/owners", doc.operations.single().path)
+    }
+
+    @Test
     fun `role попадает в target и различает рёбра без адреса`() {
         val e = ev(
             "config",
