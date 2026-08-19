@@ -574,7 +574,9 @@ views 'PetClinic' {
     description 'Кто с кем связан. Отсюда видно радиус изменения'
     include *
     include github_config_repo
+    include petclinic <-> github_config_repo
     include zipkin
+    include petclinic <-> zipkin
     global predicate noContracts
     global style base
     autoLayout TopBottom

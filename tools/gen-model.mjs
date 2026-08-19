@@ -565,8 +565,12 @@ export function generate(root = '.') {
     L.push(`    title 'Контейнеры'`)
     L.push(`    description 'Кто с кем связан. Отсюда видно радиус изменения'`)
     L.push(`    include *`)
-    // Интегрированные соседи: рёбра между включёнными элементами LikeC4 дорисует сам.
-    for (const n of neighborsOf(s.id)) L.push(`    include ${n}`)
+    // Интегрированные соседи: узел — свёрнуто, ребро — предикатом (сами по себе
+    // рёбра к вложенным целям соседа LikeC4 на свёрнутый узел не наводит).
+    for (const n of neighborsOf(s.id)) {
+      L.push(`    include ${n}`)
+      L.push(`    include ${s.id} <-> ${n}`)
+    }
     L.push(`    global predicate noContracts`)
     L.push(`    global style base`)
     L.push(`    autoLayout TopBottom`)

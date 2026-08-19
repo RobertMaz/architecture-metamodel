@@ -65,6 +65,27 @@ class LlmLaneTest {
     }
 
     @Test
+    fun `файл, покрытый lst-полкой, в LLM не уходит`() {
+        val root = archRoot()
+        val lst = Evidence(
+            lane = "lst",
+            input = InputRef("git", fixture.toString()),
+            facts = listOf(
+                fact(
+                    FactType.OUTGOING_CALL, "src/main/java/demo/TrickyCaller.java#TrickyCaller.call", 0.85,
+                    "method" to "POST", "urlTemplate" to "http://refunds-service/api/v1/refunds",
+                ),
+            ),
+        )
+        root.resolve("workspace/test.app/evidence.lst.json").writeText(Json.write(lst))
+        val fake = FakeLlm(answer)
+        val facts = LlmLane(root, fake).extract(RepoInput("test.app", fixture))
+
+        assertEquals(0, fake.calls, "всё покрыто типизированными полками — токены не тратим")
+        assertTrue(facts.isEmpty())
+    }
+
+    @Test
     fun `невалидный json - одна повторная попытка, потом скип без выдумок`() {
         val root = archRoot()
         val fake = FakeLlm("это не json")

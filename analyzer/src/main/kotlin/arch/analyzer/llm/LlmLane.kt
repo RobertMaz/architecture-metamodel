@@ -87,7 +87,7 @@ class LlmLane(
         if (!ws.exists()) return emptySet()
         val covered = mutableSetOf<String>()
         Files.list(ws).use { s ->
-            s.filter { it.fileName.toString().matches(Regex("evidence\\.(source|bytecode|config)\\.json")) }
+            s.filter { it.fileName.toString().matches(Regex("evidence\\.(source|lst|bytecode|config)\\.json")) }
                 .sorted()
                 .forEach { f ->
                     val ev = Json.read(f.readText(), Evidence::class.java)

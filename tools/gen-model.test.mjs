@@ -169,10 +169,14 @@ test('container view включает интегрированных сосед�
   assert.match(view, /^    include auth$/m, 'соседняя система — свёрнутым узлом')
   assert.match(view, /^    include unknown\.legacy_billing$/m, 'stub — отдельным узлом')
   assert.doesNotMatch(view, /include petclinic$/m, 'сама система не дублируется')
+  // связи с соседями: без предиката LikeC4 не дорисует рёбра к вложенным целям
+  assert.match(view, /^    include petclinic <-> auth$/m, 'ребро к свёрнутой системе')
+  assert.match(view, /^    include petclinic <-> unknown\.legacy_billing$/m, 'ребро к stub')
 
-  // у соседа входящее ребро тоже даёт соседа
+  // у соседа входящее ребро тоже даёт соседа — узел и связь
   const authView = readFileSync(systemFile(root, 'auth'), 'utf8').match(/view auth_containers of auth \{[\s\S]*?\n  \}/)[0]
   assert.match(authView, /^    include petclinic$/m, 'вызывающая система видна на виде цели')
+  assert.match(authView, /^    include auth <-> petclinic$/m)
 })
 
 test('container view без интеграций не тянет лишних include', () => {
