@@ -3,12 +3,17 @@
 resolutions:
   unknown.config_server:
     container: petclinic.config
+  unknown.github_com:
+    external:
+      id: github_config_repo
+      title: GitHub (config-репозиторий)
+      contract: git-репозиторий конфигов petclinic; доступность по SLA GitHub
+  unknown.pets_visits:
+    container: petclinic.visits
+  unknown.vets:
+    container: petclinic.vets
   unknown.zipkin:
     external:
       id: zipkin
       title: Zipkin
       contract: трейсинг-бэкенд (локальный)
-  unknown.pets_visits:
-    container: petclinic.visits
-  unknown.vets:
-    container: petclinic.vets

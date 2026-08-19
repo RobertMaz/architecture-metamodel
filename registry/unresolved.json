@@ -1,27 +1,3 @@
 {
-  "unresolved": [
-    {
-      "stubId": "unknown.github_com",
-      "signature": {
-        "feignNames": [],
-        "hosts": [
-          "github.com"
-        ],
-        "roles": [
-          "config-repo"
-        ],
-        "urlTemplates": [
-          "https://github.com/spring-petclinic/spring-petclinic-microservices-config"
-        ]
-      },
-      "observedEndpoints": [],
-      "callers": [
-        {
-          "container": "petclinic.config",
-          "source": "src/main/resources/application.yml"
-        }
-      ],
-      "candidates": []
-    }
-  ]
+  "unresolved": []
 }

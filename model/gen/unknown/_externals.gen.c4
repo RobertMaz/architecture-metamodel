@@ -2,6 +2,12 @@
 // Источник: registry/resolutions.yml (решение: вне компании)
 
 model {
+  github_config_repo = externalSystem 'GitHub (config-репозиторий)' {
+    #stub
+    metadata {
+      contract 'git-репозиторий конфигов petclinic; доступность по SLA GitHub'
+    }
+  }
   zipkin = externalSystem 'Zipkin' {
     #stub
     metadata {

@@ -483,7 +483,7 @@ model {
 
   petclinic.admin -[call]-> petclinic.config
   petclinic.admin -[call]-> petclinic.discovery.api
-  petclinic.config -[call]-> unknown.github_com.api
+  petclinic.config -[call]-> github_config_repo
   petclinic.customers -[call]-> petclinic.config
   petclinic.customers -[call]-> petclinic.config 'GET /customers-service/default'
   petclinic.customers -[call]-> petclinic.discovery.api
