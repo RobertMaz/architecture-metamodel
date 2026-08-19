@@ -16,9 +16,10 @@
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { dataPath } from './root.mjs'
 import { createHash } from 'node:crypto'
 
-const JOURNAL = 'model/verified.json'
+const JOURNAL = dataPath('model/verified.json')
 
 // Срок годности зависит от того, ЧЕМ подтверждали.
 export const TTL_DAYS = {

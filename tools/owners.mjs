@@ -14,7 +14,9 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-const CODEOWNERS = ['CODEOWNERS', '.github/CODEOWNERS', 'docs/CODEOWNERS'].find(existsSync)
+import { dataPath } from './root.mjs'
+
+const CODEOWNERS = ['CODEOWNERS', '.github/CODEOWNERS', 'docs/CODEOWNERS'].map((p) => dataPath(p)).find(existsSync)
 
 /** Правила CODEOWNERS: побеждает последнее совпавшее (семантика git). */
 function rules() {

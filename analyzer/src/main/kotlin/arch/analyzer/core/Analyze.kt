@@ -37,23 +37,35 @@ object Analyze {
         return cached to cfg
     }
 
-    fun defaultLanes(archRoot: Path? = null): List<Lane> {
-        val root = archRoot ?: Paths.get(".")
-        val llm = archRoot?.let { llmClient(it) }
+    /** Движок (сканеры, экстракторы, адаптеры) живёт рядом с процессом, не с данными (п. 10). */
+    fun engineRoot(): Path =
+        Paths.get(System.getenv("ARCH_ENGINE_ROOT") ?: ".").toAbsolutePath().normalize()
+
+    /**
+     * П. 10: dataRoot — корень данных (registry/, workspace/, tools/api-source/),
+     * engineRoot — корень движка (analyzer/ с собранными сканерами). По умолчанию
+     * оба — текущий репо: обратная совместимость.
+     */
+    fun defaultLanes(dataRoot: Path? = null, engineRoot: Path = engineRoot()): List<Lane> {
+        val data = dataRoot ?: Paths.get(".")
+        val llm = dataRoot?.let { llmClient(it) }
         return listOf(
             SourceLane(),
-            arch.analyzer.lanes.LstLane(extractorDir = root.resolve("analyzer/lst-extractor")),
+            arch.analyzer.lanes.LstLane(extractorDir = engineRoot.resolve("analyzer/lst-extractor")),
             ConfigLane(),
             OpenApiLane(),
             BytecodeLane(),
-            arch.analyzer.lanes.SpringwolfLane(scannerDir = root.resolve("analyzer/springwolf-scanner")),
-            JqassistantLane(adapter = root.resolve("analyzer/jqassistant/extract.sh")),
-            arch.analyzer.lanes.NoirLane(adapter = root.resolve("analyzer/noir/noir-adapter.sh")),
-            arch.analyzer.lanes.ClientLibsLane(archRoot = root),
+            arch.analyzer.lanes.SpringwolfLane(scannerDir = engineRoot.resolve("analyzer/springwolf-scanner")),
+            JqassistantLane(adapter = engineRoot.resolve("analyzer/jqassistant/extract.sh")),
+            arch.analyzer.lanes.NoirLane(adapter = engineRoot.resolve("analyzer/noir/noir-adapter.sh")),
+            arch.analyzer.lanes.ClientLibsLane(
+                archRoot = data,
+                lstExtractorDir = engineRoot.resolve("analyzer/lst-extractor"),
+            ),
             arch.analyzer.lanes.RuntimeLane(),
             arch.analyzer.lanes.TracesLane(),
             // LLM — последней: точки внимания вычисляются по свежим evidence других полок.
-            arch.analyzer.llm.LlmLane(root, llm?.first, enrich = llm?.second?.enrich ?: false),
+            arch.analyzer.llm.LlmLane(data, llm?.first, enrich = llm?.second?.enrich ?: false),
         )
     }
 
