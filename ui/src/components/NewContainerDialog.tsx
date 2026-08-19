@@ -51,7 +51,7 @@ export function NewContainerDialog({ systems }: { systems: SystemInfo[] }) {
       setRepo("")
       setPath("")
     },
-    onError: (e) => toast.error(String(e)),
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   })
 
   return (

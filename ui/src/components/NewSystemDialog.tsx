@@ -31,7 +31,7 @@ export function NewSystemDialog() {
       setOpen(false)
       setForm({ id: "", title: "", kind: "system", description: "", owner: "" })
     },
-    onError: (e) => toast.error(String(e)),
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   })
 
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }))

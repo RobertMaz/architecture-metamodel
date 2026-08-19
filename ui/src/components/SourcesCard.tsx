@@ -34,7 +34,7 @@ export function SourcesCard({ container }: { container: ContainerInfo }) {
       toast.success("Источники сохранены — запускай анализ для дообогащения")
       qc.invalidateQueries({ queryKey: ["containers"] })
     },
-    onError: (e) => toast.error(String(e)),
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   })
 
   const set = (k: keyof typeof form) => (v: string) => setForm((f) => ({ ...f, [k]: v }))

@@ -31,7 +31,7 @@ export function AnalyzeButton({ container }: { container: ContainerInfo }) {
   const analyze = useMutation({
     mutationFn: () => api.analyze(container.id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["containers"] }),
-    onError: (e) => toast.error(String(e)),
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   })
   const running = container.state === "running" || container.state === "queued" || analyze.isPending
   return (

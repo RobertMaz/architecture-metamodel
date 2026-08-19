@@ -33,14 +33,18 @@ function useResolve() {
         qc.invalidateQueries({ queryKey: [key] })
       }
     },
-    onError: (e) => toast.error(String(e)),
+    onError: (e) => toast.error(e instanceof Error ? e.message : String(e)),
   })
 }
+
+/** Формат id внешней системы — как в Triage.kt: 400 от сервера не должен быть первым сигналом. */
+const EXTERNAL_ID = /^[a-z][a-z0-9_]*$/
 
 function ExternalDialog({ stubId }: { stubId: string }) {
   const resolve = useResolve()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState({ id: "", title: "", contract: "" })
+  const idInvalid = form.id !== "" && !EXTERNAL_ID.test(form.id)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -56,7 +60,17 @@ function ExternalDialog({ stubId }: { stubId: string }) {
         <div className="grid gap-3">
           <div className="grid gap-1.5">
             <Label htmlFor="e-id">id (например, stripe)</Label>
-            <Input id="e-id" value={form.id} onChange={(e) => setForm((f) => ({ ...f, id: e.target.value }))} />
+            <Input
+              id="e-id"
+              value={form.id}
+              aria-invalid={idInvalid}
+              onChange={(e) => setForm((f) => ({ ...f, id: e.target.value }))}
+            />
+            {idInvalid && (
+              <p className="text-xs text-destructive">
+                Только строчные латинские буквы, цифры и «_», первая — буква: например, github_config_repo
+              </p>
+            )}
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="e-title">Название</Label>
@@ -73,7 +87,7 @@ function ExternalDialog({ stubId }: { stubId: string }) {
         </div>
         <DialogFooter>
           <Button
-            disabled={!form.id || resolve.isPending}
+            disabled={!form.id || idInvalid || resolve.isPending}
             onClick={() =>
               resolve.mutate(
                 {
