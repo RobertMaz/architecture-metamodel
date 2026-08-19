@@ -216,6 +216,25 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `channelRole и protocol доезжают до subscribes и publishes`() {
+        val e = ev(
+            "lst",
+            fact(
+                FactType.SUBSCRIBE, "src/L.kt#on", 0.85,
+                "channel" to "orders.DLT", "channelRole" to "dlq", "protocol" to "kafka",
+            ),
+            fact(
+                FactType.PUBLISH, "src/P.kt#p", 0.85,
+                "channel" to "orders-retry", "channelRole" to "retry", "protocol" to "kafka",
+            ),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(e), meta)
+
+        assertEquals("dlq", doc.subscribes.single().channelRole)
+        assertEquals("retry", doc.publishes.single().channelRole)
+    }
+
+    @Test
     fun `плейсхолдеры регулярок и lst в urlTemplate — один вызов`() {
         val source = ev(
             "source",

@@ -103,7 +103,10 @@ object Analyze {
         }
 
         val meta = SourceMeta(repo = entry.repo, commit = gitCommit(repoDir) ?: "local", extractedAt = date)
-        val (doc, baseReport) = Reconciler().reconcile(containerId, evidences, meta)
+        // П. 5+7: единый резолв ${...} по всем полкам перед реконсиляцией;
+        // evidence-файлы на диске остаются сырыми наблюдениями.
+        val resolver = PlaceholderResolver.load(repoDir, entry.config?.let { Paths.get(it) })
+        val (doc, baseReport) = Reconciler().reconcile(containerId, evidences.map { resolveFacts(it, resolver) }, meta)
 
         // Сервис декларирует свои имена — реестр алиасов пополняется сам.
         val aliasEntries = buildMap {

@@ -5,12 +5,9 @@ import arch.analyzer.core.FactType
 import arch.analyzer.core.Lane
 import arch.analyzer.core.RepoInput
 import arch.analyzer.core.fact
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Properties
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
@@ -25,16 +22,15 @@ import kotlin.io.path.readText
 class ConfigLane : Lane {
     override val name = "config"
 
-    private val yaml = ObjectMapper(YAMLFactory())
-
     private fun resourcesDir(input: RepoInput): Path = input.repoDir.resolve("src/main/resources")
 
+    /** Рекурсивно все application* и bootstrap* под src/main/resources (п. 7 плана). */
     private fun configFiles(input: RepoInput): List<Path> {
         val dir = resourcesDir(input)
         if (!dir.exists()) return emptyList()
-        return Files.list(dir).use { s ->
+        return Files.walk(dir).use { s ->
             s.filter { it.isRegularFile() }
-                .filter { it.name.matches(Regex("application(-[\\w]+)?\\.(yml|yaml|properties)")) }
+                .filter { it.name.matches(Regex("(application|bootstrap)(-[\\w]+)?\\.(yml|yaml|properties)")) }
                 .sorted()
                 .toList()
         }
@@ -67,7 +63,7 @@ class ConfigLane : Lane {
             .sorted()
 
         for (file in defaults) {
-            val rel = "src/main/resources/${file.name}"
+            val rel = input.repoDir.relativize(file).toString().replace('\\', '/')
             val docs = readDocs(file)
             facts += recognize(flatten(docs), rel)
             facts += gatewayRoutes(docs, rel)
@@ -84,36 +80,11 @@ class ConfigLane : Lane {
         return facts
     }
 
-    /** Все документы multi-doc yml (---); properties — один «документ». */
-    private fun readDocs(file: Path): List<com.fasterxml.jackson.databind.JsonNode> {
-        if (file.name.endsWith(".properties")) {
-            val p = Properties()
-            file.readText().reader().use { p.load(it) }
-            val node = yaml.createObjectNode()
-            for (k in p.stringPropertyNames().sorted()) node.put(k, p.getProperty(k))
-            return listOf(node)
-        }
-        val parser = yaml.factory.createParser(file.toFile())
-        return yaml.readValues(parser, com.fasterxml.jackson.databind.JsonNode::class.java)
-            .readAll()
-            .filterNotNull()
-    }
+    /** Парсинг общий с PlaceholderResolver — arch.analyzer.core.ConfigParsing. */
+    private fun readDocs(file: Path) = arch.analyzer.core.ConfigParsing.readDocs(file)
 
-    /** Документы -> плоская map "a.b.c" -> значение; первый документ побеждает. */
-    private fun flatten(docs: List<com.fasterxml.jackson.databind.JsonNode>): Map<String, String> {
-        val out = sortedMapOf<String, String>()
-        fun walk(prefix: String, node: com.fasterxml.jackson.databind.JsonNode) {
-            when {
-                node.isObject -> node.fields().forEach { (k, v) ->
-                    walk(if (prefix.isEmpty()) k else "$prefix.$k", v)
-                }
-                node.isArray -> out.putIfAbsent(prefix, node.joinToString(",") { it.asText() })
-                else -> out.putIfAbsent(prefix, node.asText())
-            }
-        }
-        for (doc in docs) walk("", doc)
-        return out
-    }
+    private fun flatten(docs: List<com.fasterxml.jackson.databind.JsonNode>) =
+        arch.analyzer.core.ConfigParsing.flatten(docs)
 
     /**
      * Маршруты Spring Cloud Gateway — рёбра, живущие в yml, а не в коде.

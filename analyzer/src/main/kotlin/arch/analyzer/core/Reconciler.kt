@@ -130,6 +130,7 @@ class Reconciler(
                 schema = m.attrs["schema"],
                 fields = m.attrs["fields"],
                 protocol = m.attrs["protocol"],
+                channelRole = m.attrs["channelRole"],
                 source = m.source,
                 confidence = m.confidence,
             )
@@ -140,6 +141,7 @@ class Reconciler(
                 group = m.attrs["group"],
                 payload = m.attrs["payload"],
                 protocol = m.attrs["protocol"],
+                channelRole = m.attrs["channelRole"],
                 source = m.source,
                 confidence = m.confidence,
             )

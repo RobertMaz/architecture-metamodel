@@ -132,13 +132,14 @@ export function generate(root = '.') {
     return s
   }
 
-  const claimChannel = (system, topic, protocol) => {
+  const claimChannel = (system, topic, protocol, role) => {
     if (!channels.has(topic)) {
-      channels.set(topic, { id: `ch_${slug(topic)}`, system, topic, protocol: null, messages: new Map(), delivers: [] })
+      channels.set(topic, { id: `ch_${slug(topic)}`, system, topic, protocol: null, role: null, messages: new Map(), delivers: [] })
     }
     const c = channels.get(topic)
     if (system < c.system) c.system = system
     if (protocol && !c.protocol) c.protocol = protocol
+    if (role && !c.role) c.role = role
     return c
   }
 
@@ -448,12 +449,12 @@ export function generate(root = '.') {
       if (st.access === 'write' || st.access === 'readwrite') edges.push(`  ${d.container} -[write]-> ${target}`)
     }
     for (const p of [...(d.publishes ?? [])].sort((a, b) => a.channel.localeCompare(b.channel))) {
-      const c = claimChannel(sys, p.channel, p.protocol)
+      const c = claimChannel(sys, p.channel, p.protocol, p.channelRole)
       if (p.schema) c.messages.set(p.schema, { producer: d.container, fields: p.fields, source: p.source, confidence: p.confidence })
       edges.push(`  ${d.container} -[publish]-> ${c.system}.${c.id}${p.schema ? ` '${esc(p.schema)}'` : ''}`)
     }
     for (const sub of [...(d.subscribes ?? [])].sort((a, b) => a.channel.localeCompare(b.channel))) {
-      const c = claimChannel(sys, sub.channel, sub.protocol)
+      const c = claimChannel(sys, sub.channel, sub.protocol, sub.channelRole)
       c.delivers.push({ to: d.container, group: sub.group })
     }
     edges.push(...(edgesByCaller.get(d.container) ?? []))
@@ -469,6 +470,11 @@ export function generate(root = '.') {
     B.push(`    ${c.id} = channel '${esc(c.topic)}' {`)
     B.push(`      #inferred`)
     B.push(`      technology '${c.protocol === 'amqp' ? 'RabbitMQ' : 'Kafka topic'}'`)
+    if (c.role) {
+      B.push(`      metadata {`)
+      B.push(`        role '${esc(c.role)}'`)
+      B.push(`      }`)
+    }
     for (const [schema, m] of [...c.messages.entries()].sort(([a], [b]) => a.localeCompare(b))) {
       B.push(``)
       B.push(`      ${slug(schema)} = message '${esc(schema)}' {`)
