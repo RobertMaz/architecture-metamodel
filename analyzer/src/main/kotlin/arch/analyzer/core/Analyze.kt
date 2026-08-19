@@ -42,6 +42,7 @@ object Analyze {
         val llm = archRoot?.let { llmClient(it) }
         return listOf(
             SourceLane(),
+            arch.analyzer.lanes.LstLane(extractorDir = root.resolve("analyzer/lst-extractor")),
             ConfigLane(),
             OpenApiLane(),
             BytecodeLane(),

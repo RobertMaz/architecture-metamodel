@@ -65,6 +65,24 @@
       "response" : "Visits",
       "source" : "actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich",
       "summary" : "Получить список всех визитов питомцев."
+    },
+    {
+      "confidence" : 0.85,
+      "method" : "GET",
+      "path" : "owners/*/pets/{petId}/visits",
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#VisitResource.read"
+    },
+    {
+      "confidence" : 0.85,
+      "method" : "POST",
+      "path" : "owners/*/pets/{petId}/visits",
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#VisitResource.create"
+    },
+    {
+      "confidence" : 0.85,
+      "method" : "GET",
+      "path" : "pets/visits",
+      "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#VisitResource.read"
     }
   ],
   "publishes" : [ ],

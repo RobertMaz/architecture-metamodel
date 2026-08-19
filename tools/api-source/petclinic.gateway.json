@@ -80,10 +80,10 @@
       }
     },
     {
-      "confidence" : 0.99,
+      "confidence" : 1.0,
       "method" : "GET",
       "path" : "/owners/{_}",
-      "source" : "otel:4eb43c639b4797052ecbf9e21d2c3cd1; src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java#L36",
+      "source" : "otel:4eb43c639b4797052ecbf9e21d2c3cd1; src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java#CustomersServiceClient.getOwner; src/main/java/org/springframework/samples/petclinic/api/application/CustomersServiceClient.java#L36",
       "target" : {
         "host" : "customers-service",
         "urlTemplate" : "http://customers-service/owners/{ownerId}"
@@ -108,12 +108,13 @@
       }
     },
     {
-      "confidence" : 0.97,
+      "confidence" : 1.0,
       "method" : "GET",
       "path" : "/pets/visits",
-      "source" : "otel:4eb43c639b4797052ecbf9e21d2c3cd1",
+      "source" : "otel:4eb43c639b4797052ecbf9e21d2c3cd1; src/main/java/org/springframework/samples/petclinic/api/application/VisitsServiceClient.java#VisitsServiceClient.getVisitsForPets",
       "target" : {
-        "host" : "visits-service"
+        "host" : "visits-service",
+        "urlTemplate" : "http://visits-service/pets/visits?petId={petId}"
       }
     },
     {
@@ -159,7 +160,7 @@
       "params" : "ownerId:path:int",
       "path" : "/api/gateway/owners/{ownerId}",
       "response" : "OwnerDetails",
-      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; llm:enrich",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#ApiGatewayController.getOwnerDetails; src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; llm:enrich",
       "summary" : "Получает данные владельца по идентификатору."
     },
     {
@@ -168,7 +169,7 @@
       "method" : "POST",
       "path" : "/fallback",
       "response" : "String",
-      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; llm:enrich",
+      "source" : "src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#FallbackController.fallback; src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; llm:enrich",
       "summary" : "Выполняет резервную обработку запроса при недоступности основного сервиса."
     }
   ],
