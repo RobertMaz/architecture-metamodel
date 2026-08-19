@@ -9,3 +9,4 @@ ui/dist/
 .playwright-mcp/
 .mcp.json
 .idea/
+analyzer/lst-extractor/target/

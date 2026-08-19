@@ -9,7 +9,7 @@ import kotlin.math.roundToInt
  * конфликт деталей — приоритетная полка + запись в отчёт.
  */
 class Reconciler(
-    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "springwolf", "source", "bytecode", "config", "llm"),
+    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "springwolf", "lst", "source", "bytecode", "config", "llm"),
 ) {
 
     private val extractor = "arch-analyzer source+config v1"
@@ -48,8 +48,8 @@ class Reconciler(
                     when {
                         cur == null || cur.isEmpty() -> attrs[k] = v
                         v.isEmpty() || v == cur -> {}
-                        // Имя path-параметра не различает эндпоинты — и не конфликтует.
-                        k == "path" && normPath(cur) == normPath(v) -> {}
+                        // Имя path-параметра/плейсхолдера не различает эндпоинты — и не конфликтует.
+                        (k == "path" || k == "urlTemplate") && normPath(cur) == normPath(v) -> {}
                         else -> conflicts += "$label: $k «$cur» (${winner.lane}) vs «$v» (${other.lane})"
                     }
                 }
@@ -147,7 +147,9 @@ class Reconciler(
         // --- исходящие вызовы -------------------------------------------
         val TARGET_KEYS = listOf("container", "feignName", "host", "role", "urlTemplate", "prop", "route")
         val calls = grouped(FactType.OUTGOING_CALL) {
-            val target = it.attrs["feignName"] ?: it.attrs["host"] ?: it.attrs["role"] ?: it.attrs["urlTemplate"] ?: ""
+            // urlTemplate нормализуется: {_} у регулярок и {getUri()} у lst — один вызов
+            val target = it.attrs["feignName"] ?: it.attrs["host"] ?: it.attrs["role"]
+                ?: it.attrs["urlTemplate"]?.let(::normPath) ?: ""
             "${it.attrs["method"] ?: ""} $target ${normPath(it.attrs["path"] ?: "")}"
         }.map { (_, m) ->
             Call(

@@ -216,6 +216,23 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `плейсхолдеры регулярок и lst в urlTemplate — один вызов`() {
+        val source = ev(
+            "source",
+            fact(FactType.OUTGOING_CALL, "src/A.java#L10", 0.7, "method" to "GET", "urlTemplate" to "{_}/owners"),
+        )
+        val lst = ev(
+            "lst",
+            fact(FactType.OUTGOING_CALL, "src/A.java#fetch", 0.85, "method" to "GET", "urlTemplate" to "{getCustomerServiceUri()}/owners"),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(source, lst), meta)
+
+        val call = doc.calls.single()
+        assertEquals("{getCustomerServiceUri()}/owners", call.target["urlTemplate"], "детали от lst")
+        assertTrue(call.confidence > 0.85, "две полки подтвердили: ${call.confidence}")
+    }
+
+    @Test
     fun `role попадает в target и различает рёбра без адреса`() {
         val e = ev(
             "config",
