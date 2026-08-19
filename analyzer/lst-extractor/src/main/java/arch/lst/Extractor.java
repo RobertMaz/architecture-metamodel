@@ -79,15 +79,31 @@ public class Extractor {
         javaFiles.sort(Path::compareTo);
         kotlinFiles.sort(Path::compareTo);
 
+        System.err.printf("вход: java=%d, kotlin=%d файлов, classpath=%d jar%n",
+            javaFiles.size(), kotlinFiles.size(), classpath.size());
+
         ExecutionContext ctx = new InMemoryExecutionContext(t -> System.err.println("[parse-error] " + t.getMessage()));
         List<SourceFile> all = new ArrayList<>();
+        long t0 = System.nanoTime();
         if (!javaFiles.isEmpty()) {
             JavaParser jp = JavaParser.fromJavaVersion().classpath(classpath).build();
-            jp.parse(javaFiles, repoRoot, ctx).forEach(all::add);
+            int[] done = {0};
+            jp.parse(javaFiles, repoRoot, ctx).forEach(sf -> {
+                all.add(sf);
+                if (++done[0] % 50 == 0) System.err.printf("java: %d/%d%n", done[0], javaFiles.size());
+            });
+            System.err.printf("java распарсен: %d файлов за %.1fс%n", javaFiles.size(), (System.nanoTime() - t0) / 1e9);
         }
+        long t1 = System.nanoTime();
         if (!kotlinFiles.isEmpty()) {
+            System.err.println("kotlin: старт компилятора…");
             KotlinParser kp = KotlinParser.builder().classpath(classpath).build();
-            kp.parse(kotlinFiles, repoRoot, ctx).forEach(all::add);
+            int[] done = {0};
+            kp.parse(kotlinFiles, repoRoot, ctx).forEach(sf -> {
+                all.add(sf);
+                if (++done[0] % 25 == 0) System.err.printf("kotlin: %d/%d%n", done[0], kotlinFiles.size());
+            });
+            System.err.printf("kotlin распарсен: %d файлов за %.1fс%n", kotlinFiles.size(), (System.nanoTime() - t1) / 1e9);
         }
         for (SourceFile sf : all) {
             if (sf instanceof ParseError pe) System.err.println("[PARSE ERROR] " + pe.getSourcePath());

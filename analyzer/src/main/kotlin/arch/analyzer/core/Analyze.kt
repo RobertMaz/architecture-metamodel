@@ -98,9 +98,16 @@ object Analyze {
         val laneMillis = linkedMapOf<String, Long>()
         // Упавшая полка не роняет прогон: реконсиляция идёт по оставшимся уликам.
         val failedLanes = mutableListOf<Pair<String, String>>()
+        // Аварийный рубильник: ARCH_SKIP_LANES=lst,llm — выключить полку без пересборки
+        val skip = (System.getenv("ARCH_SKIP_LANES") ?: "").split(',').map(String::trim).filter(String::isNotEmpty).toSet()
         for (lane in lanes) {
+            if (lane.name in skip) {
+                println("[analyze] $containerId: полка ${lane.name} пропущена (ARCH_SKIP_LANES)")
+                continue
+            }
             if (!lane.applicable(input)) continue
             onProgress?.invoke(lane.name)
+            println("[analyze] $containerId: полка ${lane.name}…")
             val t0 = System.nanoTime()
             val extracted = runCatching { lane.extract(input) }
             val ms = (System.nanoTime() - t0) / 1_000_000

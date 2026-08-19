@@ -51,17 +51,27 @@ class LstLane(
             val javaBin = Paths.get(System.getProperty("java.home"), "bin", "java").toString()
             val cp = classesDir().toAbsolutePath().toString() +
                 java.io.File.pathSeparator + cpFile().readText().trim()
+            // Большой сервис: rewrite с резолвом типов ест память — хип настраиваемый
+            val xmx = System.getenv("LST_XMX") ?: "2g"
             val p = ProcessBuilder(
-                javaBin, "-Xmx1024m", "-cp", cp, "arch.lst.Extractor",
+                javaBin, "-Xmx$xmx", "-cp", cp, "arch.lst.Extractor",
                 cpDir?.toAbsolutePath()?.toString() ?: "NONE",
                 input.repoDir.toAbsolutePath().toString(),
             ).start()
+            // stderr экстрактора (прогресс по файлам) — живьём в лог сервера
+            val err = StringBuilder()
+            val pump = Thread {
+                p.errorStream.bufferedReader().forEachLine {
+                    println("[lst] $it")
+                    err.appendLine(it)
+                }
+            }.apply { isDaemon = true; start() }
             val lines = p.inputStream.bufferedReader().readLines()
-            val err = p.errorStream.bufferedReader().readText()
             if (!p.waitFor(10, TimeUnit.MINUTES) || p.exitValue() != 0) {
                 p.destroyForcibly()
                 error("lst-экстрактор упал (exit=${runCatching { p.exitValue() }.getOrNull()}): ${err.takeLast(500)}")
             }
+            pump.join(2000)
             return parseFactLines(lines, name)
         } finally {
             tmp.toFile().deleteRecursively()
