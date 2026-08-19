@@ -48,13 +48,153 @@ class BytecodeLane : Lane {
                 .filter { it.name.endsWith(".class") && !it.name.endsWith("module-info.class") }
                 .sortedBy { it.name }
                 .toList()
+            // Два прохода (п. 9): сначала все классы + константы полей (javac инлайнит
+            // static final в LDC, но Kotlin-объекты и чужие поля идут через GETSTATIC),
+            // потом распознавание — аннотации и call-sites из тел методов.
+            val nodes = mutableListOf<ClassNode>()
             for (entry in entries) {
                 val node = ClassNode()
-                jar.getInputStream(entry).use { ClassReader(it.readBytes()).accept(node, ClassReader.SKIP_CODE) }
+                jar.getInputStream(entry).use {
+                    ClassReader(it.readBytes()).accept(node, ClassReader.SKIP_FRAMES or ClassReader.SKIP_DEBUG)
+                }
+                nodes += node
+            }
+            // Константы полей + @Value-плейсхолдеры: GETFIELD такого поля отдаёт `${...}`,
+            // которое добьёт центральный PlaceholderResolver из конфигов (пп. 5+7).
+            val constants = buildMap {
+                for (n in nodes) for (f in n.fields ?: emptyList()) {
+                    val const = f.value as? String
+                        ?: value(ann(f.visibleAnnotations, "Lorg/springframework/beans/factory/annotation/Value;"), "value")
+                    const?.let { put("${n.name}#${f.name}", it) }
+                }
+            }
+            for (node in nodes) {
                 facts += recognizeClass(jarPath.name, node)
+                facts += callSites(jarPath.name, node, constants)
+            }
+        }
+        return facts.distinct()
+    }
+
+    private val restTemplateMethods = setOf(
+        "getForObject", "getForEntity", "postForObject", "postForEntity", "postForLocation",
+        "put", "delete", "exchange", "execute", "patchForObject", "headForHeaders", "optionsForAllow",
+    )
+    private val httpVerbs = setOf("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS")
+
+    /**
+     * Call-sites из тел методов (п. 9 плана): invoke* на шаблонах Kafka/Rabbit/StreamBridge
+     * и HTTP-клиентах + простой стековый резолв аргументов — LDC-строки и константы
+     * полей назад от вызова до границы предыдущего invoke. Confidence 0.7: эвристика
+     * по окну инструкций, а не честная симуляция стека.
+     */
+    private fun callSites(jarName: String, cls: ClassNode, constants: Map<String, String>): List<Fact> {
+        val facts = mutableListOf<Fact>()
+        val fqcn = cls.name.replace('/', '.')
+        for (m in cls.methods.sortedBy { it.name }) {
+            val insns = m.instructions ?: continue
+            val src = "$jarName!$fqcn#${m.name}"
+            for (insn in insns) {
+                if (insn !is org.objectweb.asm.tree.MethodInsnNode) continue
+                when {
+                    insn.owner == "org/springframework/kafka/core/KafkaTemplate" && insn.name == "send" ->
+                        topicArg(insn, constants)?.let {
+                            facts += fact(FactType.PUBLISH, src, 0.7, "channel" to it, "protocol" to "kafka")
+                        }
+                    insn.owner == "org/springframework/cloud/stream/function/StreamBridge" && insn.name == "send" ->
+                        topicArg(insn, constants)?.let {
+                            facts += fact(FactType.PUBLISH, src, 0.7, "channel" to it, "protocol" to "kafka")
+                        }
+                    insn.owner == "org/springframework/amqp/rabbit/core/RabbitTemplate" &&
+                        (insn.name == "send" || insn.name == "convertAndSend") ->
+                        topicArg(insn, constants)?.let {
+                            facts += fact(FactType.PUBLISH, src, 0.7, "channel" to it, "protocol" to "amqp")
+                        }
+                    insn.owner == "org/springframework/web/client/RestTemplate" && insn.name in restTemplateMethods ->
+                        urlArg(insn, constants)?.let { url ->
+                            facts += callFact(src, verbOfRest(insn.name), url)
+                        }
+                    insn.name == "uri" &&
+                        (insn.owner.startsWith("org/springframework/web/reactive/function/client/WebClient") ||
+                            insn.owner.startsWith("org/springframework/web/client/RestClient")) ->
+                        urlArg(insn, constants)?.let { url ->
+                            facts += callFact(src, precedingVerb(insn), url)
+                        }
+                }
             }
         }
         return facts
+    }
+
+    private fun callFact(src: String, verb: String?, url: String): Fact {
+        val attrs = mutableListOf("urlTemplate" to url)
+        verb?.let { attrs += "method" to it }
+        pathOf(url)?.let { attrs += "path" to it }
+        return fact(FactType.OUTGOING_CALL, src, 0.7, *attrs.toTypedArray())
+    }
+
+    /** Строковые кандидаты аргументов: назад от вызова до предыдущего invoke, в порядке загрузки. */
+    private fun strCandidates(
+        insn: org.objectweb.asm.tree.AbstractInsnNode,
+        constants: Map<String, String>,
+        window: Int = 12,
+    ): List<String> {
+        val out = mutableListOf<String>()
+        var cur = insn.previous
+        var steps = 0
+        while (cur != null && steps < window) {
+            when {
+                cur is org.objectweb.asm.tree.LdcInsnNode && cur.cst is String -> out += cur.cst as String
+                cur is org.objectweb.asm.tree.FieldInsnNode -> constants["${cur.owner}#${cur.name}"]?.let { out += it }
+                cur is org.objectweb.asm.tree.MethodInsnNode -> return out.reversed()
+            }
+            cur = cur.previous
+            steps++
+        }
+        return out.reversed()
+    }
+
+    private fun topicArg(insn: org.objectweb.asm.tree.AbstractInsnNode, constants: Map<String, String>): String? =
+        strCandidates(insn, constants).firstOrNull { it.isNotEmpty() && !it.contains(' ') }
+
+    private fun urlArg(insn: org.objectweb.asm.tree.AbstractInsnNode, constants: Map<String, String>): String? =
+        strCandidates(insn, constants).firstOrNull { it.startsWith("http") || it.contains('/') }
+
+    /** Для WebClient/RestClient глагол — из предыдущего .get()/.post() в цепочке. */
+    private fun precedingVerb(insn: org.objectweb.asm.tree.AbstractInsnNode, window: Int = 8): String? {
+        var cur = insn.previous
+        var steps = 0
+        while (cur != null && steps < window) {
+            if (cur is org.objectweb.asm.tree.MethodInsnNode) {
+                val verb = cur.name.uppercase()
+                return if (verb in httpVerbs) verb else null
+            }
+            cur = cur.previous
+            steps++
+        }
+        return null
+    }
+
+    private fun verbOfRest(m: String): String? = when {
+        m.startsWith("get") -> "GET"
+        m.startsWith("post") -> "POST"
+        m.startsWith("put") -> "PUT"
+        m.startsWith("delete") -> "DELETE"
+        m.startsWith("patch") -> "PATCH"
+        else -> null
+    }
+
+    /** path-часть URL: после хоста или как есть; без query. */
+    private fun pathOf(url: String): String? {
+        val path = when {
+            url.startsWith("http://") || url.startsWith("https://") -> {
+                val rest = url.substringAfter("//")
+                if (rest.contains('/')) "/" + rest.substringAfter('/') else null
+            }
+            url.startsWith("/") -> url
+            else -> null
+        }
+        return path?.substringBefore('?')
     }
 
     private fun ann(list: List<AnnotationNode>?, desc: String): AnnotationNode? =
@@ -122,9 +262,18 @@ class BytecodeLane : Lane {
             ann(m.visibleAnnotations, "Lorg/springframework/kafka/annotation/KafkaListener;")?.let { kl ->
                 val topic = value(kl, "topics") ?: value(kl, "value")
                 if (topic != null) {
-                    val attrs = mutableListOf("channel" to topic)
+                    val attrs = mutableListOf("channel" to topic, "protocol" to "kafka")
                     value(kl, "groupId")?.let { attrs += "group" to it }
                     facts += fact(FactType.SUBSCRIBE, src(m.name), 0.8, *attrs.toTypedArray())
+                }
+            }
+            ann(m.visibleAnnotations, "Lorg/springframework/amqp/rabbit/annotation/RabbitListener;")?.let { rl ->
+                val queue = value(rl, "queues") ?: value(rl, "value")
+                if (queue != null) {
+                    facts += fact(
+                        FactType.SUBSCRIBE, src(m.name), 0.8,
+                        "channel" to queue, "protocol" to "amqp",
+                    )
                 }
             }
             if (ann(m.visibleAnnotations, "Lorg/springframework/scheduling/annotation/Scheduled;") != null) {
