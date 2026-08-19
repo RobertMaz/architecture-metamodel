@@ -16,7 +16,7 @@ model {
       metadata {
         repo 'https://github.com/spring-petclinic/spring-petclinic-rest'
         commit '698bd83'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
 
       api = api 'backend API' {

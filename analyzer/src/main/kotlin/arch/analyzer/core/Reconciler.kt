@@ -143,9 +143,9 @@ class Reconciler(
         }
 
         // --- исходящие вызовы -------------------------------------------
-        val TARGET_KEYS = listOf("container", "feignName", "host", "urlTemplate", "prop", "route")
+        val TARGET_KEYS = listOf("container", "feignName", "host", "role", "urlTemplate", "prop", "route")
         val calls = grouped(FactType.OUTGOING_CALL) {
-            val target = it.attrs["feignName"] ?: it.attrs["host"] ?: it.attrs["urlTemplate"] ?: ""
+            val target = it.attrs["feignName"] ?: it.attrs["host"] ?: it.attrs["role"] ?: it.attrs["urlTemplate"] ?: ""
             "${it.attrs["method"] ?: ""} $target ${normPath(it.attrs["path"] ?: "")}"
         }.map { (_, m) ->
             Call(

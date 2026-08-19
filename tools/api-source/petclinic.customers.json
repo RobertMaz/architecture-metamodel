@@ -8,6 +8,24 @@
   },
   "calls" : [
     {
+      "confidence" : 0.9,
+      "source" : "src/main/resources/application.yml",
+      "target" : {
+        "host" : "config-server",
+        "prop" : "spring.config.import",
+        "role" : "config-server",
+        "urlTemplate" : "http://config-server:8888"
+      }
+    },
+    {
+      "confidence" : 0.85,
+      "source" : "pom.xml",
+      "target" : {
+        "prop" : "spring-cloud-starter-netflix-eureka-client",
+        "role" : "discovery"
+      }
+    },
+    {
       "confidence" : 0.97,
       "method" : "GET",
       "path" : "/customers-service/default",
@@ -153,7 +171,7 @@
   "publishes" : [ ],
   "source" : {
     "commit" : "9a76b4e",
-    "extractedAt" : "2026-08-18",
+    "extractedAt" : "2026-08-19",
     "extractor" : "arch-analyzer source+config v1",
     "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
   },

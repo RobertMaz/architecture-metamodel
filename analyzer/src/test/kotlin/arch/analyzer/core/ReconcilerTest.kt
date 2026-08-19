@@ -190,4 +190,19 @@ class ReconcilerTest {
         assertEquals(1, report.lowConfidence.size)
         assertEquals(1, report.unresolvedCalls)
     }
+
+    @Test
+    fun `role попадает в target и различает рёбра без адреса`() {
+        val e = ev(
+            "config",
+            fact(FactType.OUTGOING_CALL, "pom.xml", 0.85, "role" to "config-server", "prop" to "spring-cloud-starter-config"),
+            fact(FactType.OUTGOING_CALL, "pom.xml", 0.85, "role" to "discovery", "prop" to "eureka-client"),
+        )
+        val (doc, _) = reconciler.reconcile("x.y", listOf(e), meta)
+
+        assertEquals(2, doc.calls.size, "разные роли — разные вызовы, не склеиваются: ${doc.calls}")
+        val cfg = doc.calls.single { it.target["role"] == "config-server" }
+        assertEquals("spring-cloud-starter-config", cfg.target["prop"])
+        assertTrue(doc.calls.any { it.target["role"] == "discovery" })
+    }
 }

@@ -16,7 +16,7 @@ model {
         app-name 'admin-server'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
     }
 
@@ -27,7 +27,7 @@ model {
       metadata {
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
     }
 
@@ -40,7 +40,7 @@ model {
         app-name 'customers-service'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
 
       api = api 'customers-service API' {
@@ -178,7 +178,7 @@ model {
         app-name 'discovery-server'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
 
       api = api 'discovery-server API' {
@@ -219,7 +219,7 @@ model {
         app-name 'api-gateway'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
 
       api = api 'api-gateway API' {
@@ -281,7 +281,7 @@ model {
         app-name 'genai-service'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
 
       api = api 'genai-service API' {
@@ -315,7 +315,7 @@ model {
         app-name 'vets-service'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
 
       api = api 'vets-service API' {
@@ -356,7 +356,7 @@ model {
         app-name 'visits-service'
         repo 'https://github.com/spring-petclinic/spring-petclinic-microservices'
         commit '9a76b4e'
-        extracted-at '2026-08-18'
+        extracted-at '2026-08-19'
       }
 
       api = api 'visits-service API' {
@@ -441,7 +441,12 @@ model {
     }
   }
 
+  petclinic.admin -[call]-> petclinic.config
+  petclinic.admin -[call]-> petclinic.discovery.api
+  petclinic.config -[call]-> unknown.github_com.api
+  petclinic.customers -[call]-> petclinic.config
   petclinic.customers -[call]-> petclinic.config 'GET /customers-service/default'
+  petclinic.customers -[call]-> petclinic.discovery.api
   petclinic.customers -[call]-> petclinic.discovery.api 'GET /eureka/apps/'
   petclinic.customers -[call]-> petclinic.discovery.api 'GET /eureka/apps/delta'
   petclinic.customers -[call]-> petclinic.discovery.api 'POST /eureka/apps/CUSTOMERS-SERVICE'
@@ -449,10 +454,13 @@ model {
   petclinic.customers -[call]-> zipkin 'POST /api/v2/spans'
   petclinic.customers -[read]-> petclinic.db_customers
   petclinic.customers -[write]-> petclinic.db_customers
+  petclinic.discovery -[call]-> petclinic.config
+  petclinic.gateway -[call]-> petclinic.config
   petclinic.gateway -[call]-> petclinic.config 'GET /api-gateway/default'
   petclinic.gateway -[call]-> petclinic.customers.api 'route /api/customer/**'
   petclinic.gateway -[call]-> petclinic.customers.api_owner.get_owners 'GET /owners'
   petclinic.gateway -[call]-> petclinic.customers.api_owner.get_owners_p 'GET /owners/{_}'
+  petclinic.gateway -[call]-> petclinic.discovery.api
   petclinic.gateway -[call]-> petclinic.discovery.api 'GET /eureka/apps/'
   petclinic.gateway -[call]-> petclinic.discovery.api 'POST /eureka/apps/API-GATEWAY'
   petclinic.gateway -[call]-> petclinic.genai.api 'route /api/genai/**'
@@ -462,12 +470,18 @@ model {
   petclinic.gateway -[call]-> petclinic.visits.api 'route /api/visit/**'
   petclinic.gateway -[call]-> petclinic.visits.api_visit.get_pets_visits 'GET /pets/visits'
   petclinic.gateway -[call]-> zipkin 'POST /api/v2/spans'
+  petclinic.genai -[call]-> petclinic.config
   petclinic.genai -[call]-> petclinic.customers.api_owner.get_owners 'GET /owners'
   petclinic.genai -[call]-> petclinic.customers.api_owner.post_owners 'POST /owners'
   petclinic.genai -[call]-> petclinic.customers.api_pet.post_owners_p_pets 'POST /owners/{_}/pets'
+  petclinic.genai -[call]-> petclinic.discovery.api
   petclinic.genai -[call]-> petclinic.vets.api 'GET'
+  petclinic.vets -[call]-> petclinic.config
+  petclinic.vets -[call]-> petclinic.discovery.api
   petclinic.vets -[read]-> petclinic.db_vets
   petclinic.vets -[write]-> petclinic.db_vets
+  petclinic.visits -[call]-> petclinic.config
+  petclinic.visits -[call]-> petclinic.discovery.api
   petclinic.visits -[read]-> petclinic.db_visits
   petclinic.visits -[write]-> petclinic.db_visits
 }

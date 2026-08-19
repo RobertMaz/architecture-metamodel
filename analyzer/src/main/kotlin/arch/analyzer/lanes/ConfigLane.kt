@@ -17,8 +17,9 @@ import kotlin.io.path.name
 import kotlin.io.path.readText
 
 /**
- * Полка config: application*.yml|.properties. Извлекает то, что код не скажет:
- * адреса сторов, имя приложения, base-URL'ы внешних вызовов.
+ * Полка config: application*.yml|.properties + build-файлы (pom/gradle).
+ * Извлекает то, что код не скажет: адреса сторов, имя приложения, base-URL'ы
+ * внешних вызовов, рёбра в инфраструктуру Spring Cloud (config-server, discovery).
  * Профильные файлы (application-*.yml) не сливаются — фиксируются атрибутом profiles.
  */
 class ConfigLane : Lane {
@@ -39,10 +40,27 @@ class ConfigLane : Lane {
         }
     }
 
-    override fun applicable(input: RepoInput): Boolean = configFiles(input).isNotEmpty()
+    private val buildFileNames = setOf("pom.xml", "build.gradle", "build.gradle.kts", "libs.versions.toml")
+
+    private fun buildFiles(input: RepoInput): List<Path> {
+        if (!input.repoDir.exists()) return emptyList()
+        return Files.walk(input.repoDir, 3).use { s ->
+            s.filter { it.isRegularFile() && it.name in buildFileNames }
+                .filter { p ->
+                    input.repoDir.relativize(p)
+                        .none { seg -> seg.toString() in setOf("src", "target", "build", "node_modules") }
+                }
+                .sorted()
+                .toList()
+        }
+    }
+
+    override fun applicable(input: RepoInput): Boolean =
+        configFiles(input).isNotEmpty() || buildFiles(input).isNotEmpty()
 
     override fun extract(input: RepoInput): List<Fact> {
         val facts = mutableListOf<Fact>()
+        val infra = mutableListOf<InfraSignal>()
         val defaults = configFiles(input).filter { !it.name.contains("-") }
         val profiles = configFiles(input).filter { it.name.contains("-") }
             .map { it.name.substringAfter("-").substringBeforeLast(".") }
@@ -53,7 +71,10 @@ class ConfigLane : Lane {
             val docs = readDocs(file)
             facts += recognize(flatten(docs), rel)
             facts += gatewayRoutes(docs, rel)
+            infra += infraSignals(docs, rel)
         }
+        infra += dependencySignals(input)
+        facts += infraFacts(infra)
         if (profiles.isNotEmpty()) {
             facts += fact(
                 FactType.CONTAINER_HINT, "src/main/resources", 0.9,
@@ -118,6 +139,107 @@ class ConfigLane : Lane {
                     path?.let { attrs += "route" to it }
                     facts += fact(FactType.OUTGOING_CALL, source, 0.9, *attrs.toTypedArray())
                 }
+            }
+        }
+        return facts
+    }
+
+    /**
+     * Сигнал ребра в инфраструктуру Spring Cloud (эвристики украдены у Code2DFD):
+     * роль цели известна всегда, адрес — не всегда (зависимость в pom без yml-адреса).
+     */
+    private data class InfraSignal(
+        val role: String,
+        val prop: String,
+        val url: String?,
+        val source: String,
+        val confidence: Double,
+    )
+
+    /** Ключи yml без регистра и дефисов: serviceUrl == service-url. */
+    private fun normKey(k: String) = k.lowercase().replace("-", "")
+
+    /** `${VAR:default}` -> default; `${VAR}` без дефолта остаётся как есть (значение во внешнем конфиге). */
+    private fun resolveInlineDefault(v: String) =
+        v.replace(Regex("\\$\\{[^:{}]+:([^{}]*)}")) { it.groupValues[1] }
+
+    private fun isLocalHost(host: String) =
+        host in setOf("localhost", "127.0.0.1", "::1", "host.docker.internal")
+
+    /** config-server, discovery и git-репозиторий конфигов из одного yml-документа. */
+    private fun infraSignals(docs: List<com.fasterxml.jackson.databind.JsonNode>, source: String): List<InfraSignal> {
+        val signals = mutableListOf<InfraSignal>()
+        for (doc in docs) {
+            val flat = flatten(listOf(doc))
+            flat["spring.config.import"]?.split(",")?.forEach { imp ->
+                val v = imp.trim()
+                if (v.contains("configserver:")) {
+                    signals += InfraSignal(
+                        "config-server", "spring.config.import",
+                        v.substringAfter("configserver:"), source, 0.9,
+                    )
+                }
+            }
+            flat["spring.cloud.config.uri"]?.split(",")?.forEach {
+                signals += InfraSignal("config-server", "spring.cloud.config.uri", it.trim(), source, 0.9)
+            }
+            for ((k, v) in flat) {
+                if (normKey(k) != "eureka.client.serviceurl.defaultzone") continue
+                v.split(",").map(String::trim).filter { it.isNotEmpty() }.forEach {
+                    signals += InfraSignal("discovery", "eureka.client.serviceUrl.defaultZone", it, source, 0.9)
+                }
+            }
+            flat["spring.cloud.config.server.git.uri"]?.let {
+                signals += InfraSignal("config-repo", "spring.cloud.config.server.git.uri", it, source, 0.9)
+            }
+        }
+        return signals
+    }
+
+    /**
+     * Зависимости в build-файлах: наличие клиента без адреса. `@EnableDiscoveryClient`
+     * отдельно не ищем — аннотация живёт в той же зависимости, а с Spring Cloud 2022+
+     * клиент активен и без неё.
+     */
+    private fun dependencySignals(input: RepoInput): List<InfraSignal> {
+        val signals = mutableListOf<InfraSignal>()
+        for (bf in buildFiles(input)) {
+            val text = bf.readText()
+            val rel = input.repoDir.relativize(bf).toString()
+            if (text.contains("spring-cloud-starter-config") || text.contains("spring-cloud-config-client")) {
+                signals += InfraSignal("config-server", "spring-cloud-starter-config", null, rel, 0.85)
+            }
+            if (text.contains("eureka-client")) {
+                signals += InfraSignal("discovery", "spring-cloud-starter-netflix-eureka-client", null, rel, 0.85)
+            }
+        }
+        return signals
+    }
+
+    /**
+     * Сигналы -> факты, по одной цели на роль: адресные варианты побеждают
+     * зависимость, не-localhost-хосты побеждают localhost (иначе все сервисы
+     * склеились бы в один stub «localhost»). Цель без адреса несёт только role —
+     * резолв по алиасам или в триаж.
+     */
+    private fun infraFacts(signals: List<InfraSignal>): List<Fact> {
+        val facts = mutableListOf<Fact>()
+        for ((role, group) in signals.groupBy { it.role }.toSortedMap()) {
+            val urled = group.filter { it.url != null }.map { s ->
+                val url = resolveInlineDefault(s.url!!)
+                Triple(s, url, hostOf(url)?.takeIf { !isLocalHost(it) })
+            }
+            val chosen = urled.filter { it.third != null }.distinctBy { it.third }
+                .ifEmpty { urled.distinctBy { it.second }.take(1) }
+            if (chosen.isNotEmpty()) {
+                for ((s, url, host) in chosen) {
+                    val attrs = mutableListOf("role" to role, "prop" to s.prop, "urlTemplate" to url)
+                    host?.let { attrs += "host" to it }
+                    facts += fact(FactType.OUTGOING_CALL, s.source, s.confidence, *attrs.toTypedArray())
+                }
+            } else {
+                val dep = group.first()
+                facts += fact(FactType.OUTGOING_CALL, dep.source, dep.confidence, "role" to role, "prop" to dep.prop)
             }
         }
         return facts
