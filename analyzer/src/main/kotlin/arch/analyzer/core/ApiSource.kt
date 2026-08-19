@@ -56,6 +56,7 @@ data class Publish(
     val schema: String? = null,
     val fields: String? = null,
     val protocol: String? = null,
+    val channelRole: String? = null,
     val source: String,
     val confidence: Double,
 )
@@ -65,6 +66,7 @@ data class Subscribe(
     val group: String? = null,
     val payload: String? = null,
     val protocol: String? = null,
+    val channelRole: String? = null,
     val source: String,
     val confidence: Double,
 )

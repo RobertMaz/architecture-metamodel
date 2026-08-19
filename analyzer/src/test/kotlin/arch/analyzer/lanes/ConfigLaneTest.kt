@@ -107,6 +107,21 @@ class ConfigLaneTest {
     }
 
     @Test
+    fun `конфиги собираются рекурсивно, bootstrap тоже читается`() {
+        val facts = lane.extract(RepoInput("test.nested", Paths.get("src/test/resources/fixtures/nested-config-app")))
+
+        assertTrue(
+            facts.any { it.type == FactType.CONTAINER_HINT && it.attrs["appName"] == "nested-service" },
+            "application.yml из вложенного каталога прочитан: $facts",
+        )
+        val store = facts.single { it.type == FactType.STORE_ACCESS }
+        assertEquals("PostgreSQL", store.attrs["technology"])
+
+        val cfg = facts.single { it.type == FactType.OUTGOING_CALL && it.attrs["role"] == "config-server" }
+        assertEquals("config.acme.io", cfg.attrs["host"], "spring.cloud.config.uri из bootstrap.properties")
+    }
+
+    @Test
     fun `multi-doc yml и маршруты spring cloud gateway`() {
         val gw = Paths.get("src/test/resources/fixtures/gateway-app")
         val facts = lane.extract(RepoInput("test.gw", gw))

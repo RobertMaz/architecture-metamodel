@@ -194,7 +194,7 @@ node tools/impact.mjs build/model.json shop.orderCreated
 ```json
 {
   "containerInfo": { "kind": "service|worker", "title": "...", "technology": "...", "appName": "..." },
-  "subscribes": [ { "channel": "topic", "group": "cg", "payload": "Dto", "protocol": "kafka|amqp", "source": "...", "confidence": 0.9 } ],
+  "subscribes": [ { "channel": "topic", "group": "cg", "payload": "Dto", "protocol": "kafka|amqp", "channelRole": "dlq|retry", "source": "...", "confidence": 0.9 } ],
   "calls": [ { "method": "GET", "path": "/x", "target": { "host": "...", "feignName": "...", "role": "...", "urlTemplate": "..." }, "source": "...", "confidence": 0.8 } ],
   "stores": [ { "kind": "jdbc|redis|s3", "address": "jdbc:...", "technology": "MySQL", "access": "read|write|readwrite", "entities": "A, B", "source": "...", "confidence": 0.9 } ]
 }

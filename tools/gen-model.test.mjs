@@ -289,6 +289,24 @@ test('protocol канала определяет technology: amqp -> RabbitMQ, �
   assert.match(text, /ch_order_created = channel 'order.created' \{\n      #inferred\n      technology 'Kafka topic'/)
 })
 
+test('channelRole канала попадает в metadata узла', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify({
+      ...doc,
+      calls: [],
+      publishes: [],
+      subscribes: [
+        { channel: 'orders.DLT', group: 'cg', protocol: 'kafka', channelRole: 'dlq', source: 's#L1', confidence: 0.9 },
+      ],
+    }),
+  )
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+  assert.match(text, /ch_orders_dlt = channel 'orders.DLT' \{[\s\S]*?role 'dlq'/)
+})
+
 test('target.role без адреса -> stub по роли и запись в unresolved', () => {
   const root = makeRoot()
   writeFileSync(

@@ -112,7 +112,7 @@ class Onboarding(private val archRoot: Path) {
         val entries = sortedMapOf<String, MutableMap<String, String>>()
         existing?.fields()?.forEach { (cid, n) ->
             val row = mutableMapOf<String, String>()
-            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi")) {
+            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi", "config")) {
                 n[k]?.asText()?.takeIf { it.isNotEmpty() }?.let { row[k] = it }
             }
             entries[cid] = row
@@ -137,7 +137,7 @@ class Onboarding(private val archRoot: Path) {
         val out = StringBuilder(reposHeader).append("repos:\n")
         for ((cid, r) in entries) {
             out.append("  $cid:\n")
-            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi")) {
+            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi", "config")) {
                 r[k]?.let { out.append("    $k: ${quote(it)}\n") }
             }
         }
