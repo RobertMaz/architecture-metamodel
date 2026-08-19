@@ -269,6 +269,37 @@ test('алиас есть, операции нет -> ребро в api цели
   assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api 'POST \/nope'/)
 })
 
+test('target.role без адреса -> stub по роли и запись в unresolved', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify(withCall({ role: 'config-server', prop: 'spring-cloud-starter-config' }, {})),
+  )
+  generate(root)
+  const stub = readFileSync(join(root, 'model/gen/unknown/config_server.gen.c4'), 'utf8')
+  assert.match(stub, /config_server = service 'config-server' \{/)
+  assert.match(stub, /roles 'config-server'/)
+  const caller = readFileSync(systemFile(root), 'utf8')
+  assert.match(caller, /petclinic\.customers -\[call\]-> unknown\.config_server\.api$/m)
+  const unresolved = JSON.parse(readFileSync(join(root, 'registry/unresolved.json'), 'utf8'))
+  assert.equal(unresolved.unresolved[0].stubId, 'unknown.config_server')
+  assert.deepEqual(unresolved.unresolved[0].signature.roles, ['config-server'])
+})
+
+test('алиас роли -> ребро в контейнер', () => {
+  const root = makeRoot()
+  writeFileSync(join(root, 'tools/api-source/petclinic.visits.json'), JSON.stringify(visitsDoc))
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify(withCall({ role: 'discovery' }, {})),
+  )
+  writeFileSync(join(root, 'registry/aliases.yml'), 'aliases:\n  discovery: petclinic.visits\n')
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+  assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api$/m)
+  assert.equal(existsSync(join(root, 'model/gen/unknown/discovery.gen.c4')), false)
+})
+
 test('нет алиаса и кандидатов -> stub в unknown и запись в unresolved', () => {
   const root = makeRoot()
   writeFileSync(

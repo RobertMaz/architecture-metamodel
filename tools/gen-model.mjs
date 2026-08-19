@@ -156,6 +156,8 @@ export function generate(root = '.') {
       const label = t.host.split('.')[0]
       if (aliases[label]) return aliases[label]
     }
+    // Логическая роль цели (config-server, discovery): адреса нет, но алиас роли — тоже склейка.
+    if (t.role && aliases[t.role]) return aliases[t.role]
     return null
   }
 
@@ -210,11 +212,11 @@ export function generate(root = '.') {
       continue
     }
 
-    const key = t.feignName ?? t.host ?? t.urlTemplate
+    const key = t.feignName ?? t.host ?? t.role ?? t.urlTemplate
     if (!key) {
       looseEntries.push({
         stubId: null,
-        note: 'нет сигнатуры цели (ни host, ни feign, ни url)',
+        note: 'нет сигнатуры цели (ни host, ни feign, ни role, ни url)',
         observedEndpoints: call.method && call.path ? [{ method: call.method, path: call.path }] : [],
         callers: [{ container: caller, source: call.source }],
         candidates: [],
@@ -229,6 +231,7 @@ export function generate(root = '.') {
         key,
         feignNames: new Set(),
         hosts: new Set(),
+        roles: new Set(),
         urlTemplates: new Set(),
         endpoints: new Map(),
         callers: [],
@@ -238,6 +241,7 @@ export function generate(root = '.') {
     const g = stubGroups.get(sl)
     if (t.feignName) g.feignNames.add(t.feignName)
     if (t.host) g.hosts.add(t.host)
+    if (t.role) g.roles.add(t.role)
     if (t.urlTemplate) g.urlTemplates.add(t.urlTemplate)
     if (call.method && call.path) g.endpoints.set(`${call.method} ${call.path}`, { method: call.method, path: call.path })
     g.callers.push({ container: caller, source: call.source })
@@ -264,6 +268,7 @@ export function generate(root = '.') {
           name: shortName(cid),
           hosts: new Set(),
           feignNames: new Set(),
+          roles: new Set(),
           urlTemplates: new Set(),
           endpoints: new Map(),
         })
@@ -271,6 +276,7 @@ export function generate(root = '.') {
       const o = observedContainers.get(cid)
       for (const h of g.hosts) o.hosts.add(h)
       for (const f of g.feignNames) o.feignNames.add(f)
+      for (const r of g.roles) o.roles.add(r)
       for (const u of g.urlTemplates) o.urlTemplates.add(u)
       for (const [k, e] of g.endpoints) o.endpoints.set(k, e)
       for (const { caller, call } of g.calls) {
@@ -322,6 +328,7 @@ export function generate(root = '.') {
       signature: {
         feignNames: [...g.feignNames].sort(),
         hosts: [...g.hosts].sort(),
+        roles: [...g.roles].sort(),
         urlTemplates: [...g.urlTemplates].sort(),
       },
       observedEndpoints: observed,
@@ -596,6 +603,7 @@ export function generate(root = '.') {
     L.push(`      metadata {`)
     if (g.hosts.size) L.push(`        hosts '${esc([...g.hosts].sort().join(', '))}'`)
     if (g.feignNames.size) L.push(`        feign-names '${esc([...g.feignNames].sort().join(', '))}'`)
+    if (g.roles.size) L.push(`        roles '${esc([...g.roles].sort().join(', '))}'`)
     if (g.urlTemplates.size) L.push(`        url-templates '${esc([...g.urlTemplates].sort().join(', '))}'`)
     L.push(`      }`)
     L.push(``)
@@ -665,6 +673,7 @@ export function generate(root = '.') {
     L.push(`      metadata {`)
     if (o.hosts.size) L.push(`        hosts '${esc([...o.hosts].sort().join(', '))}'`)
     if (o.feignNames.size) L.push(`        feign-names '${esc([...o.feignNames].sort().join(', '))}'`)
+    if (o.roles.size) L.push(`        roles '${esc([...o.roles].sort().join(', '))}'`)
     if (o.urlTemplates.size) L.push(`        url-templates '${esc([...o.urlTemplates].sort().join(', '))}'`)
     L.push(`      }`)
     L.push(``)

@@ -195,7 +195,7 @@ node tools/impact.mjs build/model.json shop.orderCreated
 {
   "containerInfo": { "kind": "service|worker", "title": "...", "technology": "...", "appName": "..." },
   "subscribes": [ { "channel": "topic", "group": "cg", "payload": "Dto", "source": "...", "confidence": 0.9 } ],
-  "calls": [ { "method": "GET", "path": "/x", "target": { "host": "...", "feignName": "...", "urlTemplate": "..." }, "source": "...", "confidence": 0.8 } ],
+  "calls": [ { "method": "GET", "path": "/x", "target": { "host": "...", "feignName": "...", "role": "...", "urlTemplate": "..." }, "source": "...", "confidence": 0.8 } ],
   "stores": [ { "kind": "jdbc|redis|s3", "address": "jdbc:...", "technology": "MySQL", "access": "read|write|readwrite", "entities": "A, B", "source": "...", "confidence": 0.9 } ]
 }
 ```
@@ -205,7 +205,10 @@ node tools/impact.mjs build/model.json shop.orderCreated
 datasource»: такой стор именуется по контейнеру и НЕ склеивается с чужими —
 иначе неизвестные адреса дали бы ложный shared database. `calls` без
 `target.container` ждут разрешения через реестр (подпроект 3) и в рёбра пока
-не генерятся.
+не генерятся. `target.role` — логическая роль цели (`config-server` |
+`discovery` | `config-repo`), когда адрес неизвестен (ребро выведено из
+зависимости в pom/gradle): резолвится алиасом с именем роли, иначе живёт
+stub'ом `unknown.<role>` до решения в триаже.
 
 ## Чего здесь намеренно нет
 
