@@ -135,6 +135,35 @@ class BytecodeLaneTest {
                 visitMaxs(0, 0)
                 visitEnd()
             }
+            // kotlin lateinit: GETFIELD topic; Intrinsics-чек между полем и send — не граница
+            cw.visitField(Opcodes.ACC_PRIVATE, "lateTopic", "Ljava/lang/String;", null, null).apply {
+                visitAnnotation("Lorg/springframework/beans/factory/annotation/Value;", true).apply {
+                    visit("value", "\${app.topics.late}")
+                    visitEnd()
+                }
+                visitEnd()
+            }
+            cw.visitMethod(Opcodes.ACC_PUBLIC, "lateSend", "(Ljava/lang/Object;)V", null, null).apply {
+                visitCode()
+                visitVarInsn(Opcodes.ALOAD, 0)
+                visitFieldInsn(Opcodes.GETFIELD, "demo/OrderPublisher", "kafka", "Lorg/springframework/kafka/core/KafkaTemplate;")
+                visitVarInsn(Opcodes.ALOAD, 0)
+                visitFieldInsn(Opcodes.GETFIELD, "demo/OrderPublisher", "lateTopic", "Ljava/lang/String;")
+                visitInsn(Opcodes.DUP)
+                visitMethodInsn(
+                    Opcodes.INVOKESTATIC, "kotlin/jvm/internal/Intrinsics", "checkNotNull",
+                    "(Ljava/lang/Object;)V", false,
+                )
+                visitVarInsn(Opcodes.ALOAD, 1)
+                visitMethodInsn(
+                    Opcodes.INVOKEVIRTUAL, "org/springframework/kafka/core/KafkaTemplate", "send",
+                    "(Ljava/lang/String;Ljava/lang/Object;)Ljava/util/concurrent/CompletableFuture;", false,
+                )
+                visitInsn(Opcodes.POP)
+                visitInsn(Opcodes.RETURN)
+                visitMaxs(0, 0)
+                visitEnd()
+            }
             // rabbit.convertAndSend("billing-queue", payload)
             cw.visitMethod(Opcodes.ACC_PUBLIC, "bill", "(Ljava/lang/Object;)V", null, null).apply {
                 visitCode()
@@ -248,6 +277,10 @@ class BytecodeLaneTest {
         assertTrue(
             pubs.any { it.attrs["channel"] == "orders.retry" },
             "топик из константы поля через GETSTATIC: $pubs",
+        )
+        assertTrue(
+            pubs.any { it.attrs["channel"] == "\${app.topics.late}" },
+            "lateinit-@Value: Intrinsics-чек не рвёт окно аргументов: $pubs",
         )
         val amqp = pubs.single { it.attrs["protocol"] == "amqp" }
         assertEquals("billing-queue", amqp.attrs["channel"])

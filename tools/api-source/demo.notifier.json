@@ -1,0 +1,56 @@
+{
+  "api" : {
+    "basePath" : "/api/notifications",
+    "id" : "api",
+    "public" : true,
+    "technology" : "HTTP/JSON",
+    "title" : "notifier-service API"
+  },
+  "calls" : [ ],
+  "container" : "demo.notifier",
+  "containerInfo" : {
+    "appName" : "notifier-service",
+    "kind" : "service",
+    "technology" : "Java, Spring Boot",
+    "title" : "notifier-service"
+  },
+  "operations" : [
+    {
+      "confidence" : 0.99,
+      "method" : "POST",
+      "path" : "/api/notifications",
+      "source" : "src/main/kotlin/demo/notifier/NotificationController.kt#NotificationController.send; demo-kotlin-notifier-0.0.1.jar!demo.notifier.NotificationController#send; src/main/kotlin/demo/notifier/NotificationController.kt:17"
+    },
+    {
+      "confidence" : 0.99,
+      "method" : "GET",
+      "path" : "/api/notifications/{notificationId}",
+      "source" : "src/main/kotlin/demo/notifier/NotificationController.kt#NotificationController.get; demo-kotlin-notifier-0.0.1.jar!demo.notifier.NotificationController#get; src/main/kotlin/demo/notifier/NotificationController.kt:14"
+    }
+  ],
+  "publishes" : [
+    {
+      "channel" : "notifications.sent",
+      "confidence" : 0.96,
+      "protocol" : "kafka",
+      "source" : "src/main/kotlin/demo/notifier/NotificationProducer.kt#NotificationProducer.notifySent; demo-kotlin-notifier-0.0.1.jar!demo.notifier.NotificationProducer#notifySent"
+    }
+  ],
+  "source" : {
+    "commit" : "local",
+    "extractedAt" : "2026-08-19",
+    "extractor" : "arch-analyzer source+config v1",
+    "repo" : "local/demo-kotlin-notifier"
+  },
+  "stores" : [ ],
+  "subscribes" : [
+    {
+      "channel" : "orders.created",
+      "confidence" : 1.0,
+      "group" : "notifier",
+      "payload" : "String",
+      "protocol" : "kafka",
+      "source" : "demo-kotlin-notifier-0.0.1.jar!orders.created_receive_onOrderCreated; src/main/kotlin/demo/notifier/OrderListener.kt#OrderListener.onOrderCreated; demo-kotlin-notifier-0.0.1.jar!demo.notifier.OrderListener#onOrderCreated"
+    }
+  ]
+}

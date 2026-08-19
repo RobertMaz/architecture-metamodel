@@ -146,7 +146,9 @@ class BytecodeLane : Lane {
             when {
                 cur is org.objectweb.asm.tree.LdcInsnNode && cur.cst is String -> out += cur.cst as String
                 cur is org.objectweb.asm.tree.FieldInsnNode -> constants["${cur.owner}#${cur.name}"]?.let { out += it }
-                cur is org.objectweb.asm.tree.MethodInsnNode -> return out.reversed()
+                // lateinit/null-чеки Kotlin — не граница аргументов
+                cur is org.objectweb.asm.tree.MethodInsnNode && !cur.owner.startsWith("kotlin/jvm/internal/") ->
+                    return out.reversed()
             }
             cur = cur.previous
             steps++

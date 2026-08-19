@@ -13,6 +13,8 @@ aliases:
   gateway: petclinic.gateway
   genai: petclinic.genai
   genai-service: petclinic.genai
+  notifier: demo.notifier
+  notifier-service: demo.notifier
   vets: petclinic.vets
   vets-service: petclinic.vets
   visits: petclinic.visits

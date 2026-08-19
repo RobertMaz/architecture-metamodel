@@ -427,9 +427,14 @@ public class Extractor {
         return host;
     }
 
+    /** Строка литерала; rewrite-kotlin отдаёт Kotlin-эскейп `\$` сырым — нормализуем. */
+    static String lit(Object v) {
+        return v == null ? null : String.valueOf(v).replace("\\$", "$");
+    }
+
     static Object literalOf(Expression e) {
-        if (e instanceof J.Literal l) return l.getValue();
-        if (e instanceof J.Assignment a && a.getAssignment() instanceof J.Literal l) return l.getValue();
+        if (e instanceof J.Literal l) return lit(l.getValue());
+        if (e instanceof J.Assignment a && a.getAssignment() instanceof J.Literal l) return lit(l.getValue());
         return null;
     }
 
@@ -438,10 +443,10 @@ public class Extractor {
         for (Expression arg : a.getArguments()) {
             if (arg instanceof J.Assignment as && as.getVariable() instanceof J.Identifier id) {
                 if (id.getSimpleName().equals(key) || (altKey != null && id.getSimpleName().equals(altKey))) {
-                    if (as.getAssignment() instanceof J.Literal l) return String.valueOf(l.getValue());
+                    if (as.getAssignment() instanceof J.Literal l) return lit(l.getValue());
                 }
             } else if (arg instanceof J.Literal l && (key.equals("value") || (altKey != null && altKey.equals("value")))) {
-                return String.valueOf(l.getValue());
+                return lit(l.getValue());
             }
         }
         return null;
@@ -499,7 +504,7 @@ public class Extractor {
         String resolve(Expression e) { return resolve(e, new HashSet<>()); }
 
         String resolve(J e, Set<String> seen) {
-            if (e instanceof J.Literal l) return String.valueOf(l.getValue());
+            if (e instanceof J.Literal l) return lit(l.getValue());
             if (e instanceof J.Parentheses<?> p) return resolve(p.getTree(), seen);
             if (e instanceof J.Binary b && b.getOperator() == J.Binary.Type.Addition)
                 return resolve(b.getLeft(), seen) + resolve(b.getRight(), seen);
