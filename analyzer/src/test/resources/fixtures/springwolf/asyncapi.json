@@ -1,0 +1,50 @@
+{
+  "asyncapi": "3.0.0",
+  "info": { "title": "demo (reconstructed)", "version": "0.0.1" },
+  "channels": {
+    "orders.created": {
+      "address": "orders.created",
+      "messages": {
+        "com.example.demo.OrderCreatedEvent": { "$ref": "#/components/messages/com.example.demo.OrderCreatedEvent" }
+      }
+    },
+    "billing-queue": {
+      "address": "billing-queue",
+      "bindings": { "amqp": { "is": "queue", "bindingVersion": "0.3.0" } }
+    },
+    "$_topic.orders_": {
+      "address": "$_topic.orders_"
+    }
+  },
+  "operations": {
+    "orders.created_receive_onOrderCreated": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/orders.created" },
+      "bindings": {
+        "kafka": { "groupId": { "type": "string", "enum": ["billing"] }, "bindingVersion": "0.5.0" }
+      },
+      "messages": [
+        { "$ref": "#/channels/orders.created/messages/com.example.demo.OrderCreatedEvent" }
+      ]
+    },
+    "billing-queue_receive_onBillingCommand": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/billing-queue" },
+      "bindings": { "amqp": { "bindingVersion": "0.3.0" } },
+      "messages": [
+        { "$ref": "#/channels/billing-queue/messages/com.example.demo.BillingCommand" }
+      ]
+    },
+    "$_topic.orders__receive_onExternalTopic": {
+      "action": "receive",
+      "channel": { "$ref": "#/channels/$_topic.orders_" },
+      "bindings": { "kafka": { "bindingVersion": "0.5.0" } },
+      "messages": []
+    },
+    "orders.created_send_publishOrder": {
+      "action": "send",
+      "channel": { "$ref": "#/channels/orders.created" },
+      "messages": []
+    }
+  }
+}

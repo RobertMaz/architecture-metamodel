@@ -9,7 +9,7 @@ import kotlin.math.roundToInt
  * конфликт деталей — приоритетная полка + запись в отчёт.
  */
 class Reconciler(
-    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "source", "bytecode", "config", "llm"),
+    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "springwolf", "source", "bytecode", "config", "llm"),
 ) {
 
     private val extractor = "arch-analyzer source+config v1"
@@ -128,6 +128,7 @@ class Reconciler(
                 channel = m.attrs["channel"] ?: "",
                 schema = m.attrs["schema"],
                 fields = m.attrs["fields"],
+                protocol = m.attrs["protocol"],
                 source = m.source,
                 confidence = m.confidence,
             )
@@ -137,6 +138,7 @@ class Reconciler(
                 channel = m.attrs["channel"] ?: "",
                 group = m.attrs["group"],
                 payload = m.attrs["payload"],
+                protocol = m.attrs["protocol"],
                 source = m.source,
                 confidence = m.confidence,
             )

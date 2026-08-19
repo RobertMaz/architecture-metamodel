@@ -3,6 +3,7 @@ build/
 dist/
 workspace/
 analyzer/target/
+analyzer/springwolf-scanner/target/
 ui/node_modules/
 ui/dist/
 .playwright-mcp/
