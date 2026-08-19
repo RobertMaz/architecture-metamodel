@@ -75,8 +75,8 @@ views 'Demo Kotlin' {
   view demo_containers of demo {
     title 'Контейнеры'
     description 'Кто с кем связан. Отсюда видно радиус изменения'
-    include *
     global predicate noContracts
+    include *
     global style base
     autoLayout TopBottom
   }

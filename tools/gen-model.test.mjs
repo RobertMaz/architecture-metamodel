@@ -172,6 +172,12 @@ test('container view включает интегрированных сосед�
   // связи с соседями: без предиката LikeC4 не дорисует рёбра к вложенным целям
   assert.match(view, /^    include petclinic <-> auth$/m, 'ребро к свёрнутой системе')
   assert.match(view, /^    include petclinic <-> unknown\.legacy_billing$/m, 'ребро к stub')
+  // noContracts обязан идти ДО include: exclude бьёт по уже включённому и молча
+  // съедает рёбра, выведенные через api/operation (и свои, и кросс-системные)
+  assert.ok(
+    view.indexOf('global predicate noContracts') < view.indexOf('include *'),
+    'noContracts до include *',
+  )
 
   // у соседа входящее ребро тоже даёт соседа — узел и связь
   const authView = readFileSync(systemFile(root, 'auth'), 'utf8').match(/view auth_containers of auth \{[\s\S]*?\n  \}/)[0]

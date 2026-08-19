@@ -685,8 +685,8 @@ views 'PetClinic REST' {
   view petrest_containers of petrest {
     title 'Контейнеры'
     description 'Кто с кем связан. Отсюда видно радиус изменения'
-    include *
     global predicate noContracts
+    include *
     global style base
     autoLayout TopBottom
   }

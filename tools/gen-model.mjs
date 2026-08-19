@@ -564,6 +564,9 @@ export function generate(root = '.') {
     L.push(`  view ${s.id}_containers of ${s.id} {`)
     L.push(`    title 'Контейнеры'`)
     L.push(`    description 'Кто с кем связан. Отсюда видно радиус изменения'`)
+    // noContracts строго ДО include: exclude применяется к уже включённому
+    // и иначе молча съедает рёбра, выведенные через api/operation.
+    L.push(`    global predicate noContracts`)
     L.push(`    include *`)
     // Интегрированные соседи: узел — свёрнуто, ребро — предикатом (сами по себе
     // рёбра к вложенным целям соседа LikeC4 на свёрнутый узел не наводит).
@@ -571,7 +574,6 @@ export function generate(root = '.') {
       L.push(`    include ${n}`)
       L.push(`    include ${s.id} <-> ${n}`)
     }
-    L.push(`    global predicate noContracts`)
     L.push(`    global style base`)
     L.push(`    autoLayout TopBottom`)
     L.push(`  }`)

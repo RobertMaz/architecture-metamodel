@@ -8,8 +8,8 @@ views {
   // «Как это всё устроено» — точка входа для новичка
   view index {
     title 'Ландшафт'
-    include *
     global predicate noContracts
+    include *
     global style base
     autoLayout TopBottom
   }
@@ -18,8 +18,8 @@ views {
   view shopContainers of shop {
     title 'Интернет-магазин: контейнеры'
     description 'Кто с кем связан. Отсюда видно радиус изменения'
-    include *
     global predicate noContracts
+    include *
     global style base
     autoLayout TopBottom
   }
@@ -29,8 +29,8 @@ views {
     title 'Круги владения'
     description 'Глубина модели убывает по мере удаления от нашей зоны'
 
-    include *
     global predicate noContracts
+    include *
     global style base
 
     group 'Наш продукт' {

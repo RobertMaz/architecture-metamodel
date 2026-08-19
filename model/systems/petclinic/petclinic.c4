@@ -572,12 +572,12 @@ views 'PetClinic' {
   view petclinic_containers of petclinic {
     title 'Контейнеры'
     description 'Кто с кем связан. Отсюда видно радиус изменения'
+    global predicate noContracts
     include *
     include github_config_repo
     include petclinic <-> github_config_repo
     include zipkin
     include petclinic <-> zipkin
-    global predicate noContracts
     global style base
     autoLayout TopBottom
   }
