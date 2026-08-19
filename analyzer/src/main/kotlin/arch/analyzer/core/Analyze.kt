@@ -49,6 +49,7 @@ object Analyze {
             arch.analyzer.lanes.SpringwolfLane(scannerDir = root.resolve("analyzer/springwolf-scanner")),
             JqassistantLane(adapter = root.resolve("analyzer/jqassistant/extract.sh")),
             arch.analyzer.lanes.NoirLane(adapter = root.resolve("analyzer/noir/noir-adapter.sh")),
+            arch.analyzer.lanes.ClientLibsLane(archRoot = root),
             arch.analyzer.lanes.RuntimeLane(),
             arch.analyzer.lanes.TracesLane(),
             // LLM — последней: точки внимания вычисляются по свежим evidence других полок.

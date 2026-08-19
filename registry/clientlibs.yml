@@ -1,0 +1,13 @@
+# Клиентские api-библиотеки: артефакт -> контейнер-цель (п. 8 плана).
+# Зависимость в pom/gradle даёт ребро «использует клиента» (conf 0.6);
+# с jar или path либа профилируется (jar — ASM: Feign + call-sites;
+# path — сорцы через lst, fallback регулярки) -> рёбра в конкретные
+# операции (0.7), а байткод сервиса подтверждает реально вызываемые (0.85).
+# Кэш профилей — workspace/_clientlibs/. Пополняется руками, как aliases.
+#
+# clientlibs:
+#   com.acme:billing-client:
+#     container: shop.billing
+#     jar: /path/to/billing-client.jar     # профиль из байткода либы
+#     path: /path/to/billing-client-repo   # или из её сорцов
+clientlibs: {}
