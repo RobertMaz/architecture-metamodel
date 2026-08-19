@@ -75,7 +75,7 @@ model {
             method 'GET'
             path '/owners'
             responses 'Owner'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.findAll; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findAll; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.findAll; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L75; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findAll; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java:75; llm:enrich'
             confidence '1'
           }
         }
@@ -88,7 +88,7 @@ model {
             path '/owners'
             request 'OwnerRequest'
             responses 'Owner'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.createOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#createOwner; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.createOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L57; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#createOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java:57; llm:enrich'
             confidence '1'
           }
         }
@@ -101,7 +101,7 @@ model {
             path '/owners/{ownerId}'
             params 'ownerId:path:int'
             responses 'Owner'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.findOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findOwner; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.findOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L67; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#findOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java:67; llm:enrich'
             confidence '1'
           }
         }
@@ -114,7 +114,7 @@ model {
             path '/owners/{ownerId}'
             params 'ownerId:path:int'
             request 'OwnerRequest'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.updateOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#updateOwner; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.updateOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#updateOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java:83; llm:enrich'
             confidence '1'
           }
         }
@@ -135,7 +135,7 @@ model {
             path '/owners/*/pets/{petId}'
             params 'petId:path:int'
             responses 'PetDetails'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#findPet; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L88; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#findPet; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java:88; llm:enrich'
             confidence '1'
           }
         }
@@ -147,7 +147,7 @@ model {
             method 'PUT'
             path '/owners/*/pets/{petId}'
             request 'PetRequest'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.processUpdateForm; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processUpdateForm; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.processUpdateForm; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L68; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processUpdateForm; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java:68; llm:enrich'
             confidence '1'
           }
         }
@@ -161,7 +161,7 @@ model {
             params 'ownerId:path:int'
             request 'PetRequest'
             responses 'Pet'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.processCreationForm; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processCreationForm; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.processCreationForm; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L54; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#processCreationForm; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java:54; llm:enrich'
             confidence '1'
           }
         }
@@ -173,7 +173,7 @@ model {
             method 'GET'
             path '/petTypes'
             responses 'PetType'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.getPetTypes; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#getPetTypes; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.getPetTypes; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#L49; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.PetResource#getPetTypes; src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java:49; llm:enrich'
             confidence '1'
           }
         }
@@ -255,7 +255,7 @@ model {
             path '/api/gateway/owners/{ownerId}'
             params 'ownerId:path:int'
             responses 'OwnerDetails'
-            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#ApiGatewayController.getOwnerDetails; src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; llm:enrich'
+            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#ApiGatewayController.getOwnerDetails; src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java#L54; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.ApiGatewayController#getOwnerDetails; src/main/java/org/springframework/samples/petclinic/api/boundary/web/ApiGatewayController.java:54; llm:enrich'
             confidence '1'
           }
         }
@@ -275,7 +275,7 @@ model {
             method 'POST'
             path '/fallback'
             responses 'String'
-            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#FallbackController.fallback; src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; llm:enrich'
+            source 'src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#FallbackController.fallback; src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java#L11; spring-petclinic-api-gateway-4.0.1.jar!org.springframework.samples.petclinic.api.boundary.web.FallbackController#fallback; src/main/java/org/springframework/samples/petclinic/api/boundary/web/FallbackController.java:11; llm:enrich'
             confidence '1'
           }
         }
@@ -309,7 +309,7 @@ model {
             path '/chatclient'
             request 'String'
             responses 'String'
-            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#PetclinicChatClient.exchange; src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; spring-petclinic-genai-service-4.0.1.jar!org.springframework.samples.petclinic.genai.PetclinicChatClient#exchange; llm:enrich'
+            source 'src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#PetclinicChatClient.exchange; src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; spring-petclinic-genai-service-4.0.1.jar!org.springframework.samples.petclinic.genai.PetclinicChatClient#exchange; src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java:57; llm:enrich'
             confidence '1'
           }
         }
@@ -350,7 +350,7 @@ model {
             method 'GET'
             path '/vets'
             responses 'Vet'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#VetResource.showResourcesVetList; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#VetResource.showResourcesVetList; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java#L44; spring-petclinic-vets-service-4.0.1.jar!org.springframework.samples.petclinic.vets.web.VetResource#showResourcesVetList; src/main/java/org/springframework/samples/petclinic/vets/web/VetResource.java:44; llm:enrich'
             confidence '1'
           }
         }
@@ -422,7 +422,7 @@ model {
             path '/owners/*/pets/{petId}/visits'
             params 'petId:path:int'
             responses 'Visit'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L67; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java:67; llm:enrich'
             confidence '1'
           }
         }
@@ -436,7 +436,7 @@ model {
             params 'petId:path:int'
             request 'Visit'
             responses 'Visit'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#create; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L56; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#create; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java:56; llm:enrich'
             confidence '1'
           }
         }
@@ -449,7 +449,7 @@ model {
             path '/pets/visits'
             params 'petId:query:Integer'
             responses 'Visits'
-            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; llm:enrich'
+            source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#L72; spring-petclinic-visits-service-4.0.1.jar!org.springframework.samples.petclinic.visits.web.VisitResource#read; src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java:72; llm:enrich'
             confidence '1'
           }
         }
