@@ -83,4 +83,20 @@ class RunsTest {
         assertTrue("tools/api-source/b.json" to "new" in files, "$files")
         assertTrue(diff["patch"].asText().contains("\"x\":1"))
     }
+
+    /** Свежий data-репо: git init есть, коммитов нет (HEAD не рождён) — дифф не падает. */
+    @Test
+    fun `diff - репозиторий без единого коммита`() = testApplication {
+        val root = archRoot()
+        ProcessBuilder("git", "-C", root.toString(), "init", "-q")
+            .redirectErrorStream(true).start().also { it.waitFor() }
+        root.resolve("tools/api-source").createDirectories()
+        root.resolve("tools/api-source/a.json").writeText("{}\n")
+
+        application(buildApp(root))
+        val diff = json.readTree(client.get("/api/diff").bodyAsText())
+        val files = diff["files"].map { it["path"].asText() to it["status"].asText() }
+        assertTrue("tools/api-source/a.json" to "new" in files, "$files")
+        assertTrue(!diff["patch"].asText().contains("fatal"), "patch: ${diff["patch"].asText()}")
+    }
 }

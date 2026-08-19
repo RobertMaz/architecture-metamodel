@@ -29,6 +29,10 @@ if [[ ! -f "$DATA/model/00-spec.c4" ]]; then
   [[ -f "$DATA/.gitignore" ]] || cp "$ENGINE/.gitignore" "$DATA/.gitignore"
   [[ -f "$DATA/CODEOWNERS" ]] || touch "$DATA/CODEOWNERS"
   git -C "$DATA" rev-parse --git-dir >/dev/null 2>&1 || git -C "$DATA" init -q
+  # стартовый коммит: «дифф прогона» в UI сравнивает с git — база нужна сразу
+  if ! git -C "$DATA" rev-parse --verify -q HEAD >/dev/null 2>&1; then
+    git -C "$DATA" add -A && git -C "$DATA" commit -qm "init: заготовка ландшафта" || true
+  fi
 fi
 
 # --- сборка движка ----------------------------------------------------------

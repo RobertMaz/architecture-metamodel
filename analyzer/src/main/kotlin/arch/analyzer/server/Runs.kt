@@ -137,13 +137,22 @@ class ModelDiff(private val archRoot: Path) {
     }
 
     fun diff(): Diff {
-        val status = git("status", "--porcelain", "--", *watched.toTypedArray())
+        // -uall: нетрекнутые файлы поимённо, а не схлопнутым каталогом (свежий data-репо)
+        val status = git("status", "--porcelain", "-uall", "--", *watched.toTypedArray())
         val files = status.lines().filter { it.isNotBlank() }.map { line ->
             val flag = line.take(2).trim()
             val path = line.drop(3).trim()
             FileChange(path, if (flag == "??" || flag == "A") "new" else if (flag.contains("D")) "deleted" else "modified")
         }.sortedBy { it.path }
-        val patch = git("diff", "HEAD", "--", *watched.toTypedArray())
+        // свежий data-репо без коммитов: HEAD не рождён — дифф против пустого дерева,
+        // иначе в патч уезжает «fatal: bad revision 'HEAD'»
+        val base = if (git("rev-parse", "--verify", "-q", "HEAD").trim().isEmpty()) EMPTY_TREE else "HEAD"
+        val patch = git("diff", base, "--", *watched.toTypedArray())
         return Diff(files, patch)
+    }
+
+    private companion object {
+        /** Хэш пустого дерева — константа git, база диффа до первого коммита. */
+        const val EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
     }
 }
