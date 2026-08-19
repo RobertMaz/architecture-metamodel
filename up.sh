@@ -81,10 +81,15 @@ fi
 # --- свободные порты --------------------------------------------------------
 port_free() { ! (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
 PICKED=""
-# pick_port <имя-переменной> <стартовый-порт>: занятые и уже выданные пропускаются
+# pick_port <имя-переменной> <стартовый-порт>: занятые и уже выданные пропускаются.
+# Уехавший порт — громко: старая вкладка на дефолтном порту выглядит живой,
+# но обновлений не получит никогда (или там вообще другой проект).
 pick_port() {
   local p=$2
   while ! port_free "$p" || [[ " $PICKED " == *" $p "* ]]; do p=$((p + 1)); done
+  if [[ "$p" != "$2" ]]; then
+    say "ВНИМАНИЕ: порт $2 занят — $1 уехал на $p. Старые вкладки мертвы, ходи по ссылкам ниже."
+  fi
   PICKED="$PICKED $p"
   printf -v "$1" '%s' "$p"
 }
@@ -94,14 +99,16 @@ pick_port UI_PORT "${UI_PORT:-5174}"
 
 RUN="$DATA/workspace/_run"
 mkdir -p "$RUN"
+# set -m: каждый фоновый сервис — своя группа процессов. Иначе kill бьёт только
+# обёртку (npm exec -> sh -> node — три уровня), а node выживает и держит порт.
+set -m
 PIDS=()
 cleanup() {
+  trap - EXIT INT TERM HUP
   say "останавливаю..."
-  for pid in "${PIDS[@]}"; do kill "$pid" 2>/dev/null || true; done
-  # mvn exec:java порождает дочерний jvm — добиваем группу
-  for pid in "${PIDS[@]}"; do pkill -P "$pid" 2>/dev/null || true; done
+  for pid in "${PIDS[@]}"; do kill -- "-$pid" 2>/dev/null || true; done
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT INT TERM HUP
 
 # --- сервисы -----------------------------------------------------------------
 say "сервер анализатора: http://localhost:$API_PORT (данные: $DATA)"

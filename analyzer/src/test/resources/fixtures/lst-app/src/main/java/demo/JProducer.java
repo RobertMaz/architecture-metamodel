@@ -9,4 +9,9 @@ public class JProducer {
         // Java-парсер не видит Kotlin-стаб — тип не атрибутирован, эвристика по имени
         kafkaTemplate.send("orders.created", payload);
     }
+
+    void forward(Object message) {
+        // топик в хедерах Message — статически не извлечь, PUBLISH быть не должно
+        kafkaTemplate.send(message);
+    }
 }

@@ -119,6 +119,34 @@ class Triage(private val archRoot: Path) {
 
         val all = resolved().toSortedMap()
         all[stubId] = rq
+        write(all)
+        return Result.Ok
+    }
+
+    /**
+     * Переприцелка решений при переносе/удалении контейнера: newId == null — решение
+     * снимается целиком (stub вернётся в триаж при следующей регенерации).
+     */
+    fun retarget(oldId: String, newId: String?) {
+        if (!file().exists()) return
+        val all = resolved().toSortedMap()
+        var touched = false
+        for ((stubId, r) in all.toMap()) {
+            val hit = r.container == oldId || r.assign?.container == oldId
+            if (!hit) continue
+            touched = true
+            when {
+                newId == null -> all.remove(stubId)
+                else -> all[stubId] = r.copy(
+                    container = if (r.container == oldId) newId else r.container,
+                    assign = if (r.assign?.container == oldId) AssignTarget(newId) else r.assign,
+                )
+            }
+        }
+        if (touched) write(all)
+    }
+
+    private fun write(all: Map<String, ResolveRequest>) {
         val out = StringBuilder(header).append("resolutions:\n")
         for ((id, r) in all) {
             out.append("  $id:\n")
@@ -132,6 +160,5 @@ class Triage(private val archRoot: Path) {
             }
         }
         file().writeText(out.toString())
-        return Result.Ok
     }
 }

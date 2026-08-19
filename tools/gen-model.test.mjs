@@ -143,6 +143,49 @@ test('views: обзорный вид системы и api-вид контейн
   assert.match(text, /include \* -> petclinic\.customers\.\*\*/)
 })
 
+test('container view включает интегрированных соседей: системы свёрнуто, stub-узлы отдельно', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'registry/systems.yml'),
+    'systems:\n  - id: petclinic\n    kind: system\n    title: PetClinic\n  - id: auth\n    kind: orgSystem\n    title: Авторизация\n',
+  )
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify({
+      ...withCall({ host: 'sso.corp' }, { method: 'POST', path: '/oauth/token' }),
+      calls: [
+        { method: 'POST', path: '/oauth/token', target: { host: 'sso.corp' }, source: 's#L1', confidence: 0.8 },
+        { method: 'POST', path: '/api/v1/invoices', target: { host: 'legacy-billing' }, source: 's#L2', confidence: 0.8 },
+      ],
+    }),
+  )
+  writeFileSync(
+    join(root, 'registry/resolutions.yml'),
+    'resolutions:\n  unknown.sso_corp:\n    assign:\n      container: auth.sso\n',
+  )
+  generate(root)
+
+  const view = readFileSync(systemFile(root), 'utf8').match(/view petclinic_containers of petclinic \{[\s\S]*?\n  \}/)[0]
+  assert.match(view, /^    include auth$/m, 'соседняя система — свёрнутым узлом')
+  assert.match(view, /^    include unknown\.legacy_billing$/m, 'stub — отдельным узлом')
+  assert.doesNotMatch(view, /include petclinic$/m, 'сама система не дублируется')
+
+  // у соседа входящее ребро тоже даёт соседа
+  const authView = readFileSync(systemFile(root, 'auth'), 'utf8').match(/view auth_containers of auth \{[\s\S]*?\n  \}/)[0]
+  assert.match(authView, /^    include petclinic$/m, 'вызывающая система видна на виде цели')
+})
+
+test('container view без интеграций не тянет лишних include', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify({ ...doc, calls: [] }),
+  )
+  generate(root)
+  const view = readFileSync(systemFile(root), 'utf8').match(/view petclinic_containers of petclinic \{[\s\S]*?\n  \}/)[0]
+  assert.equal(view.match(/include /g).length, 1, 'только include *')
+})
+
 test('повторный прогон не переписывает файлы', () => {
   const root = makeRoot()
   generate(root)

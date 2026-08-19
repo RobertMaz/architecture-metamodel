@@ -235,6 +235,24 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `канал-плейсхолдер отбрасывается с точкой внимания, честные каналы остаются`() {
+        val e = ev(
+            "lst",
+            fact(FactType.PUBLISH, "src/P.kt#send", 0.85, "channel" to "{message}", "protocol" to "kafka"),
+            fact(FactType.PUBLISH, "src/P.kt#p", 0.85, "channel" to "orders.created", "protocol" to "kafka"),
+            fact(FactType.PUBLISH, "src/V.kt#v", 0.85, "channel" to "\${app.topics.sent}", "protocol" to "kafka"),
+            fact(FactType.SUBSCRIBE, "src/L.kt#on", 0.85, "channel" to "{build()}", "protocol" to "amqp"),
+        )
+        val (doc, report) = reconciler.reconcile("x.y", listOf(e), meta)
+
+        assertEquals(listOf("orders.created"), doc.publishes.map { it.channel }, "плейсхолдеры не становятся каналами")
+        assertTrue(doc.subscribes.isEmpty())
+        assertTrue(report.lowConfidence.any { "{message}" in it && "src/P.kt#send" in it }, "точка внимания: ${report.lowConfidence}")
+        assertTrue(report.lowConfidence.any { "{build()}" in it }, "и для subscribe: ${report.lowConfidence}")
+        assertTrue(report.lowConfidence.any { "\${app.topics.sent}" in it }, "нерезолвнутый \${...} тоже: ${report.lowConfidence}")
+    }
+
+    @Test
     fun `плейсхолдеры регулярок и lst в urlTemplate — один вызов`() {
         val source = ev(
             "source",

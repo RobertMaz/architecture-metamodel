@@ -107,6 +107,10 @@ export const api = {
     http<{ resolved: string }>(`/api/unresolved/${stubId}/resolve`, { method: "POST", body: JSON.stringify(body) }),
   updateSources: (id: string, body: { repo?: string; path?: string; jar?: string; runtimeUrl?: string; traces?: string; openapi?: string }) =>
     http<{ updated: string }>(`/api/containers/${id}/sources`, { method: "PUT", body: JSON.stringify(body) }),
+  moveContainer: (id: string, system: string) =>
+    http<{ moved: string }>(`/api/containers/${id}/move`, { method: "POST", body: JSON.stringify({ system }) }),
+  deleteContainer: (id: string) =>
+    http<{ deleted: string }>(`/api/containers/${id}`, { method: "DELETE" }),
   hypotheses: (stubId: string) =>
     http<{ configured: boolean; hypotheses: { name: string; container?: string | null; confidence: number }[] }>(
       `/api/unresolved/${stubId}/hypotheses`,

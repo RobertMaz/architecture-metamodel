@@ -510,6 +510,25 @@ export function generate(root = '.') {
     pushBlock(s.system, B)
   }
 
+  // --- Соседи системы для контейнерного вида -----------------------------
+  // Рёбра уже разложены по системам строками; концы ребра — id без пробелов
+  // (подпись всегда в кавычках после). Сосед сворачивается до top-level
+  // системы, stub из unknown остаётся отдельным узлом (два сегмента id).
+  const allEdgeLines = [...systemEdges.values()].flat()
+  const neighborsOf = (sysId) => {
+    const inside = (id) => id === sysId || id.startsWith(`${sysId}.`)
+    const out = new Set()
+    for (const line of allEdgeLines) {
+      const m = line.match(/^\s*(\S+) -\[\w+\]-> (\S+)/)
+      if (!m) continue
+      for (const [self, other] of [[m[1], m[2]], [m[2], m[1]]]) {
+        if (!inside(self) || inside(other)) continue
+        out.add(other.startsWith('unknown.') ? other.split('.').slice(0, 2).join('.') : other.split('.')[0])
+      }
+    }
+    return [...out].sort()
+  }
+
   // --- РЕНДЕР: файл на систему — модель и виды ---------------------------
   const systemsDir = join(root, 'model/systems')
   if (systems.length) mkdirSync(systemsDir, { recursive: true })
@@ -546,6 +565,8 @@ export function generate(root = '.') {
     L.push(`    title 'Контейнеры'`)
     L.push(`    description 'Кто с кем связан. Отсюда видно радиус изменения'`)
     L.push(`    include *`)
+    // Интегрированные соседи: рёбра между включёнными элементами LikeC4 дорисует сам.
+    for (const n of neighborsOf(s.id)) L.push(`    include ${n}`)
     L.push(`    global predicate noContracts`)
     L.push(`    global style base`)
     L.push(`    autoLayout TopBottom`)

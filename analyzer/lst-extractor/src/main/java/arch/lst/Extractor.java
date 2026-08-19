@@ -49,6 +49,8 @@ public class Extractor {
         "put", "delete", "exchange", "execute", "patchForObject", "headForHeaders", "optionsForAllow");
 
     static final Set<String> HTTP_VERBS = Set.of("GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS");
+    // «{» не после $: плейсхолдер резолвера; ${...} у @Value — легитимен, резолвится дальше
+    static final java.util.regex.Pattern UNRESOLVED = java.util.regex.Pattern.compile("(?<!\\$)\\{");
 
     static final Map<String, String> MAPPINGS = Map.of(
         "GetMapping", "GET", "PostMapping", "POST", "PutMapping", "PUT",
@@ -342,7 +344,13 @@ public class Extractor {
         }
 
         void emitPublish(String channel, String protocol, double conf) {
-            if (channel == null || channel.isEmpty() || channel.equals("{?}")) return;
+            if (channel == null || channel.isEmpty()) return;
+            // «{» не после $ — фолбэк резолвера ({имя}/{имя()}/{?}), а не топик:
+            // не выдумываем факт, оставляем точку внимания в логе полки.
+            if (UNRESOLVED.matcher(channel).find()) {
+                System.err.println("нерезолвнутый топик «" + channel + "» у " + src() + " — PUBLISH пропущен");
+                return;
+            }
             emit("PUBLISH", src(), conf, List.of("channel=" + channel, "protocol=" + protocol));
         }
 

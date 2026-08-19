@@ -10,6 +10,7 @@ import { AnalyzeButton } from "@/components/ContainersTable"
 import { ReportView } from "@/components/ReportView"
 import { DiffView } from "@/components/DiffView"
 import { SourcesCard } from "@/components/SourcesCard"
+import { ManageCard } from "@/components/ManageCard"
 
 export function Container() {
   const { id = "" } = useParams()
@@ -67,6 +68,8 @@ export function Container() {
       )}
 
       {container && <SourcesCard container={container} />}
+
+      {container && <ManageCard container={container} />}
 
       {report.data && <ReportView report={report.data} />}
 

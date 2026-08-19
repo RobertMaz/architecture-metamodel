@@ -15,6 +15,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
+import io.ktor.server.routing.delete
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.put
@@ -159,6 +160,7 @@ fun buildApp(
         allowHeader(HttpHeaders.ContentType)
         allowMethod(HttpMethod.Post)
         allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
     }
 
     routing {
@@ -205,6 +207,39 @@ fun buildApp(
                 is Onboarding.Result.Created -> call.respond(HttpStatusCode.Created, mapOf("created" to body.id))
                 is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
                 is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+            }
+        }
+
+        delete("/api/containers/{id}") {
+            val id = call.parameters["id"]!!
+            if (!runs.isKnown(id)) {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "контейнер «$id» не найден"))
+            } else {
+                when (val r = onboarding.deleteContainer(id)) {
+                    is Onboarding.Result.Created -> {
+                        runs.regenerate()
+                        call.respond(mapOf("deleted" to id))
+                    }
+                    is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
+                    is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+                }
+            }
+        }
+
+        post("/api/containers/{id}/move") {
+            val id = call.parameters["id"]!!
+            if (!runs.isKnown(id)) {
+                call.respond(HttpStatusCode.NotFound, mapOf("error" to "контейнер «$id» не найден"))
+            } else {
+                val body = call.receive<MoveRequest>()
+                when (val r = onboarding.moveContainer(id, body.system)) {
+                    is Onboarding.Result.Created -> {
+                        runs.regenerate()
+                        call.respond(mapOf("moved" to "${body.system}.${id.substringAfter('.')}"))
+                    }
+                    is Onboarding.Result.Conflict -> call.respond(HttpStatusCode.Conflict, mapOf("error" to r.message))
+                    is Onboarding.Result.Invalid -> call.respond(HttpStatusCode.BadRequest, mapOf("error" to r.message))
+                }
             }
         }
 

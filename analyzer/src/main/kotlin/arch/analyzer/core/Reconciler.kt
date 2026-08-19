@@ -124,6 +124,13 @@ class Reconciler(
             }
 
         // --- каналы -----------------------------------------------------
+        // Имя с «{» — нерезолвнутый плейсхолдер (фолбэк lst «{имя}»/«{имя()}» или
+        // ${...}, не найденный PlaceholderResolver'ом): не канал, а точка внимания.
+        fun channelResolved(kind: String, channel: String, source: String): Boolean {
+            if ('{' !in channel) return true
+            lowConfidence += "$kind $channel: имя канала не резолвнулось, факт отброшен ($source)"
+            return false
+        }
         val publishes = grouped(FactType.PUBLISH) { it.attrs["channel"] ?: "" }.map { (_, m) ->
             Publish(
                 channel = m.attrs["channel"] ?: "",
@@ -134,7 +141,7 @@ class Reconciler(
                 source = m.source,
                 confidence = m.confidence,
             )
-        }
+        }.filter { channelResolved("PUBLISH", it.channel, it.source) }
         val subscribes = grouped(FactType.SUBSCRIBE) { it.attrs["channel"] ?: "" }.map { (_, m) ->
             Subscribe(
                 channel = m.attrs["channel"] ?: "",
@@ -145,7 +152,7 @@ class Reconciler(
                 source = m.source,
                 confidence = m.confidence,
             )
-        }
+        }.filter { channelResolved("SUBSCRIBE", it.channel, it.source) }
 
         // --- исходящие вызовы -------------------------------------------
         val TARGET_KEYS = listOf("container", "feignName", "host", "role", "urlTemplate", "prop", "route")

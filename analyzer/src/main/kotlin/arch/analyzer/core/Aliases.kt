@@ -42,11 +42,25 @@ class Aliases(private val archRoot: Path) {
                 existing != v -> conflicts += "алиас «$k» уже указывает на $existing (не перетираю на $v)"
             }
         }
+        write(current)
+        return conflicts
+    }
+
+    /** Переприцелка при переносе/удалении контейнера: newId == null — записи удаляются. */
+    fun retarget(oldId: String, newId: String?) {
+        if (!file().exists()) return
+        val current = all().toSortedMap()
+        val keys = current.filterValues { it == oldId }.keys
+        if (keys.isEmpty()) return
+        for (k in keys) if (newId == null) current.remove(k) else current[k] = newId
+        write(current)
+    }
+
+    private fun write(entries: Map<String, String>) {
         val out = StringBuilder(header).append("aliases:\n")
-        for ((k, v) in current) out.append("  $k: $v\n")
+        for ((k, v) in entries) out.append("  $k: $v\n")
         file().parent.createDirectories()
         val text = out.toString()
         if (!file().exists() || file().readText() != text) file().writeText(text)
-        return conflicts
     }
 }

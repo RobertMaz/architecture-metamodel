@@ -1,6 +1,8 @@
 package arch.analyzer.server
 
+import arch.analyzer.core.Aliases
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import java.nio.file.Files
 import java.nio.file.Path
@@ -23,6 +25,10 @@ data class NewSystem(
     val owner: String,
 )
 
+data class MoveRequest(
+    val system: String,
+)
+
 data class NewContainer(
     val id: String,
     val repo: String,
@@ -36,6 +42,32 @@ data class NewContainer(
 class Onboarding(private val archRoot: Path) {
 
     private val yaml = ObjectMapper(YAMLFactory())
+    private val json = ObjectMapper()
+
+    /** Порядок полей записи repos.yml — единый для всех перезаписей файла. */
+    private val repoKeys = listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi", "config")
+
+    private fun reposFile(): Path = archRoot.resolve("registry/repos.yml")
+
+    private fun readRepos(): java.util.SortedMap<String, MutableMap<String, String>> {
+        val entries = sortedMapOf<String, MutableMap<String, String>>()
+        val existing = if (reposFile().exists()) yaml.readTree(reposFile().toFile())?.get("repos") else null
+        existing?.fields()?.forEach { (cid, n) ->
+            val row = mutableMapOf<String, String>()
+            for (k in repoKeys) n[k]?.asText()?.takeIf { it.isNotEmpty() }?.let { row[k] = it }
+            entries[cid] = row
+        }
+        return entries
+    }
+
+    private fun writeRepos(entries: Map<String, Map<String, String>>) {
+        val out = StringBuilder(reposHeader).append("repos:\n")
+        for ((cid, row) in entries) {
+            out.append("  $cid:\n")
+            for (k in repoKeys) row[k]?.let { out.append("    $k: ${quote(it)}\n") }
+        }
+        reposFile().writeText(out.toString())
+    }
 
     sealed interface Result {
         data object Created : Result
@@ -107,16 +139,7 @@ class Onboarding(private val archRoot: Path) {
     )
 
     fun updateSources(id: String, p: SourcesPatch): Result {
-        val file = archRoot.resolve("registry/repos.yml")
-        val existing = if (file.exists()) yaml.readTree(file.toFile())?.get("repos") else null
-        val entries = sortedMapOf<String, MutableMap<String, String>>()
-        existing?.fields()?.forEach { (cid, n) ->
-            val row = mutableMapOf<String, String>()
-            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi", "config")) {
-                n[k]?.asText()?.takeIf { it.isNotEmpty() }?.let { row[k] = it }
-            }
-            entries[cid] = row
-        }
+        val entries = readRepos()
         val row = entries[id] ?: return Result.Invalid("контейнер «$id» не найден в registry/repos.yml")
 
         p.path?.takeIf { it.isNotBlank() }?.let {
@@ -134,14 +157,7 @@ class Onboarding(private val archRoot: Path) {
         }
         if (row["path"].isNullOrEmpty()) return Result.Invalid("path обязателен — без сорцов анализировать нечего")
 
-        val out = StringBuilder(reposHeader).append("repos:\n")
-        for ((cid, r) in entries) {
-            out.append("  $cid:\n")
-            for (k in listOf("repo", "path", "jar", "runtimeUrl", "traces", "openapi", "config")) {
-                r[k]?.let { out.append("    $k: ${quote(it)}\n") }
-            }
-        }
-        file.writeText(out.toString())
+        writeRepos(entries)
         return Result.Created
     }
 
@@ -153,36 +169,66 @@ class Onboarding(private val archRoot: Path) {
         if (system !in systemIds()) return Result.Invalid("система «$system» не заведена — сначала POST /api/systems")
         if (!Files.isDirectory(Paths.get(c.path))) return Result.Invalid("нет директории: ${c.path}")
 
-        val file = archRoot.resolve("registry/repos.yml")
-        val existing = if (file.exists()) yaml.readTree(file.toFile())?.get("repos") else null
-        data class Row(val repo: String, val path: String, val jar: String?, val runtimeUrl: String?, val traces: String?, val openapi: String?)
-        val entries = sortedMapOf<String, Row>()
-        existing?.fields()?.forEach { (id, n) ->
-            entries[id] = Row(
-                n["repo"]?.asText() ?: "", n["path"]?.asText() ?: "",
-                n["jar"]?.asText(), n["runtimeUrl"]?.asText(), n["traces"]?.asText(), n["openapi"]?.asText(),
-            )
-        }
+        val entries = readRepos()
         if (c.id in entries) return Result.Conflict("контейнер «${c.id}» уже есть")
-        entries[c.id] = Row(
-            c.repo, c.path,
-            c.jar?.takeIf { it.isNotBlank() },
-            c.runtimeUrl?.takeIf { it.isNotBlank() },
-            c.traces?.takeIf { it.isNotBlank() },
-            c.openapi?.takeIf { it.isNotBlank() },
-        )
+        entries[c.id] = buildMap {
+            put("repo", c.repo)
+            put("path", c.path)
+            c.jar?.takeIf { it.isNotBlank() }?.let { put("jar", it) }
+            c.runtimeUrl?.takeIf { it.isNotBlank() }?.let { put("runtimeUrl", it) }
+            c.traces?.takeIf { it.isNotBlank() }?.let { put("traces", it) }
+            c.openapi?.takeIf { it.isNotBlank() }?.let { put("openapi", it) }
+        }.toMutableMap()
 
-        val out = StringBuilder(reposHeader).append("repos:\n")
-        for ((id, row) in entries) {
-            out.append("  $id:\n")
-            out.append("    repo: ${quote(row.repo)}\n")
-            out.append("    path: ${quote(row.path)}\n")
-            row.jar?.let { out.append("    jar: ${quote(it)}\n") }
-            row.runtimeUrl?.let { out.append("    runtimeUrl: ${quote(it)}\n") }
-            row.traces?.let { out.append("    traces: ${quote(it)}\n") }
-            row.openapi?.let { out.append("    openapi: ${quote(it)}\n") }
+        writeRepos(entries)
+        return Result.Created
+    }
+
+    /**
+     * Удаление контейнера: запись в repos.yml, api-source-док, workspace-улики,
+     * алиасы и решения триажа на него. Регенерацию модели зовёт роут.
+     */
+    fun deleteContainer(id: String): Result {
+        val entries = readRepos()
+        if (entries.remove(id) == null) return Result.Invalid("контейнер «$id» не найден в registry/repos.yml")
+        writeRepos(entries)
+        Files.deleteIfExists(archRoot.resolve("tools/api-source/$id.json"))
+        archRoot.resolve("workspace/$id").toFile().deleteRecursively()
+        Aliases(archRoot).retarget(id, null)
+        Triage(archRoot).retarget(id, null)
+        return Result.Created
+    }
+
+    /**
+     * Перенос контейнера в другую систему: id — это <система>.<имя>, поэтому перенос =
+     * переименование id везде, где он ключ: repos.yml, api-source (файл и поле container),
+     * workspace, алиасы, решения триажа. Рукописные ссылки в c4-файлах model не трогаем —
+     * их подсветит npm run check.
+     */
+    fun moveContainer(id: String, newSystem: String): Result {
+        if (newSystem !in systemIds()) return Result.Invalid("система «$newSystem» не заведена — сначала POST /api/systems")
+        val newId = "$newSystem." + id.substringAfter('.')
+        if (newId == id) return Result.Invalid("контейнер уже в системе «$newSystem»")
+
+        val entries = readRepos()
+        val row = entries[id] ?: return Result.Invalid("контейнер «$id» не найден в registry/repos.yml")
+        if (newId in entries) return Result.Conflict("контейнер «$newId» уже есть")
+        entries.remove(id)
+        entries[newId] = row
+        writeRepos(entries)
+
+        val src = archRoot.resolve("tools/api-source/$id.json")
+        if (src.exists()) {
+            val doc = json.readTree(src.toFile())
+            (doc as? ObjectNode)?.put("container", newId)
+            archRoot.resolve("tools/api-source/$newId.json")
+                .writeText(json.writerWithDefaultPrettyPrinter().writeValueAsString(doc) + "\n")
+            Files.delete(src)
         }
-        file.writeText(out.toString())
+        val ws = archRoot.resolve("workspace/$id")
+        if (Files.isDirectory(ws)) Files.move(ws, archRoot.resolve("workspace/$newId"))
+        Aliases(archRoot).retarget(id, newId)
+        Triage(archRoot).retarget(id, newId)
         return Result.Created
     }
 }

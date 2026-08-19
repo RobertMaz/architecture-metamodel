@@ -39,6 +39,8 @@ class LstLaneTest {
         // продюсеры: Kotlin-константа Topics.ORDERS резолвится; протокол на месте
         val pubs = facts.filter { it.type == FactType.PUBLISH }
         assertEquals(3, pubs.size, "producer из .java, .kt и @Value: $pubs")
+        // send(message) без топика в аргументах: фолбэк-плейсхолдер «{имя}» не эмитится
+        assertTrue(pubs.none { Regex("(?<!\\$)\\{").containsMatchIn(it.attrs["channel"] ?: "") }, "без плейсхолдеров: $pubs")
         assertTrue(pubs.count { it.attrs["channel"] == "orders.created" } == 2)
         assertTrue(pubs.any { it.source.endsWith(".kt#KProducer.publish") && it.confidence == 0.85 }, "Kotlin typed: $pubs")
 

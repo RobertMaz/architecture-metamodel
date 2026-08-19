@@ -573,6 +573,8 @@ views 'PetClinic' {
     title 'Контейнеры'
     description 'Кто с кем связан. Отсюда видно радиус изменения'
     include *
+    include github_config_repo
+    include zipkin
     global predicate noContracts
     global style base
     autoLayout TopBottom
