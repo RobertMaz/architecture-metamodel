@@ -49,7 +49,7 @@ class NoirLane(
         val err = p.errorStream.bufferedReader().readText()
         if (!p.waitFor(10, TimeUnit.MINUTES) || p.exitValue() != 0) {
             p.destroyForcibly()
-            error("адаптер noir завершился с ошибкой (exit=${runCatching { p.exitValue() }.getOrNull()}): ${err.takeLast(300)}")
+            error("адаптер noir завершился с ошибкой (exit=${runCatching { p.exitValue() }.getOrNull()}): ${errorDigest(err)}")
         }
         return withContextPrefix(parseFactLines(lines, name))
     }

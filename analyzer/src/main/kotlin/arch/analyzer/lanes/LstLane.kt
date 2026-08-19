@@ -69,7 +69,7 @@ class LstLane(
             val lines = p.inputStream.bufferedReader().readLines()
             if (!p.waitFor(10, TimeUnit.MINUTES) || p.exitValue() != 0) {
                 p.destroyForcibly()
-                error("lst-экстрактор упал (exit=${runCatching { p.exitValue() }.getOrNull()}): ${err.takeLast(500)}")
+                error("lst-экстрактор упал (exit=${runCatching { p.exitValue() }.getOrNull()}): ${errorDigest(err.toString())}")
             }
             pump.join(2000)
             return parseFactLines(lines, name)

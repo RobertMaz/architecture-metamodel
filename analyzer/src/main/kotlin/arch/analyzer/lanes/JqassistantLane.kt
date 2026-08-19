@@ -45,6 +45,22 @@ class JqassistantLane(
     }
 }
 
+/**
+ * Дайджест лога упавшего процесса: строки с причиной (Exception/Error/fatal)
+ * важнее хвоста — хвост часто содержит обвязку (стек, командную строку пайплайна).
+ */
+fun errorDigest(log: String, tail: Int = 300): String {
+    val causes = log.lineSequence()
+        .filter { l ->
+            l.contains("Exception") || l.contains("Error") || l.contains("error:") ||
+                l.contains("fatal") || l.contains("Caused by") || l.contains("Aborted")
+        }
+        .map(String::trim).filter(String::isNotEmpty)
+        .distinct().take(5).joinToString(" | ")
+    val end = log.trim().takeLast(tail)
+    return if (causes.isEmpty()) end else "$causes ||| хвост: $end"
+}
+
 /** Разбор строк формата TYPE|attr=value|...|source|confidence; мусор пропускается молча в лог. */
 fun parseFactLines(lines: List<String>, lane: String): List<Fact> {
     val facts = mutableListOf<Fact>()

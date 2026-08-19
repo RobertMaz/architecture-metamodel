@@ -93,7 +93,7 @@ class SpringwolfLane(
         val log = p.inputStream.bufferedReader().readText()
         if (!p.waitFor(5, TimeUnit.MINUTES) || p.exitValue() != 0) {
             p.destroyForcibly()
-            error("сканер springwolf упал (exit=${runCatching { p.exitValue() }.getOrNull()}): ${log.takeLast(500)}")
+            error("сканер springwolf упал (exit=${runCatching { p.exitValue() }.getOrNull()}): ${errorDigest(log)}")
         }
     }
 }

@@ -23,11 +23,14 @@ for d in "$REPO/src/main/java" "$REPO/src/main/kotlin"; do
 done
 [[ ${#SCAN_DIRS[@]} -eq 0 ]] && SCAN_DIRS=("$REPO")
 
-# --strict: exit 2 при пропущенных файлах — честный сигнал неполного покрытия,
-# полка упадёт в failedLanes вместо тихой дыры в фактах.
+# --strict: exit 2 при пропущенных файлах — честный сигнал неполного покрытия.
+# Noir на экзотическом коде может упасть (SIGABRT): один упавший каталог не убивает
+# полку — сканируем остальные; полка падает, только если не выжил ни один скан.
+OK=0
+FAILED=0
 for SCAN in "${SCAN_DIRS[@]}"; do
-  "$NOIR_BIN" scan "$SCAN" -f json --strict --no-log --no-spinner --no-color \
-    | jq -r --arg conf "$CONFIDENCE" --arg repo "$REPO" '
+  if OUT="$("$NOIR_BIN" scan "$SCAN" -f json --strict --no-log --no-spinner --no-color 2> >(sed 's/^/[noir-bin] /' >&2))"; then
+    jq -r --arg conf "$CONFIDENCE" --arg repo "$REPO" '
         .endpoints[]
         # health/actuator сознательно не моделируем — фильтруем на входе
         | select(.url | test("^/(actuator|health)") | not)
@@ -37,5 +40,14 @@ for SCAN in "${SCAN_DIRS[@]}"; do
         # источник — путь относительно корня репозитория + строка
         | ($src | sub("^" + $repo + "/"; "")) as $rel
         | "ENDPOINT|method=\(.method)|path=\(.url)|\($rel):\(.details.code_paths[0].line // 0)|\($conf)"
-      '
+      ' <<<"$OUT"
+    OK=$((OK + 1))
+  else
+    echo "noir не осилил $SCAN (код $?) — каталог пропущен" >&2
+    FAILED=$((FAILED + 1))
+  fi
 done
+if [[ $OK -eq 0 && $FAILED -gt 0 ]]; then
+  echo "noir упал на всех каталогах" >&2
+  exit 1
+fi
