@@ -9,7 +9,7 @@ import kotlin.math.roundToInt
  * конфликт деталей — приоритетная полка + запись в отчёт.
  */
 class Reconciler(
-    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "springwolf", "lst", "source", "bytecode", "noir", "config", "llm"),
+    private val lanePriority: List<String> = listOf("runtime", "traces", "openapi", "springwolf", "lst", "source", "bytecode", "clientlibs", "noir", "config", "llm"),
 ) {
 
     private val extractor = "arch-analyzer source+config v1"
@@ -151,7 +151,7 @@ class Reconciler(
         val TARGET_KEYS = listOf("container", "feignName", "host", "role", "urlTemplate", "prop", "route")
         val calls = grouped(FactType.OUTGOING_CALL) {
             // urlTemplate нормализуется: {_} у регулярок и {getUri()} у lst — один вызов
-            val target = it.attrs["feignName"] ?: it.attrs["host"] ?: it.attrs["role"]
+            val target = it.attrs["container"] ?: it.attrs["feignName"] ?: it.attrs["host"] ?: it.attrs["role"]
                 ?: it.attrs["urlTemplate"]?.let(::normPath) ?: ""
             "${it.attrs["method"] ?: ""} $target ${normPath(it.attrs["path"] ?: "")}"
         }.map { (_, m) ->
