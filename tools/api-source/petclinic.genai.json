@@ -82,6 +82,7 @@
   "operations" : [
     {
       "confidence" : 1.0,
+      "group" : "chatclient",
       "method" : "POST",
       "path" : "/chatclient",
       "request" : "String",

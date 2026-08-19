@@ -34,6 +34,7 @@
     },
     {
       "confidence" : 0.97,
+      "group" : "lastn",
       "method" : "GET",
       "path" : "/lastn",
       "source" : "actuator:/mappings"

@@ -169,6 +169,7 @@
     },
     {
       "confidence" : 0.85,
+      "group" : "owners",
       "method" : "GET",
       "path" : "owners/*/pets/{petId}",
       "source" : "src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.findPet"

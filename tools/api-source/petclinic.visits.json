@@ -68,18 +68,21 @@
     },
     {
       "confidence" : 0.85,
+      "group" : "owners",
       "method" : "GET",
       "path" : "owners/*/pets/{petId}/visits",
       "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#VisitResource.read"
     },
     {
       "confidence" : 0.85,
+      "group" : "owners",
       "method" : "POST",
       "path" : "owners/*/pets/{petId}/visits",
       "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#VisitResource.create"
     },
     {
       "confidence" : 0.85,
+      "group" : "pets",
       "method" : "GET",
       "path" : "pets/visits",
       "source" : "src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#VisitResource.read"

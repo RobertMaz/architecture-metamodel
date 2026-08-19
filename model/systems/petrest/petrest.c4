@@ -25,15 +25,13 @@ model {
         metadata {
           base-path '/'
         }
+      }
 
-        get_swagger_ui_html = operation 'GET /swagger-ui.html' {
-          #inferred
-          metadata {
-            method 'GET'
-            path '/swagger-ui.html'
-            source 'actuator:/mappings'
-            confidence '0.97'
-          }
+      api_api_docs = api 'api-docs' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'api-docs'
         }
 
         get_v3_api_docs = operation 'GET /v3/api-docs' {
@@ -46,21 +44,29 @@ model {
           }
         }
 
-        get_v3_api_docs_yaml = operation 'GET /v3/api-docs.yaml' {
-          #inferred
-          metadata {
-            method 'GET'
-            path '/v3/api-docs.yaml'
-            source 'actuator:/mappings'
-            confidence '0.97'
-          }
-        }
-
         get_v3_api_docs_swagger_config = operation 'GET /v3/api-docs/swagger-config' {
           #inferred
           metadata {
             method 'GET'
             path '/v3/api-docs/swagger-config'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+      }
+
+      api_api_docs_yaml = api 'api-docs.yaml' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'api-docs.yaml'
+        }
+
+        get_v3_api_docs_yaml = operation 'GET /v3/api-docs.yaml' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/v3/api-docs.yaml'
             source 'actuator:/mappings'
             confidence '0.97'
           }
@@ -477,6 +483,24 @@ model {
         }
       }
 
+      api_swagger_ui_html = api 'swagger-ui.html' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'swagger-ui.html'
+        }
+
+        get_swagger_ui_html = operation 'GET /swagger-ui.html' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/swagger-ui.html'
+            source 'actuator:/mappings'
+            confidence '0.97'
+          }
+        }
+      }
+
       api_users = api 'users' {
         #inferred #public
         technology 'HTTP/JSON'
@@ -677,6 +701,24 @@ views 'PetClinic REST' {
     autoLayout LeftRight
   }
 
+  view petrest_backend_api_docs of petrest.backend.api_api_docs {
+    title 'API / backend / api-docs'
+    description 'Операции домена «api-docs» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_api_docs.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_api_docs_yaml of petrest.backend.api_api_docs_yaml {
+    title 'API / backend / api-docs.yaml'
+    description 'Операции домена «api-docs.yaml» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_api_docs_yaml.*
+    global style base
+    autoLayout LeftRight
+  }
+
   view petrest_backend_oops of petrest.backend.api_oops {
     title 'API / backend / oops'
     description 'Операции домена «oops» со своими вызывающими'
@@ -745,6 +787,15 @@ views 'PetClinic REST' {
     description 'Операции домена «specialties» со своими вызывающими'
     include *
     include * -> petrest.backend.api_specialties.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petrest_backend_swagger_ui_html of petrest.backend.api_swagger_ui_html {
+    title 'API / backend / swagger-ui.html'
+    description 'Операции домена «swagger-ui.html» со своими вызывающими'
+    include *
+    include * -> petrest.backend.api_swagger_ui_html.*
     global style base
     autoLayout LeftRight
   }
