@@ -26,12 +26,22 @@
       }
     },
     {
-      "confidence" : 0.7,
+      "confidence" : 0.85,
+      "method" : "GET",
+      "path" : "/vets",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/VectorStoreController.java#VectorStoreController.loadVetDataToVectorStoreOnStartup",
+      "target" : {
+        "host" : "vets-service",
+        "urlTemplate" : "http://vets-service/vets"
+      }
+    },
+    {
+      "confidence" : 0.96,
       "method" : "GET",
       "path" : "/owners",
-      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L43",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#AIDataProvider.getAllOwners; src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L43",
       "target" : {
-        "urlTemplate" : "{_}/owners"
+        "urlTemplate" : "{getCustomerServiceUri()}/owners"
       }
     },
     {
@@ -43,21 +53,21 @@
       }
     },
     {
-      "confidence" : 0.7,
+      "confidence" : 0.96,
       "method" : "POST",
       "path" : "/owners",
-      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L80",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#AIDataProvider.addOwnerToPetclinic; src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L80",
       "target" : {
-        "urlTemplate" : "{_}/owners"
+        "urlTemplate" : "{getCustomerServiceUri()}/owners"
       }
     },
     {
-      "confidence" : 0.7,
+      "confidence" : 0.96,
       "method" : "POST",
-      "path" : "/owners/{_}/pets",
-      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L71",
+      "path" : "/owners/{ownerId}/pets",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#AIDataProvider.addPetToOwner; src/main/java/org/springframework/samples/petclinic/genai/AIDataProvider.java#L71",
       "target" : {
-        "urlTemplate" : "{_}/owners/{_}/pets"
+        "urlTemplate" : "{getCustomerServiceUri()}/owners/{ownerId}/pets"
       }
     }
   ],
@@ -76,7 +86,7 @@
       "path" : "/chatclient",
       "request" : "String",
       "response" : "String",
-      "source" : "src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; spring-petclinic-genai-service-4.0.1.jar!org.springframework.samples.petclinic.genai.PetclinicChatClient#exchange; llm:enrich",
+      "source" : "src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#PetclinicChatClient.exchange; src/main/java/org/springframework/samples/petclinic/genai/PetclinicChatClient.java#L57; spring-petclinic-genai-service-4.0.1.jar!org.springframework.samples.petclinic.genai.PetclinicChatClient#exchange; llm:enrich",
       "summary" : "Отправляет запрос к GenAI-клиенту чата и возвращает ответ."
     }
   ],
