@@ -11,6 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Команды
 
 ```bash
+./up.sh [путь-к-данным]   # весь стек одной командой: пересборка движка, инициализация данных, сервер+UI+LikeC4; Ctrl+C гасит всё
 npm install
 npm run dev       # интерактивный просмотр, http://localhost:5173
 npm run check     # полный цикл: gen -> likec4 validate -> export json -> tools/check.mjs (то же, что CI)
