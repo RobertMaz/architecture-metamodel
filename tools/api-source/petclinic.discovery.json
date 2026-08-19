@@ -6,7 +6,18 @@
     "technology" : "HTTP/JSON",
     "title" : "discovery-server API"
   },
-  "calls" : [ ],
+  "calls" : [
+    {
+      "confidence" : 0.9,
+      "source" : "src/main/resources/application.yml",
+      "target" : {
+        "host" : "config-server",
+        "prop" : "spring.config.import",
+        "role" : "config-server",
+        "urlTemplate" : "http://config-server:8888"
+      }
+    }
+  ],
   "container" : "petclinic.discovery",
   "containerInfo" : {
     "appName" : "discovery-server",
@@ -31,7 +42,7 @@
   "publishes" : [ ],
   "source" : {
     "commit" : "9a76b4e",
-    "extractedAt" : "2026-08-18",
+    "extractedAt" : "2026-08-19",
     "extractor" : "arch-analyzer source+config v1",
     "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
   },

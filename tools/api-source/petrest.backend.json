@@ -416,7 +416,7 @@
   "publishes" : [ ],
   "source" : {
     "commit" : "698bd83",
-    "extractedAt" : "2026-08-18",
+    "extractedAt" : "2026-08-19",
     "extractor" : "arch-analyzer source+config v1",
     "repo" : "https://github.com/spring-petclinic/spring-petclinic-rest"
   },

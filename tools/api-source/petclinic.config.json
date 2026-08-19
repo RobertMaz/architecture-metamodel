@@ -1,5 +1,16 @@
 {
-  "calls" : [ ],
+  "calls" : [
+    {
+      "confidence" : 0.9,
+      "source" : "src/main/resources/application.yml",
+      "target" : {
+        "host" : "github.com",
+        "prop" : "spring.cloud.config.server.git.uri",
+        "role" : "config-repo",
+        "urlTemplate" : "https://github.com/spring-petclinic/spring-petclinic-microservices-config"
+      }
+    }
+  ],
   "container" : "petclinic.config",
   "containerInfo" : {
     "kind" : "service",
@@ -10,7 +21,7 @@
   "publishes" : [ ],
   "source" : {
     "commit" : "9a76b4e",
-    "extractedAt" : "2026-08-18",
+    "extractedAt" : "2026-08-19",
     "extractor" : "arch-analyzer source+config v1",
     "repo" : "https://github.com/spring-petclinic/spring-petclinic-microservices"
   },
