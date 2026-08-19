@@ -9,6 +9,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.createDirectories
+import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -18,6 +19,9 @@ import kotlin.io.path.writeText
  * при изменении содержимого — чистый git-diff = чистый прогон.
  */
 object Analyze {
+
+    /** Полки с компиляторной ценой — кэшируются по коммиту репозитория сервиса. */
+    private val EXPENSIVE_LANES = setOf("lst")
 
     data class Result(
         val containerId: String,
@@ -100,10 +104,26 @@ object Analyze {
         val failedLanes = mutableListOf<Pair<String, String>>()
         // Аварийный рубильник: ARCH_SKIP_LANES=lst,llm — выключить полку без пересборки
         val skip = (System.getenv("ARCH_SKIP_LANES") ?: "").split(',').map(String::trim).filter(String::isNotEmpty).toSet()
+        // Кэш дорогих полок: тот же коммит без локальных правок -> прошлый evidence,
+        // а не минуты компиляторного парсинга заново. ARCH_NO_LANE_CACHE=1 — выключить
+        // (нужно после обновления самого экстрактора).
+        val commit = gitCommit(repoDir)
+        val cacheable = System.getenv("ARCH_NO_LANE_CACHE") == null &&
+            commit != null && !gitDirty(repoDir)
         for (lane in lanes) {
             if (lane.name in skip) {
                 println("[analyze] $containerId: полка ${lane.name} пропущена (ARCH_SKIP_LANES)")
                 continue
+            }
+            if (lane.name in EXPENSIVE_LANES && cacheable) {
+                val prev = workspace.resolve("evidence.${lane.name}.json")
+                val cached = if (prev.exists()) runCatching { Json.read(prev.readText(), Evidence::class.java) }.getOrNull() else null
+                if (cached != null && cached.input.commit == commit) {
+                    println("[analyze] $containerId: полка ${lane.name} — из кэша (коммит $commit не менялся, ${cached.facts.size} фактов)")
+                    evidences += cached
+                    lanesRun += lane.name
+                    continue
+                }
             }
             if (!lane.applicable(input)) continue
             onProgress?.invoke(lane.name)
@@ -206,4 +226,13 @@ object Analyze {
         val out = p.inputStream.bufferedReader().readText().trim()
         if (p.waitFor() == 0 && out.matches(Regex("[0-9a-f]+"))) out else null
     }.getOrNull()
+
+    /** Незакоммиченные правки в репо сервиса — кэш дорогих полок не применим. */
+    private fun gitDirty(repoDir: Path): Boolean = runCatching {
+        val p = ProcessBuilder("git", "-C", repoDir.toString(), "status", "--porcelain")
+            .redirectErrorStream(true)
+            .start()
+        val out = p.inputStream.bufferedReader().readText()
+        p.waitFor() != 0 || out.isNotBlank()
+    }.getOrDefault(true)
 }

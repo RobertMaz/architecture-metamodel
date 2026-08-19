@@ -39,7 +39,7 @@
     }
   ],
   "source" : {
-    "commit" : "local",
+    "commit" : "104de28",
     "extractedAt" : "2026-08-19",
     "extractor" : "arch-analyzer source+config v1",
     "repo" : "local/demo-kotlin-notifier"

@@ -79,31 +79,38 @@ public class Extractor {
         javaFiles.sort(Path::compareTo);
         kotlinFiles.sort(Path::compareTo);
 
-        System.err.printf("вход: java=%d, kotlin=%d файлов, classpath=%d jar%n",
-            javaFiles.size(), kotlinFiles.size(), classpath.size());
+        // Компиляторный парсинг — дорогой; факты живут в малой доле файлов.
+        // Парсим только кандидатов (HTTP/messaging/контроллеры) + держатели констант.
+        // LST_ALL_FILES=1 — парсить всё (старое поведение).
+        boolean parseAll = System.getenv("LST_ALL_FILES") != null;
+        final List<Path> javaSrc = parseAll ? javaFiles : javaFiles.stream().filter(Extractor::isCandidate).toList();
+        final List<Path> kotlinSrc = parseAll ? kotlinFiles : kotlinFiles.stream().filter(Extractor::isCandidate).toList();
+
+        System.err.printf("вход: java=%d/%d, kotlin=%d/%d файлов-кандидатов, classpath=%d jar%n",
+            javaSrc.size(), javaFiles.size(), kotlinSrc.size(), kotlinFiles.size(), classpath.size());
 
         ExecutionContext ctx = new InMemoryExecutionContext(t -> System.err.println("[parse-error] " + t.getMessage()));
         List<SourceFile> all = new ArrayList<>();
         long t0 = System.nanoTime();
-        if (!javaFiles.isEmpty()) {
+        if (!javaSrc.isEmpty()) {
             JavaParser jp = JavaParser.fromJavaVersion().classpath(classpath).build();
             int[] done = {0};
-            jp.parse(javaFiles, repoRoot, ctx).forEach(sf -> {
+            jp.parse(javaSrc, repoRoot, ctx).forEach(sf -> {
                 all.add(sf);
-                if (++done[0] % 50 == 0) System.err.printf("java: %d/%d%n", done[0], javaFiles.size());
+                if (++done[0] % 50 == 0) System.err.printf("java: %d/%d%n", done[0], javaSrc.size());
             });
-            System.err.printf("java распарсен: %d файлов за %.1fс%n", javaFiles.size(), (System.nanoTime() - t0) / 1e9);
+            System.err.printf("java распарсен: %d файлов за %.1fс%n", javaSrc.size(), (System.nanoTime() - t0) / 1e9);
         }
         long t1 = System.nanoTime();
-        if (!kotlinFiles.isEmpty()) {
+        if (!kotlinSrc.isEmpty()) {
             System.err.println("kotlin: старт компилятора…");
             KotlinParser kp = KotlinParser.builder().classpath(classpath).build();
             int[] done = {0};
-            kp.parse(kotlinFiles, repoRoot, ctx).forEach(sf -> {
+            kp.parse(kotlinSrc, repoRoot, ctx).forEach(sf -> {
                 all.add(sf);
-                if (++done[0] % 25 == 0) System.err.printf("kotlin: %d/%d%n", done[0], kotlinFiles.size());
+                if (++done[0] % 25 == 0) System.err.printf("kotlin: %d/%d%n", done[0], kotlinSrc.size());
             });
-            System.err.printf("kotlin распарсен: %d файлов за %.1fс%n", kotlinFiles.size(), (System.nanoTime() - t1) / 1e9);
+            System.err.printf("kotlin распарсен: %d файлов за %.1fс%n", kotlinSrc.size(), (System.nanoTime() - t1) / 1e9);
         }
         for (SourceFile sf : all) {
             if (sf instanceof ParseError pe) System.err.println("[PARSE ERROR] " + pe.getSourcePath());
@@ -441,6 +448,28 @@ public class Extractor {
         // плейсхолдеры и подстановки — не хост
         if (host.isEmpty() || host.contains("{") || host.contains("$")) return null;
         return host;
+    }
+
+    /** Признаки файлов, где живут наши факты. Всё остальное не парсим. */
+    private static final String[] MARKERS = {
+        "WebClient", "RestTemplate", "RestClient", "FeignClient",
+        "RestController", "Controller", "RequestMapping",
+        "GetMapping", "PostMapping", "PutMapping", "DeleteMapping", "PatchMapping",
+        "KafkaTemplate", "RabbitTemplate", "StreamBridge", "KafkaListener", "RabbitListener",
+    };
+
+    static boolean isCandidate(Path p) {
+        final String text;
+        try {
+            text = Files.readString(p);
+        } catch (Exception e) {
+            return true; // не смогли прочитать — пусть решает парсер
+        }
+        for (String m : MARKERS) {
+            if (text.contains(m)) return true;
+        }
+        // держатели констант (Topics.ORDERS и т.п.) нужны резолверу; большие файлы — вряд ли они
+        return text.length() < 65536 && (text.contains("const val") || text.contains("static final"));
     }
 
     /** Строка литерала; rewrite-kotlin отдаёт Kotlin-эскейп `\$` сырым — нормализуем. */

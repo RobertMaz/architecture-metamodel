@@ -14,7 +14,7 @@ model {
       metadata {
         app-name 'notifier-service'
         repo 'local/demo-kotlin-notifier'
-        commit 'local'
+        commit '104de28'
         extracted-at '2026-08-19'
       }
 
