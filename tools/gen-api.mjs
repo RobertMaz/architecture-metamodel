@@ -18,8 +18,10 @@ import { readdirSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { opId, esc } from './ids.mjs'
 
-const SRC = 'tools/api-source'
-const OUT = 'model/gen'
+import { dataPath } from './root.mjs'
+
+const SRC = dataPath('tools/api-source')
+const OUT = dataPath('model/gen')
 const compactParams = (params = []) =>
   params
     .map((p) => `${p.name}:${p.in}:${p.type}${p.required ? '' : '?'}`)

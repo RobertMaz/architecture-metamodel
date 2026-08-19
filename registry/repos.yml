@@ -47,3 +47,7 @@ repos:
     path: /home/rmazitov/IdeaProjects/spring-petclinic-rest
     jar: /home/rmazitov/IdeaProjects/spring-petclinic-rest/target/spring-petclinic-rest-4.0.2.jar
     runtimeUrl: http://localhost:9966/petclinic
+  demo.notifier:
+    repo: local/demo-kotlin-notifier
+    path: /home/rmazitov/IdeaProjects/demo-kotlin-notifier
+    jar: /home/rmazitov/IdeaProjects/demo-kotlin-notifier/target/demo-kotlin-notifier-0.0.1.jar

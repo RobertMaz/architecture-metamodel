@@ -18,7 +18,9 @@ fun main(args: Array<String>) {
     fun opt(name: String): String? =
         opts.indexOf(name).takeIf { it >= 0 && it + 1 < opts.size }?.let { opts[it + 1] }
 
-    val archRoot = Paths.get(opt("--arch-root") ?: ".").toAbsolutePath().normalize()
+    // Корень данных (п. 10): --arch-root > env ARCH_DATA_ROOT > текущий репо
+    val archRoot = Paths.get(opt("--arch-root") ?: System.getenv("ARCH_DATA_ROOT") ?: ".")
+        .toAbsolutePath().normalize()
     val date = opt("--date") ?: LocalDate.now().toString()
     val targets =
         if (opts.contains("--all")) Registry(archRoot).repos().keys.toList()

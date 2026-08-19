@@ -1,0 +1,85 @@
+// Файл ведёт генератор (registry/systems.yml + tools/api-source/*.json).
+// Править руками МОЖНО, но регенерация перезапишет: закоммиченные правки
+// вытаскивай обратно через git diff, незакоммиченные — из workspace/_backup/.
+// Вся кухня системы в одном файле: контейнеры, сторы, каналы, связи, виды.
+
+model {
+
+  demo = system 'Demo Kotlin' {
+    description 'Kotlin-сервис тестового ландшафта: приёмка паритета фактов Java/Kotlin (п. 6 плана)'
+
+    notifier = service 'notifier-service' {
+      #inferred
+      technology 'Java, Spring Boot'
+      metadata {
+        app-name 'notifier-service'
+        repo 'local/demo-kotlin-notifier'
+        commit 'local'
+        extracted-at '2026-08-19'
+      }
+
+      api = api 'notifier-service API' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          base-path '/api/notifications'
+        }
+
+        post_api_notifications = operation 'POST /api/notifications' {
+          #inferred
+          metadata {
+            method 'POST'
+            path '/api/notifications'
+            source 'src/main/kotlin/demo/notifier/NotificationController.kt#NotificationController.send; demo-kotlin-notifier-0.0.1.jar!demo.notifier.NotificationController#send; src/main/kotlin/demo/notifier/NotificationController.kt:17'
+            confidence '0.99'
+          }
+        }
+
+        get_api_notifications_p = operation 'GET /api/notifications/{notificationId}' {
+          #inferred
+          metadata {
+            method 'GET'
+            path '/api/notifications/{notificationId}'
+            source 'src/main/kotlin/demo/notifier/NotificationController.kt#NotificationController.get; demo-kotlin-notifier-0.0.1.jar!demo.notifier.NotificationController#get; src/main/kotlin/demo/notifier/NotificationController.kt:14'
+            confidence '0.99'
+          }
+        }
+      }
+    }
+
+    ch_notifications_sent = channel 'notifications.sent' {
+      #inferred
+      technology 'Kafka topic'
+    }
+
+    ch_orders_created = channel 'orders.created' {
+      #inferred
+      technology 'Kafka topic'
+    }
+  }
+
+  demo.ch_orders_created -[deliver]-> demo.notifier 'group: notifier'
+  demo.notifier -[publish]-> demo.ch_notifications_sent
+}
+
+views 'Demo Kotlin' {
+
+  view demo_containers of demo {
+    title 'Контейнеры'
+    description 'Кто с кем связан. Отсюда видно радиус изменения'
+    include *
+    global predicate noContracts
+    global style base
+    autoLayout TopBottom
+  }
+
+  view demo_notifier_api of demo.notifier {
+    title 'API / notifier-service'
+    description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
+    include *
+    include demo.notifier.**
+    include * -> demo.notifier.**
+    global style base
+    autoLayout LeftRight
+  }
+}

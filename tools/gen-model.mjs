@@ -727,6 +727,6 @@ export function generate(root = '.') {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const r = generate('.')
+  const r = generate(process.env.ARCH_DATA_ROOT ?? '.')
   console.log(`\nv2-доков: ${r.docs}, сторов: ${r.stores}, каналов: ${r.channels}, stub'ов: ${r.stubs}`)
 }

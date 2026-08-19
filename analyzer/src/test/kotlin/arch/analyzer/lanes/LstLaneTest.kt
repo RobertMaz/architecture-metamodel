@@ -38,9 +38,13 @@ class LstLaneTest {
 
         // продюсеры: Kotlin-константа Topics.ORDERS резолвится; протокол на месте
         val pubs = facts.filter { it.type == FactType.PUBLISH }
-        assertEquals(2, pubs.size, "producer из .java и из .kt: $pubs")
-        assertTrue(pubs.all { it.attrs["channel"] == "orders.created" && it.attrs["protocol"] == "kafka" })
+        assertEquals(3, pubs.size, "producer из .java, .kt и @Value: $pubs")
+        assertTrue(pubs.count { it.attrs["channel"] == "orders.created" } == 2)
         assertTrue(pubs.any { it.source.endsWith(".kt#KProducer.publish") && it.confidence == 0.85 }, "Kotlin typed: $pubs")
+
+        // @Value-топик: Kotlin-эскейп \$ нормализован — честный ${...} для резолвера
+        val valuePub = pubs.single { it.source.endsWith("KValueProducer.send") }
+        assertEquals("\${app.topics.sent}", valuePub.attrs["channel"], "без backslash: $valuePub")
 
         // слушатели: Kotlin array-literal с константой и Java-массив дают один канал
         val subs = facts.filter { it.type == FactType.SUBSCRIBE }

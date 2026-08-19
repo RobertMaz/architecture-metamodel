@@ -16,3 +16,4 @@
 # /model/11-crm.c4       @acme/team-crm
 # /model/12-logistics.c4 @acme/team-logistics
 /model/systems/petrest/  @acme/team-petclinic
+/model/systems/demo/     @acme/architecture

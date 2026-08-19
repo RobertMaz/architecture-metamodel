@@ -101,12 +101,18 @@ class Runs(private val archRoot: Path) {
     /** Регенерация модели после ручного решения в триаже. */
     fun regenerate() = generateModel()
 
-    /** npm run gen в корне архрепо; вне полного репо (тесты) — тихий скип. */
+    /**
+     * npm run gen: в корне данных, если у них свой package.json (отдельный приватный
+     * репо, п. 10), иначе — в движке с ARCH_DATA_ROOT на данные. Вне полного
+     * репо (тесты) — тихий скип.
+     */
     private fun generateModel() {
-        if (!archRoot.resolve("package.json").exists()) return
+        val dir = if (archRoot.resolve("package.json").exists()) archRoot else arch.analyzer.core.Analyze.engineRoot()
+        if (!dir.resolve("package.json").exists()) return
         val p = ProcessBuilder("npm", "run", "gen")
-            .directory(archRoot.toFile())
+            .directory(dir.toFile())
             .redirectErrorStream(true)
+            .apply { environment()["ARCH_DATA_ROOT"] = archRoot.toString() }
             .start()
         val out = p.inputStream.bufferedReader().readText()
         if (p.waitFor() != 0) error("npm run gen упал:\n${out.takeLast(2000)}")

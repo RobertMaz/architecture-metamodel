@@ -9,3 +9,7 @@ systems:
     kind: system
     title: "PetClinic REST"
     description: "Монолитный REST-бэкенд petclinic (пилот полки openapi)"
+  - id: demo
+    kind: system
+    title: "Demo Kotlin"
+    description: "Kotlin-сервис тестового ландшафта: приёмка паритета фактов Java/Kotlin (п. 6 плана)"
