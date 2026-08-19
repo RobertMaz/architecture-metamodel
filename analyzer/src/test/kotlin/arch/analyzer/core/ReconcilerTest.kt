@@ -192,6 +192,30 @@ class ReconcilerTest {
     }
 
     @Test
+    fun `springwolf сливается с bytecode по каналу и приоритетнее в деталях`() {
+        val springwolf = ev(
+            "springwolf",
+            fact(
+                FactType.SUBSCRIBE, "victim.jar!orders.created_receive_on", 0.9,
+                "channel" to "orders.created", "group" to "billing",
+                "payload" to "OrderCreatedEvent", "protocol" to "kafka",
+            ),
+        )
+        val bytecode = ev(
+            "bytecode",
+            fact(FactType.SUBSCRIBE, "app.jar!demo.Listener#on", 0.8, "channel" to "orders.created", "group" to "old-group"),
+        )
+        val (doc, report) = reconciler.reconcile("x.y", listOf(bytecode, springwolf), meta)
+
+        val sub = doc.subscribes.single()
+        assertEquals("billing", sub.group, "детали — от приоритетной полки springwolf")
+        assertEquals("OrderCreatedEvent", sub.payload)
+        assertEquals("kafka", sub.protocol)
+        assertTrue(sub.confidence > 0.9, "две полки подтвердили: ${sub.confidence}")
+        assertTrue(report.conflicts.any { "group" in it }, "расхождение group — в отчёт")
+    }
+
+    @Test
     fun `role попадает в target и различает рёбра без адреса`() {
         val e = ev(
             "config",

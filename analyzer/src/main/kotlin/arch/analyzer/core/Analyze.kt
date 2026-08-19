@@ -45,6 +45,7 @@ object Analyze {
             ConfigLane(),
             OpenApiLane(),
             BytecodeLane(),
+            arch.analyzer.lanes.SpringwolfLane(scannerDir = root.resolve("analyzer/springwolf-scanner")),
             JqassistantLane(adapter = root.resolve("analyzer/jqassistant/extract.sh")),
             arch.analyzer.lanes.RuntimeLane(),
             arch.analyzer.lanes.TracesLane(),

@@ -269,6 +269,26 @@ test('алиас есть, операции нет -> ребро в api цели
   assert.match(text, /petclinic\.customers -\[call\]-> petclinic\.visits\.api 'POST \/nope'/)
 })
 
+test('protocol канала определяет technology: amqp -> RabbitMQ, иначе Kafka topic', () => {
+  const root = makeRoot()
+  writeFileSync(
+    join(root, 'tools/api-source/petclinic.customers.json'),
+    JSON.stringify({
+      ...doc,
+      calls: [],
+      publishes: [],
+      subscribes: [
+        { channel: 'billing-queue', group: 'cg', protocol: 'amqp', source: 's#L1', confidence: 0.9 },
+        { channel: 'order.created', group: 'cg', source: 's#L2', confidence: 0.9 },
+      ],
+    }),
+  )
+  generate(root)
+  const text = readFileSync(systemFile(root), 'utf8')
+  assert.match(text, /ch_billing_queue = channel 'billing-queue' \{\n      #inferred\n      technology 'RabbitMQ'/)
+  assert.match(text, /ch_order_created = channel 'order.created' \{\n      #inferred\n      technology 'Kafka topic'/)
+})
+
 test('target.role без адреса -> stub по роли и запись в unresolved', () => {
   const root = makeRoot()
   writeFileSync(
