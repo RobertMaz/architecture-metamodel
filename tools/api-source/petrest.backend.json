@@ -390,24 +390,28 @@
     },
     {
       "confidence" : 0.97,
+      "group" : "swagger-ui.html",
       "method" : "GET",
       "path" : "/swagger-ui.html",
       "source" : "actuator:/mappings"
     },
     {
       "confidence" : 0.97,
+      "group" : "api-docs",
       "method" : "GET",
       "path" : "/v3/api-docs",
       "source" : "actuator:/mappings"
     },
     {
       "confidence" : 0.97,
+      "group" : "api-docs.yaml",
       "method" : "GET",
       "path" : "/v3/api-docs.yaml",
       "source" : "actuator:/mappings"
     },
     {
       "confidence" : 0.97,
+      "group" : "api-docs",
       "method" : "GET",
       "path" : "/v3/api-docs/swagger-config",
       "source" : "actuator:/mappings"

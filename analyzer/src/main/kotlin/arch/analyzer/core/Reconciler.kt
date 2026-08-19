@@ -77,7 +77,7 @@ class Reconciler(
             Operation(
                 method = m.attrs["method"] ?: "GET",
                 path = m.attrs["path"] ?: "/",
-                group = m.attrs["group"],
+                group = m.attrs["group"] ?: inferGroupFromPath(m.attrs["path"] ?: ""),
                 summary = m.attrs["summary"],
                 params = m.attrs["params"],
                 request = m.attrs["request"],
@@ -278,6 +278,23 @@ class Reconciler(
         else located.copy(
             fact = located.fact.copy(attrs = java.util.TreeMap(located.fact.attrs.filterKeys { it != "specServerPath" })),
         )
+
+    /**
+     * Fallback-группа операции из пути — когда ни одна полка группу не дала
+     * (OpenAPI tags и имена Java-контроллеров её дают, Kotlin/bytecode/noir — нет):
+     * первый значимый сегмент после версии API и служебных префиксов.
+     * /api/v1/pos/link -> pos; /private/api/v2/terminal/{id} -> terminal.
+     * Сегменты-параметры {…} группой не бывают. Ничего не вывели — базовый api.
+     */
+    private val skipSegments = setOf("api", "private", "secured", "public", "internal")
+
+    private fun inferGroupFromPath(path: String): String? =
+        path.split('/')
+            .filter { it.isNotEmpty() }
+            .firstOrNull {
+                it.lowercase() !in skipSegments && !it.matches(Regex("v\\d+")) && !it.startsWith("{")
+            }
+            ?.lowercase()
 
     private fun round2(x: Double): Double = (x * 100).roundToInt() / 100.0
 

@@ -49,16 +49,6 @@ model {
         metadata {
           base-path '/'
         }
-
-        getowners_pets_p = operation 'GET owners/*/pets/{petId}' {
-          #inferred
-          metadata {
-            method 'GET'
-            path 'owners/*/pets/{petId}'
-            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.findPet'
-            confidence '0.85'
-          }
-        }
       }
 
       api_owner = api 'owner' {
@@ -116,6 +106,24 @@ model {
             request 'OwnerRequest'
             source 'actuator:/mappings; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#OwnerResource.updateOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java#L83; spring-petclinic-customers-service-4.0.1.jar!org.springframework.samples.petclinic.customers.web.OwnerResource#updateOwner; src/main/java/org/springframework/samples/petclinic/customers/web/OwnerResource.java:83; llm:enrich'
             confidence '1'
+          }
+        }
+      }
+
+      api_owners = api 'owners' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'owners'
+        }
+
+        getowners_pets_p = operation 'GET owners/*/pets/{petId}' {
+          #inferred
+          metadata {
+            method 'GET'
+            path 'owners/*/pets/{petId}'
+            source 'src/main/java/org/springframework/samples/petclinic/customers/web/PetResource.java#PetResource.findPet'
+            confidence '0.85'
           }
         }
       }
@@ -206,6 +214,14 @@ model {
             source 'actuator:/mappings'
             confidence '0.97'
           }
+        }
+      }
+
+      api_lastn = api 'lastn' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'lastn'
         }
 
         get_lastn = operation 'GET /lastn' {
@@ -300,6 +316,14 @@ model {
         metadata {
           base-path '/chatclient'
         }
+      }
+
+      api_chatclient = api 'chatclient' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'chatclient'
+        }
 
         post_chatclient = operation 'POST /chatclient' {
           #inferred
@@ -375,6 +399,14 @@ model {
         metadata {
           base-path '/'
         }
+      }
+
+      api_owners = api 'owners' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'owners'
+        }
 
         getowners_pets_p_visits = operation 'GET owners/*/pets/{petId}/visits' {
           #inferred
@@ -394,6 +426,14 @@ model {
             source 'src/main/java/org/springframework/samples/petclinic/visits/web/VisitResource.java#VisitResource.create'
             confidence '0.85'
           }
+        }
+      }
+
+      api_pets = api 'pets' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'pets'
         }
 
         getpets_visits = operation 'GET pets/visits' {
@@ -557,6 +597,15 @@ views 'PetClinic' {
     autoLayout LeftRight
   }
 
+  view petclinic_customers_owners of petclinic.customers.api_owners {
+    title 'API / customers-service / owners'
+    description 'Операции домена «owners» со своими вызывающими'
+    include *
+    include * -> petclinic.customers.api_owners.*
+    global style base
+    autoLayout LeftRight
+  }
+
   view petclinic_customers_pet of petclinic.customers.api_pet {
     title 'API / customers-service / pet'
     description 'Операции домена «pet» со своими вызывающими'
@@ -572,6 +621,15 @@ views 'PetClinic' {
     include *
     include petclinic.discovery.**
     include * -> petclinic.discovery.**
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_discovery_lastn of petclinic.discovery.api_lastn {
+    title 'API / discovery-server / lastn'
+    description 'Операции домена «lastn» со своими вызывающими'
+    include *
+    include * -> petclinic.discovery.api_lastn.*
     global style base
     autoLayout LeftRight
   }
@@ -614,6 +672,15 @@ views 'PetClinic' {
     autoLayout LeftRight
   }
 
+  view petclinic_genai_chatclient of petclinic.genai.api_chatclient {
+    title 'API / genai-service / chatclient'
+    description 'Операции домена «chatclient» со своими вызывающими'
+    include *
+    include * -> petclinic.genai.api_chatclient.*
+    global style base
+    autoLayout LeftRight
+  }
+
   view petclinic_vets_api of petclinic.vets {
     title 'API / vets-service'
     description 'Три уровня разом: контейнер, его api-группы и операции с вызывающими'
@@ -639,6 +706,24 @@ views 'PetClinic' {
     include *
     include petclinic.visits.**
     include * -> petclinic.visits.**
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_visits_owners of petclinic.visits.api_owners {
+    title 'API / visits-service / owners'
+    description 'Операции домена «owners» со своими вызывающими'
+    include *
+    include * -> petclinic.visits.api_owners.*
+    global style base
+    autoLayout LeftRight
+  }
+
+  view petclinic_visits_pets of petclinic.visits.api_pets {
+    title 'API / visits-service / pets'
+    description 'Операции домена «pets» со своими вызывающими'
+    include *
+    include * -> petclinic.visits.api_pets.*
     global style base
     autoLayout LeftRight
   }

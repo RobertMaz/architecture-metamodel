@@ -17,12 +17,14 @@
   "operations" : [
     {
       "confidence" : 0.99,
+      "group" : "notifications",
       "method" : "POST",
       "path" : "/api/notifications",
       "source" : "src/main/kotlin/demo/notifier/NotificationController.kt#NotificationController.send; demo-kotlin-notifier-0.0.1.jar!demo.notifier.NotificationController#send; src/main/kotlin/demo/notifier/NotificationController.kt:17"
     },
     {
       "confidence" : 0.99,
+      "group" : "notifications",
       "method" : "GET",
       "path" : "/api/notifications/{notificationId}",
       "source" : "src/main/kotlin/demo/notifier/NotificationController.kt#NotificationController.get; demo-kotlin-notifier-0.0.1.jar!demo.notifier.NotificationController#get; src/main/kotlin/demo/notifier/NotificationController.kt:14"

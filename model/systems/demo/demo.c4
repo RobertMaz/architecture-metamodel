@@ -24,6 +24,14 @@ model {
         metadata {
           base-path '/api/notifications'
         }
+      }
+
+      api_notifications = api 'notifications' {
+        #inferred #public
+        technology 'HTTP/JSON'
+        metadata {
+          domain 'notifications'
+        }
 
         post_api_notifications = operation 'POST /api/notifications' {
           #inferred
@@ -79,6 +87,15 @@ views 'Demo Kotlin' {
     include *
     include demo.notifier.**
     include * -> demo.notifier.**
+    global style base
+    autoLayout LeftRight
+  }
+
+  view demo_notifier_notifications of demo.notifier.api_notifications {
+    title 'API / notifier-service / notifications'
+    description 'Операции домена «notifications» со своими вызывающими'
+    include *
+    include * -> demo.notifier.api_notifications.*
     global style base
     autoLayout LeftRight
   }
