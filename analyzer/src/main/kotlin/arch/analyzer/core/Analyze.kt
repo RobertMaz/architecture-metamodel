@@ -25,6 +25,8 @@ object Analyze {
         val failedLanes: List<String> = emptyList(),
         val factCount: Int,
         val report: ReconcileReport,
+        /** Длительность каждой полки, мс — видно, где прогон проводит время. */
+        val laneMillis: Map<String, Long> = emptyMap(),
     )
 
     fun llmClient(archRoot: Path): Pair<arch.analyzer.llm.LlmClient, arch.analyzer.llm.LlmConfig>? {
@@ -69,7 +71,14 @@ object Analyze {
         )
     }
 
-    fun run(archRoot: Path, containerId: String, date: String, lanes: List<Lane>? = null): Result {
+    fun run(
+        archRoot: Path,
+        containerId: String,
+        date: String,
+        lanes: List<Lane>? = null,
+        /** Прогресс для UI/status.json: имя полки перед её запуском. */
+        onProgress: ((String) -> Unit)? = null,
+    ): Result {
         @Suppress("NAME_SHADOWING") val lanes = lanes ?: defaultLanes(archRoot)
         val entry = Registry(archRoot).entry(containerId)
         val repoDir = Paths.get(entry.path)
@@ -86,17 +95,24 @@ object Analyze {
 
         val evidences = mutableListOf<Evidence>()
         val lanesRun = mutableListOf<String>()
+        val laneMillis = linkedMapOf<String, Long>()
         // Упавшая полка не роняет прогон: реконсиляция идёт по оставшимся уликам.
         val failedLanes = mutableListOf<Pair<String, String>>()
         for (lane in lanes) {
             if (!lane.applicable(input)) continue
+            onProgress?.invoke(lane.name)
+            val t0 = System.nanoTime()
             val extracted = runCatching { lane.extract(input) }
+            val ms = (System.nanoTime() - t0) / 1_000_000
+            laneMillis[lane.name] = ms
             if (extracted.isFailure) {
                 val e = extracted.exceptionOrNull()!!
+                println("[analyze] $containerId: полка ${lane.name} УПАЛА за ${ms}мс — ${e.message}")
                 failedLanes += lane.name to (e.message ?: e.javaClass.simpleName)
                 continue
             }
             val facts = extracted.getOrThrow()
+            println("[analyze] $containerId: полка ${lane.name} — ${facts.size} фактов за ${ms}мс")
             val evidence = Evidence(
                 lane = lane.name,
                 input = InputRef(kind = "git", path = entry.path, commit = gitCommit(repoDir)),
@@ -129,7 +145,8 @@ object Analyze {
         val aliasConflicts = Aliases(archRoot).upsert(aliasEntries)
 
         // LLM-ревью: подозрения на пропуски — только в отчёт, не в факты.
-        val llmReview = llmClient(archRoot)?.let { (client, _) ->
+        val tLlm = System.nanoTime()
+        val llmReview = llmClient(archRoot)?.also { onProgress?.invoke("llm-ревью") }?.let { (client, _) ->
             val files = Files.walk(repoDir.resolve("src")).use { s ->
                 s.filter { Files.isRegularFile(it) }
                     .map { repoDir.relativize(it).toString().replace('\\', '/') }
@@ -138,6 +155,10 @@ object Analyze {
             runCatching { arch.analyzer.llm.LlmReviewer(client).review(doc, files) }
                 .getOrElse { listOf("LLM-ревью упало: ${it.message}") }
         } ?: emptyList()
+        if (llmReview.isNotEmpty()) {
+            laneMillis["llm-ревью"] = (System.nanoTime() - tLlm) / 1_000_000
+            println("[analyze] $containerId: llm-ревью — ${laneMillis["llm-ревью"]}мс")
+        }
 
         val laneFailures = failedLanes.map { (name, msg) -> "полка $name упала: $msg" }
         val report = baseReport.copy(
@@ -155,6 +176,7 @@ object Analyze {
             failedLanes.map { it.first }.sorted(),
             evidences.sumOf { it.facts.size },
             report,
+            laneMillis,
         )
     }
 

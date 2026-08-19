@@ -18,9 +18,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-function StateBadge({ state, analyzed }: { state: ContainerInfo["state"]; analyzed: boolean }) {
+function StateBadge({ state, lane, analyzed }: { state: ContainerInfo["state"]; lane?: string | null; analyzed: boolean }) {
   if (state === "queued") return <Badge variant="outline">в очереди</Badge>
-  if (state === "running") return <Badge variant="secondary">анализ…</Badge>
+  if (state === "running") return <Badge variant="secondary">{lane ? `анализ: ${lane}…` : "анализ…"}</Badge>
   if (state === "failed") return <Badge variant="destructive">ошибка</Badge>
   if (analyzed) return <Badge variant="success">готово</Badge>
   return <Badge variant="outline">не анализировался</Badge>
@@ -70,7 +70,7 @@ export function ContainersTable({ containers, loading }: { containers: Container
       col.display({
         id: "state",
         header: "Статус",
-        cell: (c) => <StateBadge state={c.row.original.state} analyzed={c.row.original.analyzed} />,
+        cell: (c) => <StateBadge state={c.row.original.state} lane={c.row.original.lane} analyzed={c.row.original.analyzed} />,
       }),
       col.accessor("evidenceLanes", {
         header: "Полки (evidence)",

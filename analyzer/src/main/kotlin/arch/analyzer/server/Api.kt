@@ -42,6 +42,8 @@ data class ContainerDto(
     val path: String,
     val analyzed: Boolean,
     val state: String,
+    /** Текущая полка бегущего прогона — «анализ… lst» вместо немого спиннера. */
+    val lane: String? = null,
     val lanes: List<String>,
     /** Полки, чей evidence лежит на диске, — включая прошлые прогоны (персистентность). */
     val evidenceLanes: List<String>,
@@ -105,6 +107,7 @@ class Inventory(private val archRoot: Path) {
                 path = node["path"]?.asText() ?: "",
                 analyzed = doc != null,
                 state = status?.get("state")?.asText() ?: "idle",
+                lane = status?.get("lane")?.asText()?.takeIf { it.isNotEmpty() },
                 lanes = status?.get("lanes")?.map { it.asText() } ?: emptyList(),
                 evidenceLanes = evidenceLanes(id),
                 jar = node["jar"]?.asText(),

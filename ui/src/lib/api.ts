@@ -14,6 +14,7 @@ export type ContainerInfo = {
   path: string
   analyzed: boolean
   state: "idle" | "queued" | "running" | "done" | "failed"
+  lane?: string | null
   lanes: string[]
   evidenceLanes: string[]
   operations: number

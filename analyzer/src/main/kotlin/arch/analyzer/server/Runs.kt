@@ -31,6 +31,10 @@ class Runs(private val archRoot: Path) {
         val factCount: Int = 0,
         val error: String? = null,
         val finishedAt: String? = null,
+        /** Что прогон делает прямо сейчас (полка / генерация) — для спиннера в UI. */
+        val lane: String? = null,
+        /** Длительности полок, мс — где прогон провёл время. */
+        val laneMillis: Map<String, Long> = emptyMap(),
     )
 
     private val executor = Executors.newSingleThreadExecutor { r ->
@@ -56,11 +60,18 @@ class Runs(private val archRoot: Path) {
         executor.submit {
             writeStatus(containerId, Status("running"))
             try {
-                val r = Analyze.run(archRoot, containerId, date = LocalDate.now().toString())
+                val r = Analyze.run(
+                    archRoot, containerId, date = LocalDate.now().toString(),
+                    onProgress = { lane -> writeStatus(containerId, Status("running", lane = lane)) },
+                )
+                writeStatus(containerId, Status("running", lane = "генерация модели"))
                 generateModel()
                 writeStatus(
                     containerId,
-                    Status("done", r.lanesRun, r.failedLanes, r.factCount, finishedAt = Instant.now().toString()),
+                    Status(
+                        "done", r.lanesRun, r.failedLanes, r.factCount,
+                        finishedAt = Instant.now().toString(), laneMillis = r.laneMillis,
+                    ),
                 )
             } catch (e: Exception) {
                 writeStatus(

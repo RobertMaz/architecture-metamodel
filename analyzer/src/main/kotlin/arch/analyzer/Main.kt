@@ -28,10 +28,12 @@ fun main(args: Array<String>) {
 
     for (id in targets) {
         val r = Analyze.run(archRoot, id, date)
+        val timings = r.laneMillis.entries.sortedByDescending { it.value }
+            .joinToString(" ") { "${it.key}=${it.value}мс" }
         println(
             "$id: полки=${r.lanesRun.joinToString(",")} фактов=${r.factCount} " +
                 "конфликтов=${r.report.conflicts.size} низкая-уверенность=${r.report.lowConfidence.size} " +
-                "вызовов-без-разрешения=${r.report.unresolvedCalls}",
+                "вызовов-без-разрешения=${r.report.unresolvedCalls} | $timings",
         )
     }
 }
