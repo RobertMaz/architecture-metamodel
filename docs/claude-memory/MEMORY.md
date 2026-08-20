@@ -1,0 +1,5 @@
+- [Проект arch-analyzer](arch-analyzer-project.md) — конвейер улик, решения и порядок подпроектов
+- [LikeC4: предикаты видов](likec4-view-predicates.md) — include элемента не тащит связи потомков, нужен `<->`-предикат
+- [Задел: сущности с полями](entities-fields-backlog.md) — поля только в api-source, триггер: PII или ломающие изменения
+- [likec4: тихое застревание](likec4-silent-stale.md) — невалидная модель = молча старая картинка; фикс отложен: validate после gen + стамп
+- [Ресёрч по реверсу архитектуры](arch-recovery-research.md) — Code2DFD/OpenRewrite/Joern/Springwolf, ссылка на отчёт-артефакт

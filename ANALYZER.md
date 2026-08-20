@@ -8,6 +8,30 @@
 - Node 22+ (`node --version`)
 - git; сеть до Maven Central и npm при первом запуске
 
+## Новая машина: что склонировать допом
+
+`registry/repos.yml` ссылается на репозитории-жертвы **абсолютными путями**
+(`path:`, `jar:`). Без них полки source/config/bytecode молча не запустятся.
+На новой машине склонировать в те же пути (или поправить пути в repos.yml) и собрать jar'ы:
+
+```bash
+cd ~/IdeaProjects
+git clone https://github.com/spring-petclinic/spring-petclinic-microservices   # petclinic.*
+git clone https://github.com/spring-petclinic/spring-petclinic-rest            # petrest.backend
+(cd spring-petclinic-microservices && ./mvnw -q package -DskipTests)
+(cd spring-petclinic-rest && ./mvnw -q package -DskipTests)
+```
+
+Отдельно `demo.notifier` (`~/IdeaProjects/demo-kotlin-notifier`) — **локальный демо-сервис
+без remote** (в repos.yml числится `local/`): переносить копированием каталога, иначе
+контейнер останется без источников.
+
+Файлы `traces:` (OTel-спаны) лежат в gitignore-каталоге `workspace/traces/` — на новой
+машине их нет; полка traces просто не включится, пока не снимешь спаны заново (см. ниже).
+
+Накопленный контекст сессий Claude Code — снимок в `docs/claude-memory/`
+(как восстановить — там в README).
+
 ## Запуск фулл-стека (три процесса)
 
 ```bash
@@ -49,7 +73,7 @@ npm run dev            # или: npx likec4 start model --port 5175
 | bytecode | `jar:` | Nexus или `./mvnw package -DskipTests` |
 | runtime | `runtimeUrl:` живой апки | запустить с `--management.endpoints.web.exposure.include=mappings,env,health` |
 | traces | `traces:` файл OTel-спанов | см. ниже |
-| llm | `registry/llm.yml` + env `LLM_API_KEY` | OpenAI-совместимый endpoint (корп. Qwen: `baseUrl: https://.../v1`; LM Studio: `http://<тачка>:1234/v1`) |
+| llm | `registry/llm.yml` + env `LLM_API_KEY` | OpenAI-совместимый endpoint (`baseUrl: https://.../v1`; LM Studio: `http://<тачка>:1234/v1`) |
 | jqassistant | `analyzer/jqassistant/extract.sh` (печатает `TYPE\|attr=value\|...\|source\|confidence`) | поставить jQAssistant руками, обернуть Cypher в скрипт |
 
 ### Снять OTel-спаны
